@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import TodoList from '@/components/Tasks/TodoList';
 
 const Today = () => {
   return (
     <View style={styles.container}>
-       
+      <TodoList />
     </View>
   );
 };
