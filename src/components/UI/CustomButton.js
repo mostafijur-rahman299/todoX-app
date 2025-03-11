@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, StyleSheet, Pressable } from 'react-native';
-
+import { colors } from '@/constants/Colors';
 const CustomButton = ({ title, onPress, style, textStyle }) => {
   return (
     <Pressable 
@@ -15,14 +15,14 @@ const CustomButton = ({ title, onPress, style, textStyle }) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#000',
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
   },
 });

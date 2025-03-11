@@ -3,8 +3,11 @@ import { View, StyleSheet } from 'react-native';
 import CustomText from '@/components/UI/CustomText';
 import { Image } from 'expo-image';
 import CustomButton from '@/components/UI/CustomButton';
-
+import { useNavigation } from '@react-navigation/native';
+import { colors } from '@/constants/Colors';
 const StartScreen = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       
@@ -25,7 +28,7 @@ const StartScreen = () => {
       {/* Button */}
       <CustomButton 
         title="Continue as Guest" 
-        onPress={() => {}} 
+        onPress={() => navigation.navigate('Tasks')} 
         style={styles.guestButton} 
         textStyle={styles.guestButtonText}
       />
@@ -39,12 +42,13 @@ export default StartScreen;
 
 const styles = StyleSheet.create({
     container: {
-      backgroundColor: '#fff',
+      flex: 1,
+      backgroundColor: colors.background,
       padding: 20
     },
     title: {
         fontSize: 24,
-        color: '#FF3951',
+        color: colors.primary,
         textAlign: 'center',
         marginTop: 20,
     },
@@ -56,21 +60,21 @@ const styles = StyleSheet.create({
     },
     logoTitle: {
         fontSize: 48,
-        color: '#FF3951',
+        color: colors.primary,
         textAlign: 'center',
         marginBottom: 10,
         fontFamily: 'NicoMoji-Regular',
     },
     logoSubtitle: {
         fontSize: 16,
-        color: 'grey',
+        color: colors.gray,
         textAlign: 'center',
         marginBottom: 20,
         fontFamily: 'NicoMoji-Regular',
     },
     guestButton: {
         marginTop: 50,
-        backgroundColor: '#000',
+        backgroundColor: colors.black,
         padding: 12,
         borderRadius: 5,
         alignItems: 'center',
@@ -79,7 +83,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     guestButtonText: {
-        color: '#fff',
+        color: colors.white,
         fontSize: 20,
     }
   });
