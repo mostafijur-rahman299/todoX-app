@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Today from '@/screens/Tasks/Today';
-import Overdue from '@/screens/Tasks/Overdue';
+import Completed from '@/screens/Tasks/Completed';
 import Upcomming from '@/screens/Tasks/Upcomming';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,12 +70,12 @@ export default function Tasks() {
                 }}
             />
             <Tab.Screen
-                name="Overdue"
-                component={Overdue}
+                name="Completed"
+                component={Completed}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons
-                            name={focused ? 'alert-circle' : 'alert-circle-outline'}
+                            name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'}
                             size={28}
                             color={color}
                         />

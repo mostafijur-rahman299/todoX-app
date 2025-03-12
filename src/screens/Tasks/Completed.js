@@ -1,15 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const Overdue = () => {
+const Completed = () => {
   return (
     <View style={styles.container}>
-        <Text>Overdue</Text>
+        <Text>Completed</Text>
     </View>
   );
 };
 
-export default Overdue;
+export default Completed;
 
 const styles = StyleSheet.create({
   container: {
