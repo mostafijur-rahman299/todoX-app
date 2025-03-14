@@ -6,6 +6,8 @@ import StartScreen from './src/screens/StartScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Tasks from '@/navigation/Tasks';
+import { Provider } from 'react-redux';
+import { store } from '@/store';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,9 +31,10 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-    <NavigationContainer>
-      <Stack.Navigator>
-        {/* <Stack.Screen
+      <Provider store={store}>
+        <NavigationContainer>
+          <Stack.Navigator>
+            {/* <Stack.Screen
           options={{
             headerShown: false,
           }}
@@ -43,8 +46,9 @@ export default function App() {
           }}
 
           name="Tasks" component={Tasks} />
-      </Stack.Navigator>
-    </NavigationContainer>
+          </Stack.Navigator>
+        </NavigationContainer>
+      </Provider>
     </View>
   );
 }
