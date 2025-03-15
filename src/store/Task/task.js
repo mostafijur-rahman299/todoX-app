@@ -1,42 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-function sortTasksFunc(tasks) {
-  return tasks.sort((a, b) => {
-    // sort by is_completed false first
-    return a.timestamp - b.timestamp;
-
-    // sort by is_completed false first
-    if (a.is_completed === b.is_completed) {
-      return a.is_completed - b.is_completed;
-    }
-
-    // sort by completed_timestamp
-    return a.completed_timestamp - b.completed_timestamp;
-
-    if (a.sub_tasks.length > 0 && b.sub_tasks.length > 0) {
-      a.sub_tasks.sort((aa, bb) => {
-        return aa.timestamp - bb.timestamp;
-
-        if (aa.is_completed === bb.is_completed) {
-          return aa.is_completed - bb.is_completed;
-        }
-
-        // sort by completed_timestamp
-        if (aa.completed_timestamp !== null && bb.completed_timestamp !== null) {
-          return aa.completed_timestamp - bb.completed_timestamp;
-        }
-      });
-    }
-  });
-}
-
 const taskSlice = createSlice({
   name: 'task', // a name used in action types
   initialState: { 
-    task: sortTasksFunc([
+    task_list: [
       {
           id: 1,
-          title: "Buy groceries for the week and some fruits and vegetables",
+          title: "1",
           timestamp: "2025-03-11 10:00:00",
           description: "Buy groceries for the week and some fruits and vegetables", 
           category: "shopping",
@@ -78,7 +48,7 @@ const taskSlice = createSlice({
       },
       {
           id: 2,
-          title: "Have a meeting with the team",
+          title: "2",
           timestamp: "2025-03-11 10:00:00",
           description: "Have a meeting with the team",
           category: "work",
@@ -110,7 +80,7 @@ const taskSlice = createSlice({
       },
       {
           id: 3,
-          title: "Meet with the client",
+          title: "3",
           timestamp: "2025-03-11 10:00:00",
           description: "Meet with the client",
           category: "work",
@@ -134,7 +104,7 @@ const taskSlice = createSlice({
       },
       {
           id: 4,
-          title: "Spend time with family",
+          title: "4",
           timestamp: "2025-03-11 10:00:00",
           description: "Spend time with family",
           category: "family",
@@ -166,27 +136,31 @@ const taskSlice = createSlice({
       },
       {
           id: 5,
-          title: "Go to the gym",
+          title: "5",
           timestamp: "2025-03-11 10:00:00",
           description: "Go to the gym",
           category: "fitness",
           priority: "low",
           is_completed: false,
-          completed_timestamp: null
+          completed_timestamp: null,
+          sub_tasks: [
+          ]
       },
       {
           id: 6,
-          title: "Go with the family to the park",
+          title: "6",
           timestamp: "2025-03-11 10:00:00",
           description: "Go with the family to the park",
           category: "family",
           priority: "low",
           is_completed: true,
           completed_timestamp: null,
+          sub_tasks: [
+          ]
       },
       {
           id: 7,
-          title: "Have a meeting with the team",
+          title: "7",
           timestamp: "2025-03-11 10:00:00",
           description: "Have a meeting with the team",
           category: "work",
@@ -216,44 +190,40 @@ const taskSlice = createSlice({
               }
           ]
       }
-    ]),
+    ],
     todayTasks: [],
     upcomingTasks: [],
   },
   reducers: {
-    sortTasks(state) {
-      state.task = sortTasksFunc(state.task);
-    },
-    completeTask(state, action) {
+    toggleCompleteTask(state, action) {
       const { parentId, isSubTask, subTaskId } = action.payload;
-      const task = state.task.find(task => task.id === parentId);
-      if (task) {
-        if (isSubTask) {
-          task.sub_tasks = task.sub_tasks.map(subTask => {
-            if (subTask.id === subTaskId) {
-              subTask.is_completed = true;
-              subTask.completed_timestamp = new Date().toISOString();
-            }
-            return subTask;
-          });
-        } else {
-          task.is_completed = true;
-          task.completed_timestamp = new Date().toISOString();
 
-          // Complete all sub tasks
-          task.sub_tasks = task.sub_tasks.map(subTask => {
-            subTask.is_completed = true;
-            subTask.completed_timestamp = new Date().toISOString();
-            return subTask;
-          });
+      state.task_list = state.task_list.map(task => {
+        if (task.id === parentId) {
+          if (isSubTask === true) {
+            task["sub_tasks"] = task.sub_tasks.map(subTask => {
+              if (subTask.id === subTaskId) {
+                return {
+                  ...subTask,
+                  is_completed: !subTask.is_completed,
+                  completed_timestamp: new Date().toISOString()
+                };
+              }
+              return subTask;
+            });
+          } else {
+            task.is_completed = !task.is_completed;
+            task.completed_timestamp = new Date().toISOString();
+          }
         }
-      }
+        return task;
+      })
     },
   },
 });
 
 // Export the generated actions
-export const { completeTask, sortTasks } = taskSlice.actions;
+export const { toggleCompleteTask } = taskSlice.actions;
 
 // Export the reducer to be added to the store
 export default taskSlice.reducer;

@@ -5,61 +5,48 @@ import { Ionicons } from '@expo/vector-icons';
 import AddTodoModal from '../AddTodoModal';
 import Filter from './Filter';
 import { useSelector, useDispatch } from 'react-redux';
-import { completeTask, sortTasks } from '@/store/Task/task';
-
+import { toggleCompleteTask } from '@/store/Task/task';
+import DetailModal from '../DetailModal';
 
 const TodoList = () => {
     // State management
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [quickAddText, setQuickAddText] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedPriority, setSelectedPriority] = useState('all');
     const [searchText, setSearchText] = useState('');
-    const tasks = useSelector((state) => state.tasks.task);
+    const tasks = useSelector((state) => state.tasks.task_list);
+    const [selectedTask, setSelectedTask] = useState(null);
 
     // Quick add task handler
     const handleQuickAdd = () => {
         if (!quickAddText.trim()) return;
 
-        const newTask = {
-            id: Date.now(),
-            title: quickAddText,
-            timestamp: new Date(),
-            description: '',
-            category: 'other',
-            priority: 'medium',
-            is_completed: false
-        };
-
         // setTasks(prevTasks => [...prevTasks, newTask]);
         // setQuickAddText('');
     };
 
-    // Task filtering logic
-    const filteredTasks = tasks.filter(task => {
-        const matchesCategory = selectedCategory === 'all' || task.category === selectedCategory;
-        const matchesPriority = selectedPriority === 'all' || task.priority === selectedPriority;
-        const matchesSearch = task.title.toLowerCase().includes(searchText.toLowerCase());
-        return matchesCategory && matchesPriority && matchesSearch;
+    // Separate completed and incomplete tasks
+    const incompleteTasks = tasks.filter(task => !task.is_completed).sort((a, b) => {
+        const priorityOrder = {
+            high: 1,
+            medium: 2,
+            low: 3,
+        };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+
+        return a.timestamp - b.timestamp;
+    });
+    const completedTasks = tasks.filter(task => task.is_completed).sort((a, b) => {
+        return a.completed_timestamp - b.completed_timestamp;
     });
 
-    // Task sorting logic 
-    const sortedTasks = [...filteredTasks].sort((a, b) => {
-        // Sort by completion status first
-        if (a.is_completed !== b.is_completed) {
-            return a.is_completed ? 1 : -1;
-        }
-
-        // Then by priority
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        if (a.priority !== b.priority) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-        }
-
-        // Finally by timestamp
-        return new Date(b.timestamp) - new Date(a.timestamp);
-    });
+    // Clear completed tasks
+    const handleClearCompleted = () => {
+        // Add clear completed logic here
+    };
 
     return (
         <View style={styles.container}>
@@ -68,7 +55,7 @@ const TodoList = () => {
                 <View style={styles.headerInfo}>
                     <Text style={styles.headerTitle}>Tasks</Text>
                     <Text style={styles.headerSubtitle}>
-                        {tasks.filter(t => !t.is_completed).length} remaining{tasks.length > 0 && ` of ${tasks.length}`}
+                        {incompleteTasks.length} remaining{tasks.length > 0 && ` of ${tasks.length}`}
                     </Text>
                 </View>
 
@@ -106,9 +93,37 @@ const TodoList = () => {
 
             {/* Tasks List */}
             <FlatList
-                data={sortedTasks}
-                renderItem={({ item }) => <TodoItem item={item} />}
-                keyExtractor={item => item.id.toString()}
+                data={[
+                    ...incompleteTasks,
+                    // Clear completed button and header
+                    { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
+                    { id: 'clear_button', type: 'clear_button' },
+                    ...completedTasks,
+                ]}
+                renderItem={({ item }) => {
+                    if (item.type === 'header') {
+                        if(completedTasks.length > 0) {
+                            return (
+                                <Text style={styles.sectionHeader}>{item.title}</Text>
+                            );
+                        }
+                        return null;
+                    } else if (item.type === 'clear_button') {
+                        if(completedTasks.length > 0) {
+                            return (
+                                <TouchableOpacity 
+                                style={styles.clearButton}
+                                onPress={handleClearCompleted}
+                            >
+                                <Text style={styles.clearButtonText}>Clear</Text>
+                            </TouchableOpacity>
+                            );
+                        }
+                        return null;
+                    }
+                    return <TodoItem item={item} setSelectedTask={setSelectedTask} setIsDetailModalVisible={setIsDetailModalVisible} />;
+                }}
+                keyExtractor={item => item.id?.toString()}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
@@ -155,21 +170,22 @@ const TodoList = () => {
                 // tasks={tasks}
                 // setTasks={setTasks}
             />
+
+        <DetailModal
+            isModalVisible={isDetailModalVisible}
+            setIsModalVisible={setIsDetailModalVisible}
+            task={selectedTask}
+         />
         </View>
     );
 };
 
 export default TodoList;
 
-const TodoItem = ({ item }) => {
+const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isCompleted, setIsCompleted] = useState(item.is_completed);
-    const [subTasksCompleted, setSubTasksCompleted] = useState(
-        item.sub_tasks?.map(task => task.is_completed) || []
-    );
     const dispatch = useDispatch();
     const animatedHeight = new Animated.Value(isExpanded ? 1 : 0);
-    const subTaskCount = item.sub_tasks?.length || 0;
 
     const toggleExpand = () => {
         const newValue = !isExpanded;
@@ -182,13 +198,8 @@ const TodoItem = ({ item }) => {
         }).start();
     };
 
-    const toggleComplete = (item, isSubTask = false, subTaskId = null) => {
-        if (item.is_completed) {
-            // dispatch(completeTask({ id: item.id, isSubTask: false }));
-        } else {
-            dispatch(completeTask({ parentId: item.id, isSubTask: isSubTask, subTaskId: subTaskId }));
-            dispatch(sortTasks());
-        }
+    const toggleComplete = (item, isSubTask = false, subItem=null) => {
+        dispatch(toggleCompleteTask({ parentId: item.id, isSubTask: isSubTask, subTaskId: subItem?.id }));
     }
 
     const formatDate = (timestamp) => {
@@ -205,20 +216,26 @@ const TodoItem = ({ item }) => {
         return text.substring(0, maxLength) + '...';
     };
 
+    const handleTaskPress = () => {
+        setSelectedTask(item);
+        setIsDetailModalVisible(true);
+    };
+
     return (
-        <View style={[
-            styles.item,
-            isCompleted && { opacity: 0.7, backgroundColor: '#fafafa' }
+        <>
+            <View style={[
+                styles.item,
+                item.is_completed && { opacity: 0.7, backgroundColor: '#fafafa' }
         ]}>
-            <TouchableOpacity onPress={toggleExpand}>
+            <TouchableOpacity>
                 <View style={styles.itemHeader}>
                     <View style={styles.itemHeaderLeft}>
                         <TouchableOpacity onPress={() => toggleComplete(item, false, null)}>
                             <Ionicons
-                                name={isCompleted ? "checkmark-circle" : "radio-button-off"}
+                                name={item.is_completed ? "checkmark-circle" : "radio-button-off"}
                                 size={24}
                                 color={
-                                    isCompleted ? colors.primary :
+                                    item.is_completed ? colors.primary :
                                         item.priority === "high" ? colors.red :
                                             item.priority === "medium" ? colors.orange :
                                                 colors.green
@@ -227,13 +244,14 @@ const TodoItem = ({ item }) => {
                         </TouchableOpacity>
                         <Text
                             numberOfLines={1}
-                            style={[styles.itemTitle, isCompleted && styles.completedText]}
+                            style={[styles.itemTitle, item.is_completed && styles.completedText]}
+                            onPress={handleTaskPress}
                         >
                             {truncateText(item.title)}
                         </Text>
-                        {subTaskCount > 0 && (
+                        {item?.sub_tasks?.length > 0 && (
                             <Text style={styles.subTaskCount}>
-                                {subTasksCompleted.filter(Boolean).length}/{subTaskCount}
+                                {item?.sub_tasks?.filter(task => task.is_completed).length}/{item?.sub_tasks?.length}
                             </Text>
                         )}
                     </View>
@@ -241,6 +259,7 @@ const TodoItem = ({ item }) => {
                         name={isExpanded ? "chevron-up" : "chevron-down"}
                         size={20}
                         color={colors.darkGray}
+                        onPress={toggleExpand}
                     />
                 </View>
             </TouchableOpacity>
@@ -263,12 +282,12 @@ const TodoItem = ({ item }) => {
                     <View key={subTask.id} style={styles.subItem}>
                         <View style={styles.itemHeader}>
                             <View style={styles.itemHeaderLeft}>
-                                <TouchableOpacity onPress={() => toggleComplete(item, true, subTask.id)}>
+                                <TouchableOpacity onPress={() => toggleComplete(item, true, subTask)}>
                                     <Ionicons
-                                        name={subTasksCompleted[index] ? "checkmark-circle" : "radio-button-off"}
+                                        name={subTask.is_completed ? "checkmark-circle" : "radio-button-off"}
                                         size={20}
                                         color={
-                                            subTasksCompleted[index] ? colors.primary :
+                                            subTask.is_completed ? colors.primary :
                                                 subTask.priority === "high" ? colors.red :
                                                     subTask.priority === "medium" ? colors.orange :
                                                         colors.green
@@ -279,7 +298,7 @@ const TodoItem = ({ item }) => {
                                     numberOfLines={1}
                                     style={[
                                         styles.subItemText,
-                                        subTasksCompleted[index] && styles.completedText
+                                        subTask.is_completed && styles.completedText
                                     ]}
                                 >
                                     {truncateText(subTask.title)}
@@ -289,12 +308,23 @@ const TodoItem = ({ item }) => {
                         <Text style={styles.dateText}>{formatDate(subTask.timestamp)}</Text>
                     </View>
                 ))}
-                <TouchableOpacity style={styles.addSubTaskButton}>
-                    <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-                    <Text style={styles.addSubTaskText}>Add Subtask</Text>
-                </TouchableOpacity>
+
+                <View style={styles.addSubTaskContainer}>
+                    <TouchableOpacity style={styles.addSubTaskButton}>
+                        <Ionicons name="trash-outline" size={20} color={colors.red} />
+                        <Text style={styles.addSubTaskText}>Delete Task</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.addSubTaskButton}>
+                        <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+                        <Text style={styles.addSubTaskText}>Add Subtask</Text>
+                    </TouchableOpacity>
+                </View>
             </Animated.View>
-        </View>
+         </View>
+
+         
+        </>
     );
 };
 
@@ -306,7 +336,7 @@ export const styles = StyleSheet.create({
     },
     quickAddWrapper: {
         position: 'absolute',
-        bottom: 10,
+        bottom: 20,
         left: 20,
         right: 20,
     },
@@ -314,28 +344,28 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
-        borderRadius: 5,
-        paddingHorizontal: 6,
-        paddingVertical: 4,
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 6,
         shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 6,
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.05)',
     },
     quickAddInput: {
         flex: 1,
         paddingHorizontal: 12,
-        paddingVertical: 8,
-        fontSize: 15,
+        paddingVertical: 10,
+        fontSize: 16,
         color: colors.text,
-        fontWeight: '400',
+        fontWeight: '500',
     },
     quickAddButton: {
-        padding: 8,
-        borderRadius: 16,
+        padding: 10,
+        borderRadius: 10,
         backgroundColor: 'rgba(0,0,0,0.05)',
     },
     activeQuickAddButton: {
@@ -345,67 +375,67 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 5,
-        paddingVertical: 4,
+        marginBottom: 10,
+        paddingVertical: 8,
     },
     headerButtons: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
     },
     headerInfo: {
         flex: 1,
     },
     headerTitle: {
-        fontSize: 26,
+        fontSize: 32,
         fontWeight: 'bold',
         color: colors.text,
-        marginBottom: 2,
+        marginBottom: 4,
     },
     headerSubtitle: {
-        fontSize: 14,
+        fontSize: 15,
         color: colors.darkGray,
         fontWeight: '500',
     },
     addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 12,
         backgroundColor: colors.primary,
         shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     addButtonText: {
         color: 'white',
         fontWeight: '600',
-        marginLeft: 4,
-        fontSize: 14,
+        marginLeft: 6,
+        fontSize: 15,
     },
     listContent: {
-        paddingBottom: 100,
+        paddingBottom: 120,
     },
     item: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         backgroundColor: "#fff",
-        marginBottom: 12,
-        borderRadius: 5,
+        marginBottom: 14,
+        borderRadius: 12,
         shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        elevation: 3,
     },
     itemTitle: {
-        fontSize: 16,
+        fontSize: 17,
         color: colors.text,
         fontWeight: '600',
-        marginLeft: 12,
+        marginLeft: 14,
         flex: 1,
     },
     itemHeader: {
@@ -419,53 +449,56 @@ export const styles = StyleSheet.create({
         flex: 1,
     },
     itemBody: {
-        marginTop: 12,
+        marginTop: 14,
         overflow: 'hidden'
     },
     subItem: {
-        marginLeft: 36,
-        marginTop: 10,
-        padding: 14,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 5,
+        marginLeft: 38,
+        marginTop: 8,
     },
     subItemText: {
-        fontSize: 15,
+        fontSize: 16,
         color: colors.text,
         fontWeight: '500',
-        marginLeft: 12,
+        marginLeft: 14,
         flex: 1,
     },
     subTaskCount: {
-        fontSize: 12,
+        fontSize: 13,
         color: colors.darkGray,
-        marginLeft: 8,
+        marginLeft: 10,
         backgroundColor: colors.background,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
         fontWeight: '600',
+    },
+    addSubTaskContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 10,
     },
     addSubTaskButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 36,
-        marginTop: 12,
-        padding: 12,
-        backgroundColor: colors.background,
-        borderRadius: 12,
+        justifyContent: 'center',
+        marginLeft: 38,
+        marginTop: 14,
+        padding: 14,
+        borderRadius: 10,
     },
     addSubTaskText: {
         color: colors.primary,
-        marginLeft: 8,
-        fontSize: 14,
+        marginLeft: 10,
+        fontSize: 15,
         fontWeight: '600',
     },
     dateText: {
-        fontSize: 12,
+        fontSize: 13,
         color: colors.darkGray,
-        marginTop: 6,
-        marginLeft: 36,
+        marginTop: 8,
+        marginLeft: 38,
         fontWeight: '500',
     },
     completedText: {
@@ -478,28 +511,47 @@ export const styles = StyleSheet.create({
         color: colors.darkGray,
         textAlign: 'center',
         marginTop: 100,
+        paddingHorizontal: 20,
+        lineHeight: 24,
     },
     filterToggleButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 16,
-        backgroundColor: colors.lightGray,
-        marginRight: 8,
-        gap: 4,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        backgroundColor: colors.background,
+        gap: 6,
     },
     activeFilterToggleButton: {
         backgroundColor: colors.primary,
     },
     filterToggleText: {
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: '600',
         color: colors.text,
     },
     activeFilterToggleText: {
         color: 'white',
     },
+    sectionHeader: {
+        fontSize: 18,
+        color: colors.text,
+        fontWeight: 'bold',
+        marginTop: 24,
+        marginBottom: 12,
+    },
+    clearButton: {
+        padding: 12,
+        borderRadius: 10,
+        backgroundColor: colors.background,
+        marginTop: 12,
+        marginBottom: 12,
+        alignSelf: 'flex-start',
+    },
+    clearButtonText: {
+        fontSize: 15,
+        color: colors.primary,
+        fontWeight: '600',
+    },
 });
-
-
