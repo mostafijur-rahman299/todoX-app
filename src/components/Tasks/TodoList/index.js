@@ -9,7 +9,6 @@ import { toggleCompleteTask } from '@/store/Task/task';
 import DetailModal from '../DetailModal';
 
 const TodoList = () => {
-    // State management
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [quickAddText, setQuickAddText] = useState('');
@@ -71,7 +70,7 @@ const TodoList = () => {
                     <TouchableOpacity
                         style={[styles.filterToggleButton, showFilters && styles.activeFilterToggleButton]}
                         onPress={() => setShowFilters(!showFilters)}
-                    >   
+                    >
                         <Ionicons name="filter" size={18} color={showFilters ? 'white' : colors.text} />
                         <Text style={[styles.filterToggleText, showFilters && styles.activeFilterToggleText]}>
                             Filters
@@ -102,21 +101,21 @@ const TodoList = () => {
                 ]}
                 renderItem={({ item }) => {
                     if (item.type === 'header') {
-                        if(completedTasks.length > 0) {
+                        if (completedTasks.length > 0) {
                             return (
                                 <Text style={styles.sectionHeader}>{item.title}</Text>
                             );
                         }
                         return null;
                     } else if (item.type === 'clear_button') {
-                        if(completedTasks.length > 0) {
+                        if (completedTasks.length > 0) {
                             return (
-                                <TouchableOpacity 
-                                style={styles.clearButton}
-                                onPress={handleClearCompleted}
-                            >
-                                <Text style={styles.clearButtonText}>Clear</Text>
-                            </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.clearButton}
+                                    onPress={handleClearCompleted}
+                                >
+                                    <Text style={styles.clearButtonText}>Clear</Text>
+                                </TouchableOpacity>
                             );
                         }
                         return null;
@@ -167,15 +166,15 @@ const TodoList = () => {
             <AddTodoModal
                 isModalVisible={isModalVisible}
                 setIsModalVisible={setIsModalVisible}
-                // tasks={tasks}
-                // setTasks={setTasks}
+            // tasks={tasks}
+            // setTasks={setTasks}
             />
 
-        <DetailModal
-            isModalVisible={isDetailModalVisible}
-            setIsModalVisible={setIsDetailModalVisible}
-            task={selectedTask}
-         />
+            <DetailModal
+                isModalVisible={isDetailModalVisible}
+                setIsModalVisible={setIsDetailModalVisible}
+                task={selectedTask}
+            />
         </View>
     );
 };
@@ -198,7 +197,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
         }).start();
     };
 
-    const toggleComplete = (item, isSubTask = false, subItem=null) => {
+    const toggleComplete = (item, isSubTask = false, subItem = null) => {
         dispatch(toggleCompleteTask({ parentId: item.id, isSubTask: isSubTask, subTaskId: subItem?.id }));
     }
 
@@ -226,104 +225,91 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
             <View style={[
                 styles.item,
                 item.is_completed && { opacity: 0.7, backgroundColor: '#fafafa' }
-        ]}>
-            <TouchableOpacity>
-                <View style={styles.itemHeader}>
-                    <View style={styles.itemHeaderLeft}>
-                        <TouchableOpacity onPress={() => toggleComplete(item, false, null)}>
-                            <Ionicons
-                                name={item.is_completed ? "checkmark-circle" : "radio-button-off"}
-                                size={24}
-                                color={
-                                    item.is_completed ? colors.primary :
-                                        item.priority === "high" ? colors.red :
-                                            item.priority === "medium" ? colors.orange :
-                                                colors.green
-                                }
-                            />
-                        </TouchableOpacity>
-                        <Text
-                            numberOfLines={1}
-                            style={[styles.itemTitle, item.is_completed && styles.completedText]}
-                            onPress={handleTaskPress}
-                        >
-                            {truncateText(item.title)}
-                        </Text>
-                        {item?.sub_tasks?.length > 0 && (
-                            <Text style={styles.subTaskCount}>
-                                {item?.sub_tasks?.filter(task => task.is_completed).length}/{item?.sub_tasks?.length}
+            ]}>
+                <TouchableOpacity>
+                    <View style={styles.itemHeader}>
+                        <View style={styles.itemHeaderLeft}>
+                            <TouchableOpacity onPress={() => toggleComplete(item, false, null)}>
+                                <Ionicons
+                                    name={item.is_completed ? "checkmark-circle" : "radio-button-off"}
+                                    size={24}
+                                    color={
+                                        item.is_completed ? colors.lightGray :
+                                            item.priority === "high" ? colors.red :
+                                                item.priority === "medium" ? colors.orange :
+                                                    colors.green
+                                    }
+                                />
+                            </TouchableOpacity>
+                            <Text
+                                numberOfLines={1}
+                                style={[styles.itemTitle, item.is_completed && styles.completedText]}
+                                onPress={handleTaskPress}
+                            >
+                                {truncateText("Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.")}
                             </Text>
+                            {item?.sub_tasks?.length > 0 && (
+                                <Text style={styles.subTaskCount}>
+                                    {item?.sub_tasks?.filter(task => task.is_completed).length}/{item?.sub_tasks?.length}
+                                </Text>
+                            )}
+                        </View>
+                        {item?.sub_tasks?.length > 0 && (
+                            <Ionicons
+                                name={isExpanded ? "chevron-up" : "chevron-down"}
+                                size={20}
+                                color={colors.darkGray}
+                                onPress={toggleExpand}
+                            />
                         )}
                     </View>
-                    <Ionicons
-                        name={isExpanded ? "chevron-up" : "chevron-down"}
-                        size={20}
-                        color={colors.darkGray}
-                        onPress={toggleExpand}
-                    />
-                </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
 
-            <Text style={styles.dateText}>{formatDate(item.timestamp)}</Text>
-
-            <Animated.View
-                style={[
-                    styles.itemBody,
-                    {
-                        maxHeight: animatedHeight.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0, 1000]
-                        }),
-                        opacity: animatedHeight
-                    }
-                ]}
-            >
-                {item.sub_tasks && item.sub_tasks.map((subTask, index) => (
-                    <View key={subTask.id} style={styles.subItem}>
-                        <View style={styles.itemHeader}>
-                            <View style={styles.itemHeaderLeft}>
-                                <TouchableOpacity onPress={() => toggleComplete(item, true, subTask)}>
-                                    <Ionicons
-                                        name={subTask.is_completed ? "checkmark-circle" : "radio-button-off"}
-                                        size={20}
-                                        color={
-                                            subTask.is_completed ? colors.primary :
-                                                subTask.priority === "high" ? colors.red :
-                                                    subTask.priority === "medium" ? colors.orange :
-                                                        colors.green
-                                        }
-                                    />
-                                </TouchableOpacity>
-                                <Text
-                                    numberOfLines={1}
-                                    style={[
-                                        styles.subItemText,
-                                        subTask.is_completed && styles.completedText
-                                    ]}
-                                >
-                                    {truncateText(subTask.title)}
-                                </Text>
+                <Animated.View
+                    style={[
+                        styles.itemBody,
+                        {
+                            maxHeight: animatedHeight.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 1000]
+                            }),
+                            opacity: animatedHeight
+                        }
+                    ]}
+                >
+                    {item.sub_tasks && item.sub_tasks.map((subTask, index) => (
+                        <View key={subTask.id} style={styles.subItem}>
+                            <View style={styles.itemHeader}>
+                                <View style={styles.itemHeaderLeft}>
+                                    <TouchableOpacity onPress={() => toggleComplete(item, true, subTask)}>
+                                        <Ionicons
+                                            name={subTask.is_completed ? "checkmark-circle" : "radio-button-off"}
+                                            size={20}
+                                            color={
+                                                subTask.is_completed ? colors.lightGray :
+                                                    subTask.priority === "high" ? colors.red :
+                                                        subTask.priority === "medium" ? colors.orange :
+                                                            colors.green
+                                            }
+                                        />
+                                    </TouchableOpacity>
+                                    <Text
+                                        numberOfLines={1}
+                                        style={[
+                                            styles.subItemText,
+                                            subTask.is_completed && styles.completedText
+                                        ]}
+                                    >
+                                        {truncateText(subTask.title)}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
-                        <Text style={styles.dateText}>{formatDate(subTask.timestamp)}</Text>
-                    </View>
-                ))}
+                    ))}
+                </Animated.View>
+            </View>
 
-                <View style={styles.addSubTaskContainer}>
-                    <TouchableOpacity style={styles.addSubTaskButton}>
-                        <Ionicons name="trash-outline" size={20} color={colors.red} />
-                        <Text style={styles.addSubTaskText}>Delete Task</Text>
-                    </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.addSubTaskButton}>
-                        <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-                        <Text style={styles.addSubTaskText}>Add Subtask</Text>
-                    </TouchableOpacity>
-                </View>
-            </Animated.View>
-         </View>
-
-         
         </>
     );
 };
@@ -375,8 +361,7 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
-        paddingVertical: 8,
+        paddingVertical: 5,
     },
     headerButtons: {
         flexDirection: 'row',
@@ -387,10 +372,9 @@ export const styles = StyleSheet.create({
         flex: 1,
     },
     headerTitle: {
-        fontSize: 32,
+        fontSize: 25,
         fontWeight: 'bold',
         color: colors.text,
-        marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 15,
@@ -420,22 +404,17 @@ export const styles = StyleSheet.create({
         paddingBottom: 120,
     },
     item: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: 6,
+        paddingVertical: 6,
         backgroundColor: "#fff",
-        marginBottom: 14,
-        borderRadius: 12,
-        shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
-        elevation: 3,
+        marginBottom: 8,
+        borderRadius: 5,
     },
     itemTitle: {
         fontSize: 17,
         color: colors.text,
         fontWeight: '600',
-        marginLeft: 14,
+        marginLeft: 8,
         flex: 1,
     },
     itemHeader: {
@@ -454,13 +433,13 @@ export const styles = StyleSheet.create({
     },
     subItem: {
         marginLeft: 38,
-        marginTop: 8,
+        marginBottom: 12
     },
     subItemText: {
         fontSize: 16,
         color: colors.text,
         fontWeight: '500',
-        marginLeft: 14,
+        marginLeft: 8,
         flex: 1,
     },
     subTaskCount: {
@@ -536,22 +515,19 @@ export const styles = StyleSheet.create({
     },
     sectionHeader: {
         fontSize: 18,
-        color: colors.text,
+        color: colors.gray,
+        alignSelf: 'center',
         fontWeight: 'bold',
         marginTop: 24,
         marginBottom: 12,
     },
     clearButton: {
-        padding: 12,
-        borderRadius: 10,
-        backgroundColor: colors.background,
-        marginTop: 12,
         marginBottom: 12,
-        alignSelf: 'flex-start',
+        alignSelf: 'flex-end',
     },
     clearButtonText: {
         fontSize: 15,
-        color: colors.primary,
+        color: colors.gray,
         fontWeight: '600',
     },
 });

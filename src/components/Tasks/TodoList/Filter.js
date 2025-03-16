@@ -56,22 +56,6 @@ function Filter({
 
     return (
         <View style={styles.filterSection}>
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color={colors.darkGray} style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    value={searchText}
-                    onChangeText={setSearchText}
-                    placeholder="Search tasks..."
-                    placeholderTextColor={colors.darkGray}
-                />
-                {searchText !== '' && (
-                    <TouchableOpacity onPress={() => setSearchText('')}>
-                        <Ionicons name="close-circle" size={20} color={colors.darkGray} />
-                    </TouchableOpacity>
-                )}
-            </View>
-
             <View style={styles.filterGroups}>
                 <View style={styles.filterGroup}>
                     <Text style={styles.filterLabel}>Category</Text>
@@ -138,30 +122,7 @@ const styles = StyleSheet.create({
     filterSection: {
         backgroundColor: '#fff',
         padding: 15,
-        borderRadius: 12,
-        margin: 10,
-        shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        marginBottom: 15,
-    },
-    searchIcon: {
-        marginRight: 8,
-    },
-    searchInput: {
-        flex: 1,
-        paddingVertical: 10,
-        fontSize: 15,
-        color: colors.text,
+        borderRadius: 8
     },
     filterGroups: {
         gap: 15,
