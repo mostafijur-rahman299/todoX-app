@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const taskSlice = createSlice({
   name: 'task', // a name used in action types
-  initialState: { 
+  initialState: {
     task_list: [
       {
           id: 1,

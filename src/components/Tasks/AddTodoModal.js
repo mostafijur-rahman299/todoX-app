@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Animated } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, ScrollView, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { priorities, defaultCategories } from '@/constants/GeneralData';
 
 const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) => {
     const [showDatePicker, setShowDatePicker] = useState(false);
+    // For Android, pickerMode will be either 'date' or 'time'; on iOS we use "datetime" directly
+    const [pickerMode, setPickerMode] = useState(null);
     const [newTask, setNewTask] = useState({
         title: '',
         description: '',
@@ -14,18 +17,20 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
         timestamp: new Date(),
     });
 
-    const priorities = ['low', 'medium', 'high'];
-    const categories = ['work', 'personal', 'shopping', 'health', 'other'];
+    const categories = defaultCategories;
 
     const handleAddTask = () => {
         if (!newTask.title) return;
 
-        setTasks([...tasks, { 
-            ...newTask, 
-            id: Date.now(),
-            completed: false,
-            createdAt: new Date()
-        }]);
+        setTasks([
+            ...tasks,
+            { 
+                ...newTask, 
+                id: Date.now(),
+                completed: false,
+                createdAt: new Date()
+            }
+        ]);
 
         setIsModalVisible(false);
         setNewTask({
@@ -37,6 +42,72 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
         });
     };
 
+    const formatDate = (date) => {
+        return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    const handleDateTimeChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') {
+            if (event.type === 'dismissed') {
+                // If the user dismisses the picker, cancel the flow.
+                setPickerMode(null);
+                setShowDatePicker(false);
+                return;
+            }
+            if (pickerMode === 'date') {
+                // Update the date portion while preserving the current time.
+                const currentDate = selectedDate || newTask.timestamp;
+                const updatedTimestamp = new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth(),
+                    currentDate.getDate(),
+                    newTask.timestamp.getHours(),
+                    newTask.timestamp.getMinutes()
+                );
+                setNewTask({ ...newTask, timestamp: updatedTimestamp });
+                // Now switch to time picker.
+                setPickerMode('time');
+                setShowDatePicker(true);
+            } else if (pickerMode === 'time') {
+                // Update the time portion while preserving the date.
+                const currentTime = selectedDate || newTask.timestamp;
+                const updatedTimestamp = new Date(
+                    newTask.timestamp.getFullYear(),
+                    newTask.timestamp.getMonth(),
+                    newTask.timestamp.getDate(),
+                    currentTime.getHours(),
+                    currentTime.getMinutes()
+                );
+                setNewTask({ ...newTask, timestamp: updatedTimestamp });
+                setPickerMode(null);
+                setShowDatePicker(false);
+            }
+        } else {
+            // For iOS, use the datetime mode.
+            if (selectedDate) {
+                setNewTask({ ...newTask, timestamp: selectedDate });
+            }
+            setShowDatePicker(false);
+        }
+    };
+
+    const openPicker = () => {
+        if (Platform.OS === 'android') {
+            // For Android, start with the date picker.
+            setPickerMode('date');
+            setShowDatePicker(true);
+        } else {
+            setShowDatePicker(true);
+        }
+    };
+
     return (
         <Modal
             visible={isModalVisible}
@@ -44,186 +115,192 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
             transparent={true}
             statusBarTranslucent
         >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                    <View style={styles.modalHandle} />
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        <Text style={styles.modalTitle}>Create New Task</Text>
+            <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
+                <View style={styles.modalContainer}>
+                    <TouchableWithoutFeedback>
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHandle} />
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                <Text style={styles.modalTitle}>New Task</Text>
 
-                        <Text style={styles.inputLabel}>Title</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={newTask.title}
-                            onChangeText={(text) => setNewTask({ ...newTask, title: text })}
-                            placeholder="What needs to be done?"
-                            placeholderTextColor={colors.darkGray}
-                        />
+                                <TextInput
+                                    style={styles.titleInput}
+                                    value={newTask.title}
+                                    onChangeText={(text) => setNewTask({ ...newTask, title: text })}
+                                    placeholder="Task title"
+                                    placeholderTextColor={colors.darkGray}
+                                />
 
-                        <Text style={styles.inputLabel}>Description</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            value={newTask.description}
-                            onChangeText={(text) => setNewTask({ ...newTask, description: text })}
-                            placeholder="Add details about your task..."
-                            placeholderTextColor={colors.darkGray}
-                            multiline
-                            numberOfLines={4}
-                        />
+                                <TextInput
+                                    style={styles.descriptionInput}
+                                    value={newTask.description}
+                                    onChangeText={(text) => setNewTask({ ...newTask, description: text })}
+                                    placeholder="Description (optional)"
+                                    placeholderTextColor={colors.darkGray}
+                                    multiline
+                                    numberOfLines={4}
+                                />
 
-                        <Text style={styles.inputLabel}>Priority Level</Text>
-                        <View style={styles.priorityContainer}>
-                            {priorities.map((priority) => (
+                                <Text style={styles.sectionTitle}>Priority</Text>
+                                <View style={styles.priorityContainer}>
+                                    {Object.values(priorities).map((priority) => (
+                                        <TouchableOpacity
+                                            key={priority.id}
+                                            style={[
+                                                styles.priorityButton,
+                                                newTask.priority === priority.id ? { backgroundColor: priority.color } : { backgroundColor: priority.colorLight },
+                                            ]}
+                                            onPress={() => setNewTask({ ...newTask, priority: priority.id })}
+                                        >
+                                            <Text style={styles.priorityText}>{priority.name}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <Text style={styles.sectionTitle}>Category</Text>
+                                <View style={styles.categoryContainer}>
+                                    {Object.values(categories).map((category) => (
+                                        <TouchableOpacity
+                                            key={category.id}
+                                            style={[
+                                                styles.categoryButton,
+                                                newTask.category === category.id && styles.selectedCategory,
+                                            ]}
+                                            onPress={() => setNewTask({ ...newTask, category: category.id })}
+                                        >
+                                            <Text style={[
+                                                styles.categoryText,
+                                                newTask.category === category.id && styles.selectedCategoryText
+                                            ]}>{category.name}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <Text style={styles.sectionTitle}>Due Date</Text>
                                 <TouchableOpacity
-                                    key={priority}
-                                    style={[
-                                        styles.priorityButton,
-                                        newTask.priority === priority && styles.selectedPriority,
-                                        { backgroundColor: priority === 'high' ? colors.red : priority === 'medium' ? colors.orange : colors.green }
-                                    ]}
-                                    onPress={() => setNewTask({ ...newTask, priority })}
+                                    style={styles.dateButton}
+                                    onPress={openPicker}
                                 >
-                                    <Text style={styles.priorityText}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</Text>
+                                    <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                                    <Text style={styles.dateButtonText}>
+                                        {formatDate(newTask.timestamp)}
+                                    </Text>
                                 </TouchableOpacity>
-                            ))}
+                                
+                                {showDatePicker && (
+                                    <DateTimePicker
+                                        value={newTask.timestamp}
+                                        mode={Platform.OS === 'android' ? pickerMode : 'datetime'}
+                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                        onChange={handleDateTimeChange}
+                                    />
+                                )}
+
+                                <View style={styles.buttonContainer}>
+                                    <TouchableOpacity
+                                        style={styles.cancelButton}
+                                        onPress={() => setIsModalVisible(false)}
+                                    >
+                                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.createButton, !newTask.title && styles.disabledButton]}
+                                        onPress={handleAddTask}
+                                        disabled={!newTask.title}
+                                    >
+                                        <Text style={styles.createButtonText}>Create Task</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </ScrollView>
                         </View>
-
-                        <Text style={styles.inputLabel}>Category</Text>
-                        <View style={styles.categoryContainer}>
-                            {categories.map((category) => (
-                                <TouchableOpacity
-                                    key={category}
-                                    style={[
-                                        styles.categoryButton,
-                                        newTask.category === category && styles.selectedCategory
-                                    ]}
-                                    onPress={() => setNewTask({ ...newTask, category })}
-                                >
-                                    <Text style={[
-                                        styles.categoryText,
-                                        newTask.category === category && styles.selectedCategoryText
-                                    ]}>{category.charAt(0).toUpperCase() + category.slice(1)}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={styles.inputLabel}>Due Date & Time</Text>
-                        <TouchableOpacity
-                            style={styles.dateButton}
-                            onPress={() => setShowDatePicker(true)}
-                        >
-                            <Ionicons name="calendar-outline" size={24} color={colors.primary} />
-                            <Text style={styles.dateButtonText}>
-                                {newTask.timestamp.toLocaleString()}
-                            </Text>
-                        </TouchableOpacity>
-
-                        {showDatePicker && (
-                            <DateTimePicker
-                                value={newTask.timestamp}
-                                mode="datetime"
-                                onChange={(event, date) => {
-                                    setShowDatePicker(false);
-                                    if (date) setNewTask({ ...newTask, timestamp: date });
-                                }}
-                            />
-                        )}
-
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.cancelButton]}
-                                onPress={() => setIsModalVisible(false)}
-                            >
-                                <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.addTaskButton]}
-                                onPress={handleAddTask}
-                            >
-                                <Text style={styles.buttonText}>Create Task</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </ScrollView>
+                    </TouchableWithoutFeedback>
                 </View>
-            </View>
+            </TouchableWithoutFeedback>
         </Modal>
-    )
-}
+    );
+};
 
 export default AddTodoModal;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: colors.background,
-    },
     modalContainer: {
         flex: 1,
         justifyContent: 'flex-end',
         backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        backgroundColor: colors.background,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
         maxHeight: '90%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
     },
     modalHandle: {
-        width: 40,
-        height: 4,
-        backgroundColor: colors.lightGray,
-        borderRadius: 2,
+        width: 60,
+        height: 5,
+        backgroundColor: '#ccc',
+        borderRadius: 2.5,
         alignSelf: 'center',
-        marginBottom: 16,
+        marginBottom: 15,
     },
     modalTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 24,
-        color: colors.text,
-    },
-    input: {
-        borderWidth: 1.5,
-        borderColor: colors.lightGray,
-        borderRadius: 12,
-        padding: 12,
+        fontSize: 24,
+        fontWeight: '700',
         marginBottom: 20,
         color: colors.text,
-        fontSize: 16,
-        backgroundColor: '#FAFAFA',
+        textAlign: 'center',
     },
-    textArea: {
-        height: 120,
-        textAlignVertical: 'top',
-    },
-    inputLabel: {
-        fontSize: 16,
+    titleInput: {
+        fontSize: 18,
+        padding: 15,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 10,
+        marginBottom: 15,
         color: colors.text,
-        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    descriptionInput: {
+        fontSize: 16,
+        padding: 15,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 10,
+        marginBottom: 20,
+        height: 100,
+        textAlignVertical: 'top',
+        color: colors.text,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    sectionTitle: {
+        fontSize: 16,
         fontWeight: '600',
+        marginBottom: 10,
+        color: colors.text,
     },
     priorityContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         marginBottom: 20,
+        justifyContent: 'space-between',
     },
     priorityButton: {
         flex: 1,
-        padding: 12,
-        borderRadius: 12,
-        marginHorizontal: 6,
+        paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 8,
         alignItems: 'center',
+        marginHorizontal: 5,
         opacity: 0.8,
     },
-    selectedPriority: {
-        opacity: 1,
-        transform: [{scale: 1.05}],
-    },
     priorityText: {
-        color: 'white',
+        color: colors.text,
         fontWeight: '600',
-        fontSize: 15,
     },
     categoryContainer: {
         flexDirection: 'row',
@@ -231,74 +308,71 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     categoryButton: {
-        paddingVertical: 10,
+        paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 20,
-        marginRight: 10,
-        marginBottom: 10,
-        borderWidth: 1.5,
-        borderColor: colors.primary,
+        backgroundColor: '#f9f9f9',
+        margin: 5,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
     selectedCategory: {
         backgroundColor: colors.primary,
-        transform: [{scale: 1.05}],
     },
     categoryText: {
-        color: colors.primary,
-        fontWeight: '500',
+        color: colors.text,
+        fontSize: 14,
     },
     selectedCategoryText: {
-        color: 'white',
+        color: '#fff',
     },
     dateButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        borderWidth: 1.5,
-        borderColor: colors.lightGray,
-        borderRadius: 12,
-        marginBottom: 24,
-        backgroundColor: '#FAFAFA',
+        padding: 15,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 10,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
     dateButtonText: {
-        marginLeft: 12,
+        marginLeft: 10,
         color: colors.text,
-        fontSize: 15,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 8,
-    },
-    modalButton: {
-        flex: 1,
-        padding: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginHorizontal: 6,
-    },
-    cancelButton: {
-        backgroundColor: '#F5F5F5',
-        borderWidth: 1.5,
-        borderColor: colors.lightGray,
-    },
-    addTaskButton: {
-        backgroundColor: colors.primary,
-        shadowColor: colors.primary,
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
-        elevation: 8,
-    },
-    buttonText: {
-        color: 'white',
-        fontWeight: '600',
         fontSize: 16,
     },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    cancelButton: {
+        flex: 1,
+        padding: 15,
+        borderRadius: 10,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        marginRight: 5,
+    },
     cancelButtonText: {
-        color: colors.darkGray,
-    }
+        color: colors.text,
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    createButton: {
+        flex: 1,
+        padding: 15,
+        borderRadius: 10,
+        backgroundColor: colors.primary,
+        alignItems: 'center',
+        marginLeft: 5,
+    },
+    disabledButton: {
+        opacity: 0.5,
+    },
+    createButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
 });
