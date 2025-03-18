@@ -4,45 +4,55 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { priorities, defaultCategories } from '@/constants/GeneralData';
+import { generateId } from '@/utils/gnFunc';
+import { useDispatch } from 'react-redux';
+import { addTask } from '@/store/Task/task';
 
-const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) => {
+const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
+    const dispatch = useDispatch();
     const [showDatePicker, setShowDatePicker] = useState(false);
-    // For Android, pickerMode will be either 'date' or 'time'; on iOS we use "datetime" directly
     const [pickerMode, setPickerMode] = useState(null);
     const [newTask, setNewTask] = useState({
-        title: '',
-        description: '',
-        priority: 'medium',
-        category: '',
+        title: "",
         timestamp: new Date(),
+        description: "", 
+        category: defaultCategories[4].name, // "Other" category
+        priority: priorities[0].name, // "High" priority
+        is_completed: false,
+        completed_timestamp: null,
+        sub_tasks: []
     });
 
-    const categories = defaultCategories;
+    const handleSetNewTask = (key, value) => {
+        setNewTask(prev => ({ ...prev, [key]: value }));
+    };
 
     const handleAddTask = () => {
-        if (!newTask.title) return;
+        if (!newTask.title.trim()) return;
 
-        setTasks([
-            ...tasks,
-            { 
-                ...newTask, 
-                id: Date.now(),
-                completed: false,
-                createdAt: new Date()
-            }
-        ]);
+        dispatch(addTask({
+            ...newTask,
+            id: generateId(),
+            timestamp: newTask.timestamp.toISOString()
+        }));
 
         setIsModalVisible(false);
         setNewTask({
-            title: '',
-            description: '',
-            priority: 'medium', 
-            category: '',
+            title: "",
             timestamp: new Date(),
+            description: "", 
+            category: defaultCategories[4].name,
+            priority: priorities[0].name,
+            is_completed: false,
+            completed_timestamp: null,
+            sub_tasks: []
         });
     };
 
     const formatDate = (date) => {
+        if (!(date instanceof Date)) {
+            date = new Date(date);
+        }
         return date.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -55,44 +65,39 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
 
     const handleDateTimeChange = (event, selectedDate) => {
         if (Platform.OS === 'android') {
-            if (event.type === 'dismissed') {
-                // If the user dismisses the picker, cancel the flow.
+            if (!selectedDate) {
                 setPickerMode(null);
                 setShowDatePicker(false);
                 return;
             }
+
             if (pickerMode === 'date') {
-                // Update the date portion while preserving the current time.
-                const currentDate = selectedDate || newTask.timestamp;
+                const currentTime = new Date(newTask.timestamp);
+                const updatedTimestamp = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate(),
+                    currentTime.getHours(),
+                    currentTime.getMinutes()
+                );
+                handleSetNewTask('timestamp', updatedTimestamp);
+                setPickerMode('time');
+            } else if (pickerMode === 'time') {
+                const currentDate = new Date(newTask.timestamp);
                 const updatedTimestamp = new Date(
                     currentDate.getFullYear(),
                     currentDate.getMonth(),
                     currentDate.getDate(),
-                    newTask.timestamp.getHours(),
-                    newTask.timestamp.getMinutes()
+                    selectedDate.getHours(),
+                    selectedDate.getMinutes()
                 );
-                setNewTask({ ...newTask, timestamp: updatedTimestamp });
-                // Now switch to time picker.
-                setPickerMode('time');
-                setShowDatePicker(true);
-            } else if (pickerMode === 'time') {
-                // Update the time portion while preserving the date.
-                const currentTime = selectedDate || newTask.timestamp;
-                const updatedTimestamp = new Date(
-                    newTask.timestamp.getFullYear(),
-                    newTask.timestamp.getMonth(),
-                    newTask.timestamp.getDate(),
-                    currentTime.getHours(),
-                    currentTime.getMinutes()
-                );
-                setNewTask({ ...newTask, timestamp: updatedTimestamp });
+                handleSetNewTask('timestamp', updatedTimestamp);
                 setPickerMode(null);
                 setShowDatePicker(false);
             }
         } else {
-            // For iOS, use the datetime mode.
             if (selectedDate) {
-                setNewTask({ ...newTask, timestamp: selectedDate });
+                handleSetNewTask('timestamp', selectedDate);
             }
             setShowDatePicker(false);
         }
@@ -100,12 +105,9 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
 
     const openPicker = () => {
         if (Platform.OS === 'android') {
-            // For Android, start with the date picker.
             setPickerMode('date');
-            setShowDatePicker(true);
-        } else {
-            setShowDatePicker(true);
         }
+        setShowDatePicker(true);
     };
 
     return (
@@ -126,7 +128,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
                                 <TextInput
                                     style={styles.titleInput}
                                     value={newTask.title}
-                                    onChangeText={(text) => setNewTask({ ...newTask, title: text })}
+                                    onChangeText={(text) => handleSetNewTask('title', text)}
                                     placeholder="Task title"
                                     placeholderTextColor={colors.darkGray}
                                 />
@@ -134,7 +136,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
                                 <TextInput
                                     style={styles.descriptionInput}
                                     value={newTask.description}
-                                    onChangeText={(text) => setNewTask({ ...newTask, description: text })}
+                                    onChangeText={(text) => handleSetNewTask('description', text)}
                                     placeholder="Description (optional)"
                                     placeholderTextColor={colors.darkGray}
                                     multiline
@@ -143,35 +145,38 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
 
                                 <Text style={styles.sectionTitle}>Priority</Text>
                                 <View style={styles.priorityContainer}>
-                                    {Object.values(priorities).map((priority) => (
+                                    {priorities.map((priority) => (
                                         <TouchableOpacity
-                                            key={priority.id}
+                                            key={priority.name}
                                             style={[
                                                 styles.priorityButton,
-                                                newTask.priority === priority.id ? { backgroundColor: priority.color } : { backgroundColor: priority.colorLight },
+                                                newTask.priority === priority.name && { backgroundColor: priority.color }
                                             ]}
-                                            onPress={() => setNewTask({ ...newTask, priority: priority.id })}
+                                            onPress={() => handleSetNewTask('priority', priority.name)}
                                         >
-                                            <Text style={styles.priorityText}>{priority.name}</Text>
+                                            <Text style={[
+                                                styles.priorityText,
+                                                newTask.priority === priority.name && { color: '#fff' }
+                                            ]}>{priority.name?.charAt(0).toUpperCase() + priority.name?.slice(1)}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
 
                                 <Text style={styles.sectionTitle}>Category</Text>
                                 <View style={styles.categoryContainer}>
-                                    {Object.values(categories).map((category) => (
+                                    {defaultCategories.map((category) => (
                                         <TouchableOpacity
-                                            key={category.id}
+                                            key={category.name}
                                             style={[
                                                 styles.categoryButton,
-                                                newTask.category === category.id && styles.selectedCategory,
+                                                newTask.category === category.name && styles.selectedCategory,
                                             ]}
-                                            onPress={() => setNewTask({ ...newTask, category: category.id })}
+                                            onPress={() => handleSetNewTask('category', category.name)}
                                         >
                                             <Text style={[
                                                 styles.categoryText,
-                                                newTask.category === category.id && styles.selectedCategoryText
-                                            ]}>{category.name}</Text>
+                                                newTask.category === category.name && styles.selectedCategoryText
+                                            ]}>{category.name?.charAt(0).toUpperCase() + category.name?.slice(1)}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -193,6 +198,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
                                         mode={Platform.OS === 'android' ? pickerMode : 'datetime'}
                                         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                                         onChange={handleDateTimeChange}
+                                        minimumDate={new Date()}
                                     />
                                 )}
 
@@ -204,9 +210,9 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible, tasks, setTasks }) =>
                                         <Text style={styles.cancelButtonText}>Cancel</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        style={[styles.createButton, !newTask.title && styles.disabledButton]}
+                                        style={[styles.createButton, !newTask.title.trim() && styles.disabledButton]}
                                         onPress={handleAddTask}
-                                        disabled={!newTask.title}
+                                        disabled={!newTask.title.trim()}
                                     >
                                         <Text style={styles.createButtonText}>Create Task</Text>
                                     </TouchableOpacity>
@@ -296,7 +302,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
         marginHorizontal: 5,
-        opacity: 0.8,
+        backgroundColor: '#f9f9f9',
     },
     priorityText: {
         color: colors.text,

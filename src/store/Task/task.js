@@ -195,6 +195,10 @@ const taskSlice = createSlice({
     upcomingTasks: [],
   },
   reducers: {
+    addTask(state, action) {
+      state.task_list.push(action.payload);
+    },
+
     toggleCompleteTask(state, action) {
       const { parentId, isSubTask, subTaskId } = action.payload;
 
@@ -223,7 +227,7 @@ const taskSlice = createSlice({
 });
 
 // Export the generated actions
-export const { toggleCompleteTask } = taskSlice.actions;
+export const { toggleCompleteTask, addTask } = taskSlice.actions;
 
 // Export the reducer to be added to the store
 export default taskSlice.reducer;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, TouchableWithoutFeedback, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 
@@ -63,6 +63,10 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
         });
     };
 
+    if (!task) {
+        return null;
+    }
+
     return (
         <Modal
             visible={isModalVisible}
@@ -70,124 +74,130 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
             transparent={true}
             statusBarTranslucent
         >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                    <View style={styles.modalHandle} />
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Task Details</Text>
-                            <TouchableOpacity 
-                                style={styles.closeButton}
-                                onPress={() => setIsModalVisible(false)}
-                            >
-                                <Ionicons name="close" size={24} color={colors.darkGray} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.detailSection}>
-                            <Text style={styles.label}>Title</Text>
-                            <Text style={styles.value}>{task?.title}</Text>
-                        </View>
-
-                        {task?.description && (
-                            <View style={styles.detailSection}>
-                                <Text style={styles.label}>Description</Text>
-                                <Text style={styles.value}>{task?.description}</Text>
-                            </View>
-                        )}
-
-                        <View style={styles.row}>
-                            <View style={[styles.detailSection, styles.flex1]}>
-                                <Text style={styles.label}>Priority Level</Text>
-                                <View style={[
-                                    styles.priorityBadge,
-                                    { backgroundColor: task?.priority === 'high' ? colors.red : task?.priority === 'medium' ? colors.orange : colors.green }
-                                ]}>
-                                    <Text style={styles.priorityText}>
-                                        {task?.priority?.charAt(0).toUpperCase() + task?.priority?.slice(1)}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <View style={[styles.detailSection, styles.flex1]}>
-                                <Text style={styles.label}>Category</Text>
-                                <View style={styles.categoryBadge}>
-                                    <Text style={styles.categoryText}>
-                                        {task?.category?.charAt(0).toUpperCase() + task?.category?.slice(1)}
-                                    </Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        <View style={styles.detailSection}>
-                            <Text style={styles.label}>Due Date & Time</Text>
-                            <Text style={styles.dateValue}>
-                                {formatDateTime(task?.timestamp)}
-                            </Text>
-                        </View>
-
-                        {task?.sub_tasks && (
-                            <View style={styles.detailSection}>
-                                <View style={styles.subtaskHeader}>
-                                    <Text style={styles.label}>Subtasks ({task.sub_tasks.length})</Text>
+            <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
+                <View style={styles.modalContainer}>
+                    <TouchableWithoutFeedback>
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHandle} />
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalTitle}>Task Details</Text>
                                     <TouchableOpacity 
-                                        style={styles.addSubtaskButton}
-                                        onPress={handleAddSubtask}
+                                        style={styles.closeButton}
+                                        onPress={() => setIsModalVisible(false)}
                                     >
-                                        <Ionicons name="add-circle" size={20} color={colors.primary} />
-                                        <Text style={styles.addSubtaskText}>Add Subtask</Text>
+                                        <Ionicons name="close" size={24} color={colors.darkGray} />
                                     </TouchableOpacity>
                                 </View>
-                                
-                                {task?.sub_tasks?.map((subTask, index) => (
-                                    <View key={subTask.id} style={styles.subTaskItem}>
-                                        <View style={styles.subTaskHeader}>
-                                            <Ionicons
-                                                name={subTask.is_completed ? "checkmark-circle" : "radio-button-off"}
-                                                size={20}
-                                                color={
-                                                    subTask.is_completed ? colors.primary :
-                                                    subTask.priority === "high" ? colors.red :
-                                                    subTask.priority === "medium" ? colors.orange :
-                                                    colors.green
-                                                }
-                                            />
-                                            <Text style={[
-                                                styles.subTaskTitle,
-                                                subTask.is_completed && styles.completedSubTask
-                                            ]}>
-                                                {subTask.title}
+
+                                <View style={styles.detailSection}>
+                                    <Text style={styles.label}>Title</Text>
+                                    <Text style={styles.value}>{task.title}</Text>
+                                </View>
+
+                                {task.description && (
+                                    <View style={styles.detailSection}>
+                                        <Text style={styles.label}>Description</Text>
+                                        <Text style={styles.value}>{task.description}</Text>
+                                    </View>
+                                )}
+
+                                <View style={styles.row}>
+                                    <View style={[styles.detailSection, styles.flex1]}>
+                                        <Text style={styles.label}>Priority Level</Text>
+                                        <View style={[
+                                            styles.priorityBadge,
+                                            { backgroundColor: task.priority === 'high' ? colors.red : task.priority === 'medium' ? colors.orange : colors.green }
+                                        ]}>
+                                            <Text style={styles.priorityText}>
+                                                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                                             </Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={[styles.detailSection, styles.flex1]}>
+                                        <Text style={styles.label}>Category</Text>
+                                        <View style={styles.categoryBadge}>
+                                            <Text style={styles.categoryText}>
+                                                {task.category.charAt(0).toUpperCase() + task.category.slice(1)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailSection}>
+                                    <Text style={styles.label}>Due Date & Time</Text>
+                                    <Text style={styles.dateValue}>
+                                        {formatDateTime(task.timestamp)}
+                                    </Text>
+                                </View>
+
+                                {task.sub_tasks && task.sub_tasks.length > 0 && (
+                                    <View style={styles.detailSection}>
+                                        <View style={styles.subtaskHeader}>
+                                            <Text style={styles.label}>Subtasks ({task.sub_tasks.length})</Text>
                                             <TouchableOpacity 
-                                                onPress={() => handleDeleteSubtask(subTask.id)}
-                                                style={styles.deleteButton}
+                                                style={styles.addSubtaskButton}
+                                                onPress={handleAddSubtask}
                                             >
-                                                <Ionicons name="trash-outline" size={20} color={colors.red} />
+                                                <Ionicons name="add-circle" size={20} color={colors.primary} />
+                                                <Text style={styles.addSubtaskText}>Add Subtask</Text>
                                             </TouchableOpacity>
                                         </View>
-                                        <Text style={styles.subTaskDate}>
-                                            Due {new Date(subTask.timestamp).toLocaleTimeString('en-US', {
-                                                hour: 'numeric',
-                                                minute: '2-digit',
-                                                hour12: true
-                                            })}
-                                        </Text>
+                                        
+                                        {task.sub_tasks.map((subTask) => (
+                                            <View key={subTask.id} style={styles.subTaskItem}>
+                                                <View style={styles.subTaskHeader}>
+                                                    <TouchableOpacity onPress={() => handleToggleSubtask(subTask.id)}>
+                                                        <Ionicons
+                                                            name={subTask.is_completed ? "checkmark-circle" : "radio-button-off"}
+                                                            size={20}
+                                                            color={
+                                                                subTask.is_completed ? colors.primary :
+                                                                subTask.priority === "high" ? colors.red :
+                                                                subTask.priority === "medium" ? colors.orange :
+                                                                colors.green
+                                                            }
+                                                        />
+                                                    </TouchableOpacity>
+                                                    <Text style={[
+                                                        styles.subTaskTitle,
+                                                        subTask.is_completed && styles.completedSubTask
+                                                    ]}>
+                                                        {subTask.title}
+                                                    </Text>
+                                                    <TouchableOpacity 
+                                                        onPress={() => handleDeleteSubtask(subTask.id)}
+                                                        style={styles.deleteButton}
+                                                    >
+                                                        <Ionicons name="trash-outline" size={20} color={colors.red} />
+                                                    </TouchableOpacity>
+                                                </View>
+                                                <Text style={styles.subTaskDate}>
+                                                    Due {new Date(subTask.timestamp).toLocaleTimeString('en-US', {
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                        hour12: true
+                                                    })}
+                                                </Text>
+                                            </View>
+                                        ))}
                                     </View>
-                                ))}
-                            </View>
-                        )}
+                                )}
 
-                        <TouchableOpacity 
-                            style={styles.deleteTaskButton}
-                            onPress={handleDeleteTask}
-                        >
-                            <Ionicons name="trash-outline" size={24} color="white" />
-                            <Text style={styles.deleteTaskText}>Delete Task</Text>
-                        </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={styles.deleteTaskButton}
+                                    onPress={handleDeleteTask}
+                                >
+                                    <Ionicons name="trash-outline" size={24} color="white" />
+                                    <Text style={styles.deleteTaskText}>Delete Task</Text>
+                                </TouchableOpacity>
 
-                    </ScrollView>
+                            </ScrollView>
+                        </View>
+                    </TouchableWithoutFeedback>
                 </View>
-            </View>
+            </TouchableWithoutFeedback>
         </Modal>
     );
 };

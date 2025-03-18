@@ -5,8 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import AddTodoModal from '../AddTodoModal';
 import Filter from './Filter';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleCompleteTask } from '@/store/Task/task';
+import { toggleCompleteTask, addTask } from '@/store/Task/task';
 import DetailModal from '../DetailModal';
+import { generateId } from '@/utils/gnFunc';
+import { priorities, defaultCategories } from '@/constants/GeneralData';
 
 const TodoList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -18,28 +20,48 @@ const TodoList = () => {
     const [searchText, setSearchText] = useState('');
     const tasks = useSelector((state) => state.tasks.task_list);
     const [selectedTask, setSelectedTask] = useState(null);
+    const dispatch = useDispatch();
 
     // Quick add task handler
     const handleQuickAdd = () => {
         if (!quickAddText.trim()) return;
 
-        // setTasks(prevTasks => [...prevTasks, newTask]);
-        // setQuickAddText('');
+        const newTask = {
+            title: quickAddText,
+            timestamp: new Date(),
+            description: "",
+            category: defaultCategories[4].name,
+            priority: priorities[0].name,
+            is_completed: false,
+            completed_timestamp: null,
+            sub_tasks: []
+        };
+
+        dispatch(addTask({
+            ...newTask,
+            id: generateId(),
+            timestamp: newTask.timestamp.toISOString()
+        }));
+
+        setQuickAddText('');
     };
 
     // Separate completed and incomplete tasks
-    const incompleteTasks = tasks.filter(task => !task.is_completed).sort((a, b) => {
-        const priorityOrder = {
+    const incompleteTasks = tasks
+        .filter(task => !task.is_completed)
+        .sort((a, b) => {
+            const priorityOrder = {
             high: 1,
             medium: 2,
             low: 3,
-        };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-
-        return a.timestamp - b.timestamp;
-    });
+            };
+            if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+            }
+            return new Date(b.timestamp) - new Date(a.timestamp);
+        });
     const completedTasks = tasks.filter(task => task.is_completed).sort((a, b) => {
-        return a.completed_timestamp - b.completed_timestamp;
+        return new Date(b.completed_timestamp) - new Date(a.completed_timestamp);
     });
 
     // Clear completed tasks
@@ -131,6 +153,7 @@ const TodoList = () => {
                     </Text>
                 }
                 style={{ marginTop: 10 }}
+                extraData={[incompleteTasks, completedTasks, tasks]} // Added tasks to extraData to ensure updates
             />
 
             {/* Quick Add Input */}
@@ -166,8 +189,6 @@ const TodoList = () => {
             <AddTodoModal
                 isModalVisible={isModalVisible}
                 setIsModalVisible={setIsModalVisible}
-            // tasks={tasks}
-            // setTasks={setTasks}
             />
 
             <DetailModal
@@ -224,7 +245,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
         <>
             <View style={[
                 styles.item,
-                item.is_completed && { opacity: 0.7, backgroundColor: '#fafafa' }
+                
             ]}>
                 <TouchableOpacity>
                     <View style={styles.itemHeader}>
@@ -234,7 +255,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
                                     name={item.is_completed ? "checkmark-circle" : "radio-button-off"}
                                     size={24}
                                     color={
-                                        item.is_completed ? colors.lightGray :
+                                        item.is_completed ? colors.gray :
                                             item.priority === "high" ? colors.red :
                                                 item.priority === "medium" ? colors.orange :
                                                     colors.green
@@ -246,7 +267,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
                                 style={[styles.itemTitle, item.is_completed && styles.completedText]}
                                 onPress={handleTaskPress}
                             >
-                                {truncateText("Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.")}
+                                {truncateText(item.title)}
                             </Text>
                             {item?.sub_tasks?.length > 0 && (
                                 <Text style={styles.subTaskCount}>
@@ -318,7 +339,7 @@ export const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 15,
-        backgroundColor: colors.lightGray,
+        // backgroundColor: colors.lightGray,
     },
     quickAddWrapper: {
         position: 'absolute',
@@ -405,10 +426,8 @@ export const styles = StyleSheet.create({
     },
     item: {
         paddingHorizontal: 6,
-        paddingVertical: 6,
-        backgroundColor: "#fff",
-        marginBottom: 8,
-        borderRadius: 5,
+        paddingVertical: 5,
+        marginBottom: 5,
     },
     itemTitle: {
         fontSize: 17,
