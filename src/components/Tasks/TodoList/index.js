@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Animated, TextInput, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Animated, TextInput, StyleSheet, Touchable } from 'react-native';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AddTodoModal from '../AddTodoModal';
 import Filter from './Filter';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleCompleteTask, addTask } from '@/store/Task/task';
+import { addTask, setTasks } from '@/store/Task/task';
 import DetailModal from '../DetailModal';
 import { generateId } from '@/utils/gnFunc';
 import { priorities, defaultCategories } from '@/constants/GeneralData';
+import { storeData, getData } from '@/utils/storage';
 
 const TodoList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -22,13 +23,29 @@ const TodoList = () => {
     const [selectedTask, setSelectedTask] = useState(null);
     const dispatch = useDispatch();
 
+    // Load tasks from storage
+    useEffect(() => {
+        const loadTasks = async () => {
+            try {
+                const storedTasks = await getData('task_list') || [];
+                if (storedTasks) {
+                    dispatch(setTasks(storedTasks));
+                }
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        };
+        loadTasks();
+    }, [dispatch]);
+
     // Quick add task handler
     const handleQuickAdd = () => {
         if (!quickAddText.trim()) return;
 
         const newTask = {
+            id: generateId(),
             title: quickAddText,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             description: "",
             category: defaultCategories[4].name,
             priority: priorities[0].name,
@@ -37,36 +54,40 @@ const TodoList = () => {
             sub_tasks: []
         };
 
-        dispatch(addTask({
-            ...newTask,
-            id: generateId(),
-            timestamp: newTask.timestamp.toISOString()
-        }));
-
-        setQuickAddText('');
+        try {
+            dispatch(addTask(newTask));
+            const updatedTasks = [...tasks, newTask];
+            storeData('task_list', updatedTasks);
+            setQuickAddText('');
+        } catch (error) {
+            console.error('Error saving task:', error);
+        }
     };
 
     // Separate completed and incomplete tasks
     const incompleteTasks = tasks
-        .filter(task => !task.is_completed)
+        ?.filter(task => !task.is_completed)
         .sort((a, b) => {
             const priorityOrder = {
-            high: 1,
-            medium: 2,
-            low: 3,
+                high: 1,
+                medium: 2,
+                low: 3,
             };
             if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
             }
             return new Date(b.timestamp) - new Date(a.timestamp);
         });
-    const completedTasks = tasks.filter(task => task.is_completed).sort((a, b) => {
+    const completedTasks = tasks?.filter(task => task.is_completed).sort((a, b) => {
         return new Date(b.completed_timestamp) - new Date(a.completed_timestamp);
     });
 
     // Clear completed tasks
     const handleClearCompleted = () => {
-        // Add clear completed logic here
+        // Clear completed tasks
+        const updatedTasks = tasks?.filter(task => !task.is_completed);
+        dispatch(setTasks(updatedTasks));
+        storeData('task_list', updatedTasks);
     };
 
     return (
@@ -116,44 +137,49 @@ const TodoList = () => {
             <FlatList
                 data={[
                     ...incompleteTasks,
-                    // Clear completed button and header
-                    { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
-                    { id: 'clear_button', type: 'clear_button' },
-                    ...completedTasks,
+                    ...(completedTasks.length > 0 ? [
+                        { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
+                        { id: 'clear_button', type: 'clear_button' },
+                        ...completedTasks,
+                    ] : [])
                 ]}
                 renderItem={({ item }) => {
                     if (item.type === 'header') {
-                        if (completedTasks.length > 0) {
-                            return (
-                                <Text style={styles.sectionHeader}>{item.title}</Text>
-                            );
-                        }
-                        return null;
+                        return <Text key={item.id} style={styles.sectionHeader}>{item.title}</Text>;
                     } else if (item.type === 'clear_button') {
-                        if (completedTasks.length > 0) {
-                            return (
-                                <TouchableOpacity
-                                    style={styles.clearButton}
-                                    onPress={handleClearCompleted}
-                                >
-                                    <Text style={styles.clearButtonText}>Clear</Text>
-                                </TouchableOpacity>
-                            );
-                        }
-                        return null;
+                        return (
+                            <TouchableOpacity
+                                key={item.id}
+                                style={styles.clearButton}
+                                onPress={handleClearCompleted}
+                            >
+                                <Text style={styles.clearButtonText}>Clear</Text>
+                            </TouchableOpacity>
+                        );
                     }
-                    return <TodoItem item={item} setSelectedTask={setSelectedTask} setIsDetailModalVisible={setIsDetailModalVisible} />;
+                    return <TodoItem
+                        key={item.id}
+                        quickAddText={quickAddText}
+                        setQuickAddText={setQuickAddText}
+                        handleQuickAdd={handleQuickAdd}
+                        item={item}
+                        tasks={tasks}
+                        setSelectedTask={setSelectedTask}
+                        setIsDetailModalVisible={setIsDetailModalVisible} />;
                 }}
                 keyExtractor={item => item.id?.toString()}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[
+                    styles.listContent,
+                    (!incompleteTasks.length && !completedTasks.length) && { flex: 1, justifyContent: 'center' }
+                ]}
                 ListEmptyComponent={
                     <Text style={styles.emptyText}>
                         Hi there! You don't have any tasks yet. Start task and take control of your day.
                     </Text>
                 }
-                style={{ marginTop: 10 }}
-                extraData={[incompleteTasks, completedTasks, tasks]} // Added tasks to extraData to ensure updates
+                style={{ marginTop: 10, flex: 1 }}
+                extraData={[incompleteTasks, completedTasks, tasks]}
             />
 
             {/* Quick Add Input */}
@@ -202,7 +228,7 @@ const TodoList = () => {
 
 export default TodoList;
 
-const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
+const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible, tasks }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const dispatch = useDispatch();
     const animatedHeight = new Animated.Value(isExpanded ? 1 : 0);
@@ -219,17 +245,36 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
     };
 
     const toggleComplete = (item, isSubTask = false, subItem = null) => {
-        dispatch(toggleCompleteTask({ parentId: item.id, isSubTask: isSubTask, subTaskId: subItem?.id }));
-    }
+        const updatedTasks = tasks?.map(task => {
+            if (task.id === item.id) {
+                if (isSubTask === true) {
+                    return {
+                        ...task,
+                        sub_tasks: task.sub_tasks.map(subTask => {
+                            if (subTask.id === subItem.id) {
+                                return {
+                                    ...subTask,
+                                    is_completed: !subTask.is_completed,
+                                    completed_timestamp: new Date().toISOString()
+                                };
+                            }
+                            return subTask;
+                        })
+                    };
+                } else {
+                    return {
+                        ...task,
+                        is_completed: !task.is_completed,
+                        completed_timestamp: new Date().toISOString()
+                    };
+                }
+            }
+            return task;
+        });
 
-    const formatDate = (timestamp) => {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        }).toLowerCase();
-    };
+        dispatch(setTasks(updatedTasks));
+        storeData('task_list', updatedTasks);
+    }
 
     const truncateText = (text, maxLength = 40) => {
         if (text.length <= maxLength) return text;
@@ -245,7 +290,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
         <>
             <View style={[
                 styles.item,
-                
+
             ]}>
                 <TouchableOpacity>
                     <View style={styles.itemHeader}>
@@ -262,13 +307,15 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
                                     }
                                 />
                             </TouchableOpacity>
-                            <Text
-                                numberOfLines={1}
-                                style={[styles.itemTitle, item.is_completed && styles.completedText]}
-                                onPress={handleTaskPress}
-                            >
-                                {truncateText(item.title)}
-                            </Text>
+                            <TouchableOpacity onPress={handleTaskPress}>
+
+                                <Text
+                                    numberOfLines={1}
+                                    style={[styles.itemTitle, item.is_completed && styles.completedText]}
+                                >
+                                    {truncateText(item.title)}
+                                </Text>
+                            </TouchableOpacity>
                             {item?.sub_tasks?.length > 0 && (
                                 <Text style={styles.subTaskCount}>
                                     {item?.sub_tasks?.filter(task => task.is_completed).length}/{item?.sub_tasks?.length}
@@ -298,7 +345,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible }) => {
                         }
                     ]}
                 >
-                    {item.sub_tasks && item.sub_tasks.map((subTask, index) => (
+                    {item.sub_tasks && item.sub_tasks.map((subTask) => (
                         <View key={subTask.id} style={styles.subItem}>
                             <View style={styles.itemHeader}>
                                 <View style={styles.itemHeaderLeft}>
@@ -425,9 +472,7 @@ export const styles = StyleSheet.create({
         paddingBottom: 120,
     },
     item: {
-        paddingHorizontal: 6,
-        paddingVertical: 5,
-        marginBottom: 5,
+        // marginBottom: 2,
     },
     itemTitle: {
         fontSize: 17,

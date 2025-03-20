@@ -5,8 +5,9 @@ import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { priorities, defaultCategories } from '@/constants/GeneralData';
 import { generateId } from '@/utils/gnFunc';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addTask } from '@/store/Task/task';
+import { storeData } from '@/utils/storage';
 
 const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
     const dispatch = useDispatch();
@@ -22,6 +23,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
         completed_timestamp: null,
         sub_tasks: []
     });
+    const tasks = useSelector(state => state.tasks.task_list);
 
     const handleSetNewTask = (key, value) => {
         setNewTask(prev => ({ ...prev, [key]: value }));
@@ -36,6 +38,8 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
             timestamp: newTask.timestamp.toISOString()
         }));
 
+        storeData('task_list', [...tasks, newTask]);
+        
         setIsModalVisible(false);
         setNewTask({
             title: "",

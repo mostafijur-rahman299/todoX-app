@@ -185,13 +185,20 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                                     </View>
                                 )}
 
-                                <TouchableOpacity 
-                                    style={styles.deleteTaskButton}
-                                    onPress={handleDeleteTask}
+                                <View style={styles.buttonContainer}>
+                                    <TouchableOpacity 
+                                        style={styles.deleteTaskButton}
+                                        onPress={handleDeleteTask}
                                 >
                                     <Ionicons name="trash-outline" size={24} color="white" />
                                     <Text style={styles.deleteTaskText}>Delete Task</Text>
                                 </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.editTaskButton} onPress={() => {}}>
+                                    <Ionicons name="pencil" size={20} color={colors.darkGray} />
+                                    <Text style={styles.editTaskText}>Edit Task</Text>
+                                </TouchableOpacity>
+                                </View>
 
                             </ScrollView>
                         </View>
@@ -350,23 +357,43 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         padding: 6,
-        backgroundColor: 'rgba(255,59,48,0.1)',
+        backgroundColor: 'rgba(255,59,48,0.1)', 
         borderRadius: 8,
     },
     deleteTaskButton: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors.red,
-        padding: 18,
+        padding: 16,
         borderRadius: 16,
-        marginTop: 24,
-        marginBottom: 12,
     },
     deleteTaskText: {
         color: 'white',
         fontSize: 17,
-        fontWeight: '700',
-        marginLeft: 10,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
+    editTaskButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.lightGray,
+        padding: 16,
+        borderRadius: 16,
+    },
+    editTaskText: {
+        color: colors.darkGray,
+        fontSize: 17,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+        marginTop: 32,
     }
 });
