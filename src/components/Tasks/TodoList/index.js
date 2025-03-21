@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Animated, TextInput, StyleSheet, Touchable } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Animated, TextInput, StyleSheet, Alert } from 'react-native';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AddTodoModal from '../AddTodoModal';
@@ -10,6 +10,7 @@ import DetailModal from '../DetailModal';
 import { generateId } from '@/utils/gnFunc';
 import { priorities, defaultCategories } from '@/constants/GeneralData';
 import { storeData, getData } from '@/utils/storage';
+
 
 const TodoList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -84,145 +85,157 @@ const TodoList = () => {
 
     // Clear completed tasks
     const handleClearCompleted = () => {
-        // Clear completed tasks
         const updatedTasks = tasks?.filter(task => !task.is_completed);
         dispatch(setTasks(updatedTasks));
         storeData('task_list', updatedTasks);
     };
 
+    const handleClearAlert = () => {
+        Alert.alert('Clear All Tasks', 'Are you sure you want to clear all tasks?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Clear', onPress: handleClearCompleted },
+        ]);
+    };
+
     return (
-        <View style={styles.container}>
-            {/* Header Section */}
-            <View style={styles.headerContainer}>
-                <View style={styles.headerInfo}>
-                    <Text style={styles.headerTitle}>Tasks</Text>
-                    <Text style={styles.headerSubtitle}>
-                        {incompleteTasks.length} remaining{tasks.length > 0 && ` of ${tasks.length}`}
-                    </Text>
-                </View>
-
-                {/* Header Buttons */}
-                <View style={styles.headerButtons}>
-                    <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => setIsModalVisible(true)}
-                    >
-                        <Ionicons name="add" size={18} color="white" />
-                        <Text style={styles.addButtonText}>New</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.filterToggleButton, showFilters && styles.activeFilterToggleButton]}
-                        onPress={() => setShowFilters(!showFilters)}
-                    >
-                        <Ionicons name="filter" size={18} color={showFilters ? 'white' : colors.text} />
-                        <Text style={[styles.filterToggleText, showFilters && styles.activeFilterToggleText]}>
-                            Filters
+        <>
+            <View style={styles.container}>
+                {/* Header Section */}
+                <View style={styles.headerContainer}>
+                    <View style={styles.headerInfo}>
+                        <Text style={styles.headerTitle}>Tasks</Text>
+                        <Text style={styles.headerSubtitle}>
+                            {incompleteTasks.length} remaining{tasks.length > 0 && ` of ${tasks.length}`}
                         </Text>
-                    </TouchableOpacity>
+                    </View>
+
+                    {/* Header Buttons */}
+                    <View style={styles.headerButtons}>
+                        <TouchableOpacity
+                            style={styles.addButton}
+                            onPress={() => setIsModalVisible(true)}
+                        >
+                            <Ionicons name="add" size={18} color="white" />
+                            <Text style={styles.addButtonText}>New</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.filterToggleButton, showFilters && styles.activeFilterToggleButton]}
+                            onPress={() => setShowFilters(!showFilters)}
+                        >
+                            <Ionicons name="filter" size={18} color={showFilters ? 'white' : colors.text} />
+                            <Text style={[styles.filterToggleText, showFilters && styles.activeFilterToggleText]}>
+                                Filters
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
 
-            {/* Filter Section */}
-            {showFilters && (
-                <Filter
-                    selectedCategory={selectedCategory}
-                    selectedPriority={selectedPriority}
-                    setSelectedCategory={setSelectedCategory}
-                    setSelectedPriority={setSelectedPriority}
-                    setSearchText={setSearchText}
-                    searchText={searchText} />
-            )}
+                {/* Filter Section */}
+                {showFilters && (
+                    <Filter
+                        selectedCategory={selectedCategory}
+                        selectedPriority={selectedPriority}
+                        setSelectedCategory={setSelectedCategory}
+                        setSelectedPriority={setSelectedPriority}
+                        setSearchText={setSearchText}
+                        searchText={searchText} />
+                )}
 
-            {/* Tasks List */}
-            <FlatList
-                data={[
-                    ...incompleteTasks,
-                    ...(completedTasks.length > 0 ? [
-                        { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
-                        { id: 'clear_button', type: 'clear_button' },
-                        ...completedTasks,
-                    ] : [])
-                ]}
-                renderItem={({ item }) => {
-                    if (item.type === 'header') {
-                        return <Text key={item.id} style={styles.sectionHeader}>{item.title}</Text>;
-                    } else if (item.type === 'clear_button') {
-                        return (
-                            <TouchableOpacity
-                                key={item.id}
-                                style={styles.clearButton}
-                                onPress={handleClearCompleted}
-                            >
-                                <Text style={styles.clearButtonText}>Clear</Text>
-                            </TouchableOpacity>
-                        );
-                    }
-                    return <TodoItem
-                        key={item.id}
-                        quickAddText={quickAddText}
-                        setQuickAddText={setQuickAddText}
-                        handleQuickAdd={handleQuickAdd}
-                        item={item}
-                        tasks={tasks}
-                        setSelectedTask={setSelectedTask}
-                        setIsDetailModalVisible={setIsDetailModalVisible} />;
-                }}
-                keyExtractor={item => item.id?.toString()}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={[
-                    styles.listContent,
-                    (!incompleteTasks.length && !completedTasks.length) && { flex: 1, justifyContent: 'center' }
-                ]}
-                ListEmptyComponent={
-                    <Text style={styles.emptyText}>
-                        Hi there! You don't have any tasks yet. Start task and take control of your day.
-                    </Text>
-                }
-                style={{ marginTop: 10, flex: 1 }}
-                extraData={[incompleteTasks, completedTasks, tasks]}
-            />
-
-            {/* Quick Add Input */}
-            <View style={styles.quickAddWrapper}>
-                <View style={styles.quickAddContainer}>
-                    <TextInput
-                        style={styles.quickAddInput}
-                        value={quickAddText}
-                        onChangeText={setQuickAddText}
-                        placeholder="Quick add task..."
-                        placeholderTextColor={colors.darkGray}
-                        onSubmitEditing={handleQuickAdd}
-                        returnKeyType="done"
-                    />
-                    <TouchableOpacity
-                        style={[
-                            styles.quickAddButton,
-                            quickAddText.trim() && styles.activeQuickAddButton
+                {/* Tasks List */}
+                <View style={{ flex: 1, marginTop: 10 }}>
+                    <FlatList
+                        data={[
+                            ...incompleteTasks,
+                            ...(completedTasks.length > 0 ? [
+                                { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
+                                { id: 'clear_button', type: 'clear_button' },
+                                ...completedTasks,
+                            ] : [])
                         ]}
-                        onPress={handleQuickAdd}
-                        disabled={!quickAddText.trim()}
-                    >
-                        <Ionicons
-                            name="add"
-                            size={20}
-                            color={quickAddText.trim() ? 'white' : colors.darkGray}
-                        />
-                    </TouchableOpacity>
+                        renderItem={({ item }) => {
+                            if (item.type === 'header') {
+                                return <Text key={item.id} style={styles.sectionHeader}>{item.title}</Text>;
+                            } else if (item.type === 'clear_button') {
+                                return (
+                                    <TouchableOpacity
+                                        key={item.id}
+                                        style={styles.clearButton}
+                                        onPress={handleClearAlert}
+                                    >
+                                        <Text style={styles.clearButtonText}>Clear</Text>
+                                    </TouchableOpacity>
+                                );
+                            }
+                            return <TodoItem
+                                key={item.id}
+                                quickAddText={quickAddText}
+                                setQuickAddText={setQuickAddText}
+                                handleQuickAdd={handleQuickAdd}
+                                item={item}
+                                tasks={tasks}
+                                setSelectedTask={setSelectedTask}
+                                setIsDetailModalVisible={setIsDetailModalVisible} />;
+                        }}
+                        keyExtractor={item => item.id?.toString()}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={[
+                            styles.listContent,
+                            (!incompleteTasks.length && !completedTasks.length) && { flex: 1, justifyContent: 'center' }
+                        ]}
+                        ListEmptyComponent={
+                            <Text style={styles.emptyText}>
+                                Hi there! You don't have any tasks yet. Start task and take control of your day.
+                            </Text>
+                        }
+                        extraData={[incompleteTasks, completedTasks, tasks]}
+                        nestedScrollEnabled={true}
+                        scrollEnabled={true}
+                    />
                 </View>
+
+                {/* Quick Add Input */}
+                <View style={styles.quickAddWrapper}>
+                    <View style={styles.quickAddContainer}>
+                        <TextInput
+                            style={styles.quickAddInput}
+                            value={quickAddText}
+                            onChangeText={setQuickAddText}
+                            placeholder="Quick add task..."
+                            placeholderTextColor={colors.darkGray}
+                            onSubmitEditing={handleQuickAdd}
+                            returnKeyType="done"
+                        />
+                        <TouchableOpacity
+                            style={[
+                                styles.quickAddButton,
+                                quickAddText.trim() && styles.activeQuickAddButton
+                            ]}
+                            onPress={handleQuickAdd}
+                            disabled={!quickAddText.trim()}
+                        >
+                            <Ionicons
+                                name="add"
+                                size={20}
+                                color={quickAddText.trim() ? 'white' : colors.darkGray}
+                            />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Add Task Modal */}
+                <AddTodoModal
+                    isModalVisible={isModalVisible}
+                    setIsModalVisible={setIsModalVisible}
+                />
+
+                <DetailModal
+                    isModalVisible={isDetailModalVisible}
+                    setIsModalVisible={setIsDetailModalVisible}
+                    selectedTask={selectedTask}
+                    tasks={tasks}
+                />
             </View>
-
-            {/* Add Task Modal */}
-            <AddTodoModal
-                isModalVisible={isModalVisible}
-                setIsModalVisible={setIsModalVisible}
-            />
-
-            <DetailModal
-                isModalVisible={isDetailModalVisible}
-                setIsModalVisible={setIsDetailModalVisible}
-                task={selectedTask}
-            />
-        </View>
+        </>
     );
 };
 
@@ -232,6 +245,7 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible, tasks }) => 
     const [isExpanded, setIsExpanded] = useState(false);
     const dispatch = useDispatch();
     const animatedHeight = new Animated.Value(isExpanded ? 1 : 0);
+    const translateX = new Animated.Value(0);
 
     const toggleExpand = () => {
         const newValue = !isExpanded;
@@ -287,110 +301,110 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible, tasks }) => 
     };
 
     return (
-        <>
-            <View style={[
-                styles.item,
+        <View style={styles.itemContent}>
+            <TouchableOpacity onPress={handleTaskPress}>
+                <View style={styles.itemHeader}>
+                    <View style={styles.itemHeaderLeft}>
+                        <TouchableOpacity
+                            style={styles.checkboxContainer}
+                            onPress={() => toggleComplete(item, false, null)}
+                        >
+                            <Ionicons
+                                name={item.is_completed ? "checkmark-circle" : "ellipse-outline"}
+                                size={26}
+                                color={
+                                    item.is_completed ? colors.success :
+                                        item.priority === "high" ? colors.red :
+                                            item.priority === "medium" ? colors.orange :
+                                                colors.green
+                                }
+                            />
+                        </TouchableOpacity>
+                        <View style={styles.taskDetails}>
+                            <Text
+                                numberOfLines={1}
+                                style={[styles.itemTitle, item.is_completed && styles.completedText]}
+                            >
+                                {truncateText(item.title)}
+                            </Text>
+                            {item?.sub_tasks?.length > 0 && (
+                                <Text style={styles.subTaskCount}>
+                                    {item?.sub_tasks?.filter(task => task.is_completed).length}/{item?.sub_tasks?.length} subtasks
+                                </Text>
+                            )}
+                        </View>
+                    </View>
+                    {item?.sub_tasks?.length > 0 && (
+                        <TouchableOpacity
+                            style={styles.expandButton}
+                            onPress={toggleExpand}
+                        >
+                            <Ionicons
+                                name={isExpanded ? "chevron-up" : "chevron-down"}
+                                size={22}
+                                color={colors.darkGray}
+                            />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </TouchableOpacity>
 
-            ]}>
-                <TouchableOpacity>
-                    <View style={styles.itemHeader}>
-                        <View style={styles.itemHeaderLeft}>
-                            <TouchableOpacity onPress={() => toggleComplete(item, false, null)}>
+            <Animated.View
+                style={[
+                    styles.itemBody,
+                    {
+                        maxHeight: animatedHeight.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 1000]
+                        }),
+                        opacity: animatedHeight
+                    }
+                ]}
+            >
+                {item.sub_tasks && item.sub_tasks.map((subTask) => (
+                    <View key={subTask.id} style={styles.subItem}>
+                        <View style={styles.subItemHeader}>
+                            <TouchableOpacity
+                                style={styles.subCheckboxContainer}
+                                onPress={() => toggleComplete(item, true, subTask)}
+                            >
                                 <Ionicons
-                                    name={item.is_completed ? "checkmark-circle" : "radio-button-off"}
-                                    size={24}
+                                    name={subTask.is_completed ? "checkmark-circle" : "ellipse-outline"}
+                                    size={22}
                                     color={
-                                        item.is_completed ? colors.gray :
-                                            item.priority === "high" ? colors.red :
-                                                item.priority === "medium" ? colors.orange :
+                                        subTask.is_completed ? colors.success :
+                                            subTask.priority === "high" ? colors.red :
+                                                subTask.priority === "medium" ? colors.orange :
                                                     colors.green
                                     }
                                 />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={handleTaskPress}>
-
-                                <Text
-                                    numberOfLines={1}
-                                    style={[styles.itemTitle, item.is_completed && styles.completedText]}
-                                >
-                                    {truncateText(item.title)}
-                                </Text>
-                            </TouchableOpacity>
-                            {item?.sub_tasks?.length > 0 && (
-                                <Text style={styles.subTaskCount}>
-                                    {item?.sub_tasks?.filter(task => task.is_completed).length}/{item?.sub_tasks?.length}
-                                </Text>
-                            )}
+                            <Text
+                                numberOfLines={1}
+                                style={[
+                                    styles.subItemText,
+                                    subTask.is_completed && styles.completedText
+                                ]}
+                            >
+                                {truncateText(subTask.title)}
+                            </Text>
                         </View>
-                        {item?.sub_tasks?.length > 0 && (
-                            <Ionicons
-                                name={isExpanded ? "chevron-up" : "chevron-down"}
-                                size={20}
-                                color={colors.darkGray}
-                                onPress={toggleExpand}
-                            />
-                        )}
                     </View>
-                </TouchableOpacity>
-
-                <Animated.View
-                    style={[
-                        styles.itemBody,
-                        {
-                            maxHeight: animatedHeight.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [0, 1000]
-                            }),
-                            opacity: animatedHeight
-                        }
-                    ]}
-                >
-                    {item.sub_tasks && item.sub_tasks.map((subTask) => (
-                        <View key={subTask.id} style={styles.subItem}>
-                            <View style={styles.itemHeader}>
-                                <View style={styles.itemHeaderLeft}>
-                                    <TouchableOpacity onPress={() => toggleComplete(item, true, subTask)}>
-                                        <Ionicons
-                                            name={subTask.is_completed ? "checkmark-circle" : "radio-button-off"}
-                                            size={20}
-                                            color={
-                                                subTask.is_completed ? colors.lightGray :
-                                                    subTask.priority === "high" ? colors.red :
-                                                        subTask.priority === "medium" ? colors.orange :
-                                                            colors.green
-                                            }
-                                        />
-                                    </TouchableOpacity>
-                                    <Text
-                                        numberOfLines={1}
-                                        style={[
-                                            styles.subItemText,
-                                            subTask.is_completed && styles.completedText
-                                        ]}
-                                    >
-                                        {truncateText(subTask.title)}
-                                    </Text>
-                                </View>
-                            </View>
-                        </View>
-                    ))}
-                </Animated.View>
-            </View>
-
-
-        </>
+                ))}
+            </Animated.View>
+        </View>
     );
 };
 
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 15,
-        // backgroundColor: colors.lightGray,
+        paddingHorizontal: 20,
+        backgroundColor: colors.background,
     },
     quickAddWrapper: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 25,
         left: 20,
         right: 20,
     },
@@ -398,28 +412,27 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
-        borderRadius: 12,
-        paddingHorizontal: 8,
-        paddingVertical: 6,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
         shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 16,
+        elevation: 8,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        borderColor: 'rgba(0,0,0,0.06)',
     },
     quickAddInput: {
         flex: 1,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingHorizontal: 16,
         fontSize: 16,
         color: colors.text,
         fontWeight: '500',
     },
     quickAddButton: {
         padding: 10,
-        borderRadius: 10,
+        borderRadius: 12,
         backgroundColor: 'rgba(0,0,0,0.05)',
     },
     activeQuickAddButton: {
@@ -430,6 +443,8 @@ export const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: 5,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.06)',
     },
     headerButtons: {
         flexDirection: 'row',
@@ -440,21 +455,23 @@ export const styles = StyleSheet.create({
         flex: 1,
     },
     headerTitle: {
-        fontSize: 25,
+        fontSize: 32,
         fontWeight: 'bold',
         color: colors.text,
+        letterSpacing: -0.5,
     },
     headerSubtitle: {
-        fontSize: 15,
+        fontSize: 16,
         color: colors.darkGray,
         fontWeight: '500',
+        marginTop: 4,
     },
     addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 14,
         backgroundColor: colors.primary,
         shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 4 },
@@ -472,7 +489,12 @@ export const styles = StyleSheet.create({
         paddingBottom: 120,
     },
     item: {
-        // marginBottom: 2,
+        marginBottom: 2,
+        position: 'relative',
+    },
+    itemContent: {
+        zIndex: 1,
+        backgroundColor: colors.background,
     },
     itemTitle: {
         fontSize: 17,
@@ -593,5 +615,5 @@ export const styles = StyleSheet.create({
         fontSize: 15,
         color: colors.gray,
         fontWeight: '600',
-    },
+    }
 });

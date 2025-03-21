@@ -2,8 +2,20 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, TouchableWithoutFeedback, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
+import { storeData } from '@/utils/storage';
+import { useDispatch } from 'react-redux';
+import { setTasks } from '@/store/Task/task';
 
-const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
+const DetailModal = ({ isModalVisible, setIsModalVisible, selectedTask, tasks }) => {
+    const dispatch = useDispatch();
+
+    const deleteTask = () => {
+        setIsModalVisible(false);
+        const updatedTasks = tasks.filter(task => task.id !== selectedTask.id);
+        dispatch(setTasks(updatedTasks));
+        storeData('task_list', updatedTasks);
+    }
+
     const handleDeleteTask = () => {
         Alert.alert(
             "Delete Task",
@@ -17,7 +29,7 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                     text: "Delete",
                     onPress: () => {
                         // Add delete task logic here
-                        setIsModalVisible(false);
+                        deleteTask();
                     },
                     style: "destructive"
                 }
@@ -63,7 +75,7 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
         });
     };
 
-    if (!task) {
+    if (!selectedTask) {
         return null;
     }
 
@@ -92,13 +104,13 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
 
                                 <View style={styles.detailSection}>
                                     <Text style={styles.label}>Title</Text>
-                                    <Text style={styles.value}>{task.title}</Text>
+                                    <Text style={styles.value}>{selectedTask.title}</Text>
                                 </View>
 
-                                {task.description && (
+                                {selectedTask.description && (
                                     <View style={styles.detailSection}>
                                         <Text style={styles.label}>Description</Text>
-                                        <Text style={styles.value}>{task.description}</Text>
+                                        <Text style={styles.value}>{selectedTask.description}</Text>
                                     </View>
                                 )}
 
@@ -107,10 +119,10 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                                         <Text style={styles.label}>Priority Level</Text>
                                         <View style={[
                                             styles.priorityBadge,
-                                            { backgroundColor: task.priority === 'high' ? colors.red : task.priority === 'medium' ? colors.orange : colors.green }
+                                            { backgroundColor: selectedTask.priority === 'high' ? colors.red : selectedTask.priority === 'medium' ? colors.orange : colors.green }
                                         ]}>
                                             <Text style={styles.priorityText}>
-                                                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                                                {selectedTask.priority.charAt(0).toUpperCase() + selectedTask.priority.slice(1)}
                                             </Text>
                                         </View>
                                     </View>
@@ -119,7 +131,7 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                                         <Text style={styles.label}>Category</Text>
                                         <View style={styles.categoryBadge}>
                                             <Text style={styles.categoryText}>
-                                                {task.category.charAt(0).toUpperCase() + task.category.slice(1)}
+                                                {selectedTask.category.charAt(0).toUpperCase() + selectedTask.category.slice(1)}
                                             </Text>
                                         </View>
                                     </View>
@@ -128,14 +140,14 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                                 <View style={styles.detailSection}>
                                     <Text style={styles.label}>Due Date & Time</Text>
                                     <Text style={styles.dateValue}>
-                                        {formatDateTime(task.timestamp)}
+                                        {formatDateTime(selectedTask.timestamp)}
                                     </Text>
                                 </View>
 
-                                {task.sub_tasks && task.sub_tasks.length > 0 && (
+                                {selectedTask.sub_tasks && selectedTask.sub_tasks.length > 0 && (
                                     <View style={styles.detailSection}>
                                         <View style={styles.subtaskHeader}>
-                                            <Text style={styles.label}>Subtasks ({task.sub_tasks.length})</Text>
+                                            <Text style={styles.label}>Subtasks ({selectedTask.sub_tasks.length})</Text>
                                             <TouchableOpacity 
                                                 style={styles.addSubtaskButton}
                                                 onPress={handleAddSubtask}
@@ -145,7 +157,7 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                                             </TouchableOpacity>
                                         </View>
                                         
-                                        {task.sub_tasks.map((subTask) => (
+                                        {selectedTask.sub_tasks.map((subTask) => (
                                             <View key={subTask.id} style={styles.subTaskItem}>
                                                 <View style={styles.subTaskHeader}>
                                                     <TouchableOpacity onPress={() => handleToggleSubtask(subTask.id)}>
@@ -190,13 +202,15 @@ const DetailModal = ({ isModalVisible, setIsModalVisible, task }) => {
                                         style={styles.deleteTaskButton}
                                         onPress={handleDeleteTask}
                                 >
-                                    <Ionicons name="trash-outline" size={24} color="white" />
-                                    <Text style={styles.deleteTaskText}>Delete Task</Text>
+                                    <Ionicons name="trash-outline" size={30} color={colors.secondary} />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity style={styles.editTaskButton} onPress={() => {}}>
-                                    <Ionicons name="pencil" size={20} color={colors.darkGray} />
-                                    <Text style={styles.editTaskText}>Edit Task</Text>
+                                    <Ionicons name="pencil" size={30} color={colors.secondary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.editTaskButton} onPress={() => {}}>
+                                    <Ionicons name="checkmark-circle" size={30} color={colors.secondary} />
                                 </TouchableOpacity>
                                 </View>
 
@@ -254,7 +268,6 @@ const styles = StyleSheet.create({
     },
     closeButton: {
         padding: 8,
-        backgroundColor: colors.lightGray,
         borderRadius: 12,
     },
     detailSection: {
@@ -357,43 +370,19 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         padding: 6,
-        backgroundColor: 'rgba(255,59,48,0.1)', 
         borderRadius: 8,
     },
     deleteTaskButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.red,
         padding: 16,
         borderRadius: 16,
-    },
-    deleteTaskText: {
-        color: 'white',
-        fontSize: 17,
-        fontWeight: '600',
-        marginLeft: 8,
     },
     editTaskButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.lightGray,
         padding: 16,
         borderRadius: 16,
-    },
-    editTaskText: {
-        color: colors.darkGray,
-        fontSize: 17,
-        fontWeight: '600',
-        marginLeft: 8,
     },
     buttonContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 12,
-        marginTop: 32,
+        justifyContent: 'flex-start',
+        gap: 5
     }
 });
