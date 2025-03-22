@@ -6,7 +6,7 @@ import AddTodoModal from '../AddTodoModal';
 import Filter from './Filter';
 import { useSelector, useDispatch } from 'react-redux';
 import { addTask, setTasks } from '@/store/Task/task';
-import DetailModal from '../DetailModal';
+import UpdateTaskModal from '../UpdateTaskModal';
 import { generateId } from '@/utils/gnFunc';
 import { priorities, defaultCategories } from '@/constants/GeneralData';
 import { storeData, getData } from '@/utils/storage';
@@ -14,7 +14,6 @@ import { storeData, getData } from '@/utils/storage';
 
 const TodoList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [quickAddText, setQuickAddText] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -22,6 +21,7 @@ const TodoList = () => {
     const [searchText, setSearchText] = useState('');
     const tasks = useSelector((state) => state.tasks.task_list);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
     const dispatch = useDispatch();
 
     // Load tasks from storage
@@ -174,7 +174,7 @@ const TodoList = () => {
                                 item={item}
                                 tasks={tasks}
                                 setSelectedTask={setSelectedTask}
-                                setIsDetailModalVisible={setIsDetailModalVisible} />;
+                                setIsUpdateModalVisible={setIsUpdateModalVisible} />;
                         }}
                         keyExtractor={item => item.id?.toString()}
                         showsVerticalScrollIndicator={false}
@@ -228,9 +228,9 @@ const TodoList = () => {
                     setIsModalVisible={setIsModalVisible}
                 />
 
-                <DetailModal
-                    isModalVisible={isDetailModalVisible}
-                    setIsModalVisible={setIsDetailModalVisible}
+                <UpdateTaskModal
+                    isModalVisible={isUpdateModalVisible}
+                    setIsModalVisible={setIsUpdateModalVisible}
                     selectedTask={selectedTask}
                     tasks={tasks}
                 />
@@ -241,11 +241,10 @@ const TodoList = () => {
 
 export default TodoList;
 
-const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible, tasks }) => {
+const TodoItem = ({ item, setSelectedTask, setIsUpdateModalVisible, tasks }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const dispatch = useDispatch();
     const animatedHeight = new Animated.Value(isExpanded ? 1 : 0);
-    const translateX = new Animated.Value(0);
 
     const toggleExpand = () => {
         const newValue = !isExpanded;
@@ -297,13 +296,14 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible, tasks }) => 
 
     const handleTaskPress = () => {
         setSelectedTask(item);
-        setIsDetailModalVisible(true);
+        setIsUpdateModalVisible(true);
     };
 
     return (
-        <View style={styles.itemContent}>
-            <TouchableOpacity onPress={handleTaskPress}>
-                <View style={styles.itemHeader}>
+        <>
+            <View style={styles.itemContent}>
+                <TouchableOpacity onPress={handleTaskPress}>
+                    <View style={styles.itemHeader}>
                     <View style={styles.itemHeaderLeft}>
                         <TouchableOpacity
                             style={styles.checkboxContainer}
@@ -393,6 +393,8 @@ const TodoItem = ({ item, setSelectedTask, setIsDetailModalVisible, tasks }) => 
                 ))}
             </Animated.View>
         </View>
+
+        </>
     );
 };
 
