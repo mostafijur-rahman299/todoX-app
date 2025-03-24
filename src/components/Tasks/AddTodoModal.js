@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, ScrollView, StyleSheet, Platform } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, ScrollView, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addTask } from '@/store/Task/task';
 import { storeData } from '@/utils/storage';
 
+const { width, height } = Dimensions.get('window');
+
 const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
     const dispatch = useDispatch();
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -17,8 +19,8 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
         title: "",
         timestamp: new Date(),
         description: "", 
-        category: defaultCategories[4].name, // "Other" category
-        priority: priorities[0].name, // "High" priority
+        category: defaultCategories[4].name,
+        priority: priorities[0].name,
         is_completed: false,
         completed_timestamp: null,
         sub_tasks: []
@@ -125,29 +127,41 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                 <View style={styles.modalContainer}>
                     <TouchableWithoutFeedback>
                         <View style={styles.modalContent}>
-                            <View style={styles.modalHandle} />
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Create New Task</Text>
+                                <TouchableOpacity 
+                                    onPress={() => setIsModalVisible(false)}
+                                    style={styles.closeButton}
+                                >
+                                    <Ionicons name="close" size={24} color={colors.text} />
+                                </TouchableOpacity>
+                            </View>
                             <ScrollView showsVerticalScrollIndicator={false}>
-                                <Text style={styles.modalTitle}>New Task</Text>
+                                <View style={styles.inputContainer}>
+                                    <Ionicons name="pencil-outline" size={20} color={colors.primary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.titleInput}
+                                        value={newTask.title}
+                                        onChangeText={(text) => handleSetNewTask('title', text)}
+                                        placeholder="What would you like to do?"
+                                        placeholderTextColor={colors.darkGray}
+                                    />
+                                </View>
 
-                                <TextInput
-                                    style={styles.titleInput}
-                                    value={newTask.title}
-                                    onChangeText={(text) => handleSetNewTask('title', text)}
-                                    placeholder="Task title"
-                                    placeholderTextColor={colors.darkGray}
-                                />
+                                <View style={styles.inputContainer}>
+                                    <Ionicons name="document-text-outline" size={20} color={colors.primary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.descriptionInput}
+                                        value={newTask.description}
+                                        onChangeText={(text) => handleSetNewTask('description', text)}
+                                        placeholder="Add details about your task"
+                                        placeholderTextColor={colors.darkGray}
+                                        multiline
+                                        numberOfLines={3}
+                                    />
+                                </View>
 
-                                <TextInput
-                                    style={styles.descriptionInput}
-                                    value={newTask.description}
-                                    onChangeText={(text) => handleSetNewTask('description', text)}
-                                    placeholder="Description (optional)"
-                                    placeholderTextColor={colors.darkGray}
-                                    multiline
-                                    numberOfLines={4}
-                                />
-
-                                <Text style={styles.sectionTitle}>Priority</Text>
+                                <Text style={styles.sectionTitle}>Set Priority Level</Text>
                                 <View style={styles.priorityContainer}>
                                     {priorities.map((priority) => (
                                         <TouchableOpacity
@@ -158,42 +172,59 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                                             ]}
                                             onPress={() => handleSetNewTask('priority', priority.name)}
                                         >
+                                            <Ionicons 
+                                                name={newTask.priority === priority.name ? "flag" : "flag-outline"} 
+                                                size={18} 
+                                                color={newTask.priority === priority.name ? '#fff' : priority.color} 
+                                            />
                                             <Text style={[
                                                 styles.priorityText,
                                                 newTask.priority === priority.name && { color: '#fff' }
-                                            ]}>{priority.name?.charAt(0).toUpperCase() + priority.name?.slice(1)}</Text>
+                                            ]}>{priority.name}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
 
-                                <Text style={styles.sectionTitle}>Category</Text>
-                                <View style={styles.categoryContainer}>
-                                    {defaultCategories.map((category) => (
-                                        <TouchableOpacity
-                                            key={category.name}
-                                            style={[
-                                                styles.categoryButton,
-                                                newTask.category === category.name && styles.selectedCategory,
-                                            ]}
-                                            onPress={() => handleSetNewTask('category', category.name)}
-                                        >
-                                            <Text style={[
-                                                styles.categoryText,
-                                                newTask.category === category.name && styles.selectedCategoryText
-                                            ]}>{category.name?.charAt(0).toUpperCase() + category.name?.slice(1)}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
+                                <Text style={styles.sectionTitle}>Choose Category</Text>
+                                <ScrollView 
+                                    horizontal 
+                                    showsHorizontalScrollIndicator={false}
+                                    style={styles.categoryScrollView}
+                                >
+                                    <View style={styles.categoryContainer}>
+                                        {defaultCategories.map((category) => (
+                                            <TouchableOpacity
+                                                key={category.name}
+                                                style={[
+                                                    styles.categoryButton,
+                                                    newTask.category === category.name && styles.selectedCategory,
+                                                ]}
+                                                onPress={() => handleSetNewTask('category', category.name)}
+                                            >
+                                                <Ionicons 
+                                                    name={category.icon || "bookmark-outline"} 
+                                                    size={18} 
+                                                    color={newTask.category === category.name ? '#fff' : colors.primary} 
+                                                />
+                                                <Text style={[
+                                                    styles.categoryText,
+                                                    newTask.category === category.name && styles.selectedCategoryText
+                                                ]}>{category.name}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                </ScrollView>
 
-                                <Text style={styles.sectionTitle}>Due Date</Text>
+                                <Text style={styles.sectionTitle}>Set Due Date & Time</Text>
                                 <TouchableOpacity
                                     style={styles.dateButton}
                                     onPress={openPicker}
                                 >
-                                    <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                                    <Ionicons name="time-outline" size={20} color={colors.primary} />
                                     <Text style={styles.dateButtonText}>
                                         {formatDate(newTask.timestamp)}
                                     </Text>
+                                    <Ionicons name="chevron-forward" size={20} color={colors.primary} />
                                 </TouchableOpacity>
                                 
                                 {showDatePicker && (
@@ -206,21 +237,14 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                                     />
                                 )}
 
-                                <View style={styles.buttonContainer}>
-                                    <TouchableOpacity
-                                        style={styles.cancelButton}
-                                        onPress={() => setIsModalVisible(false)}
-                                    >
-                                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.createButton, !newTask.title.trim() && styles.disabledButton]}
-                                        onPress={handleAddTask}
-                                        disabled={!newTask.title.trim()}
-                                    >
-                                        <Text style={styles.createButtonText}>Create Task</Text>
-                                    </TouchableOpacity>
-                                </View>
+                                <TouchableOpacity
+                                    style={[styles.createButton, !newTask.title.trim() && styles.disabledButton]}
+                                    onPress={handleAddTask}
+                                    disabled={!newTask.title.trim()}
+                                >
+                                    <Text style={styles.createButtonText}>Create Task</Text>
+                                    <Ionicons name="arrow-forward" size={20} color="#fff" />
+                                </TouchableOpacity>
                             </ScrollView>
                         </View>
                     </TouchableWithoutFeedback>
@@ -236,62 +260,60 @@ const styles = StyleSheet.create({
     modalContainer: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
     },
     modalContent: {
         backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
         padding: 20,
-        maxHeight: '90%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
+        maxHeight: height * 0.85,
     },
-    modalHandle: {
-        width: 60,
-        height: 5,
-        backgroundColor: '#ccc',
-        borderRadius: 2.5,
-        alignSelf: 'center',
-        marginBottom: 15,
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 20,
     },
     modalTitle: {
         fontSize: 24,
         fontWeight: '700',
-        marginBottom: 20,
         color: colors.text,
-        textAlign: 'center',
+    },
+    closeButton: {
+        padding: 5,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8f9fa',
+        borderRadius: 12,
+        marginBottom: 12,
+        paddingHorizontal: 12,
+    },
+    inputIcon: {
+        marginRight: 8,
     },
     titleInput: {
-        fontSize: 18,
-        padding: 15,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 10,
-        marginBottom: 15,
+        flex: 1,
+        fontSize: 16,
+        padding: 12,
         color: colors.text,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
     },
     descriptionInput: {
-        fontSize: 16,
-        padding: 15,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 10,
-        marginBottom: 20,
-        height: 100,
+        flex: 1,
+        fontSize: 14,
+        padding: 12,
+        height: 80,
         textAlignVertical: 'top',
         color: colors.text,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
     },
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        marginBottom: 10,
+        marginBottom: 12,
         color: colors.text,
+        marginTop: 8,
     },
     priorityContainer: {
         flexDirection: 'row',
@@ -300,31 +322,36 @@ const styles = StyleSheet.create({
     },
     priorityButton: {
         flex: 1,
+        flexDirection: 'row',
         paddingVertical: 10,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        borderRadius: 8,
+        paddingHorizontal: 12,
+        borderRadius: 10,
         alignItems: 'center',
-        marginHorizontal: 5,
-        backgroundColor: '#f9f9f9',
+        justifyContent: 'center',
+        marginHorizontal: 4,
+        backgroundColor: '#f8f9fa',
     },
     priorityText: {
         color: colors.text,
         fontWeight: '600',
+        marginLeft: 6,
+        fontSize: 14,
+    },
+    categoryScrollView: {
+        marginBottom: 20,
     },
     categoryContainer: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginBottom: 20,
+        paddingVertical: 4,
     },
     categoryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 20,
-        backgroundColor: '#f9f9f9',
-        margin: 5,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
+        backgroundColor: '#f8f9fa',
+        marginRight: 8,
     },
     selectedCategory: {
         backgroundColor: colors.primary,
@@ -332,6 +359,7 @@ const styles = StyleSheet.create({
     categoryText: {
         color: colors.text,
         fontSize: 14,
+        marginLeft: 6,
     },
     selectedCategoryText: {
         color: '#fff',
@@ -339,50 +367,34 @@ const styles = StyleSheet.create({
     dateButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 10,
+        justifyContent: 'space-between',
+        padding: 12,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 12,
         marginBottom: 20,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
     },
     dateButtonText: {
-        marginLeft: 10,
-        color: colors.text,
-        fontSize: 16,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 10,
-    },
-    cancelButton: {
         flex: 1,
-        padding: 15,
-        borderRadius: 10,
-        backgroundColor: '#f0f0f0',
-        alignItems: 'center',
-        marginRight: 5,
-    },
-    cancelButtonText: {
+        marginLeft: 8,
         color: colors.text,
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 14,
     },
     createButton: {
-        flex: 1,
+        flexDirection: 'row',
         padding: 15,
-        borderRadius: 10,
+        borderRadius: 12,
         backgroundColor: colors.primary,
         alignItems: 'center',
-        marginLeft: 5,
+        justifyContent: 'center',
+        marginTop: 10,
     },
     disabledButton: {
-        opacity: 0.5,
+        opacity: 0.6,
     },
     createButtonText: {
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+        marginRight: 8,
     },
 });
