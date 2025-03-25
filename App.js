@@ -13,7 +13,6 @@ const Stack = createNativeStackNavigator();
 
 SplashScreen.preventAutoHideAsync();
 
-
 export default function App() {
   const [loaded, error] = useFonts({
     'NicoMoji-Regular': require('./src/assets/fonts/NicoMoji-Regular.ttf'),

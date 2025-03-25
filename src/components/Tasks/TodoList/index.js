@@ -157,7 +157,7 @@ const TodoList = () => {
     const renderItem = useCallback(({ item }) => {
         if (item.type === 'header') {
             return (
-                <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeader} key={item.id}>
                     <View style={styles.sectionHeaderLeft}>
                         <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
                         <Text style={styles.sectionHeaderText}>{item.title}</Text>
@@ -173,6 +173,7 @@ const TodoList = () => {
         }
         return (
             <TodoItem
+                key={item.id}
                 item={item}
                 setSelectedTask={setSelectedTask}
                 setIsUpdateModalVisible={setIsUpdateModalVisible}
@@ -272,7 +273,7 @@ const TodoList = () => {
                                             ...incompleteTasks,
                                             ...(completedTasks.length > 0 ? [
                                                 { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
-                                                ...completedTasks,
+                                                ...completedTasks.map(task => ({...task, id: `completed-${task.id}`}))
                                             ] : [])
                                         ]}
                                         renderItem={renderItem}
@@ -286,113 +287,122 @@ const TodoList = () => {
                             </View>
                         </View>
 
-                            <View style={styles.quickAddInputContainer}>
-                                <View style={[
-                                    styles.quickAddInputWrapper,
-                                    isInputFocused && styles.quickAddInputWrapperFocused
-                                ]}>
-                                    <Ionicons name="add-circle-outline" size={18} color="#6366f1" style={styles.quickAddIcon} />
-                                    <TextInput
-                                        style={styles.quickAddInput}
-                                        placeholder="Add a new task..."
-                                        placeholderTextColor="#94a3b8"
-                                        value={quickAddText}
-                                        onChangeText={setQuickAddText}
-                                        onSubmitEditing={handleQuickAdd}
-                                        onFocus={() => {
-                                            setIsInputFocused(true);
-                                        }}
-                                        onBlur={() => {
-                                            setIsInputFocused(false);
-                                        }}
-                                        returnKeyType="done"
-                                        multiline
-                                    />
-                                </View>
-
-                                <View style={styles.quickAddActions}>
-                                    <View style={styles.actionButtonsContainer}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.quickAddOption,
-                                                showCategoryTooltip && styles.quickAddOptionActive
-                                            ]}
-                                            onPress={() => setShowCategoryTooltip(!showCategoryTooltip)}
-                                        >
-                                            <Ionicons name="bookmark" size={14} color="#6366f1" />
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.quickAddOption,
-                                                {
-                                                    backgroundColor: quickAddPriority === "high" ? '#fef2f2' :
-                                                        quickAddPriority === "medium" ? '#fff7ed' : '#f0fdf4'
-                                                }
-                                            ]}
-                                            onPress={() => {
-                                                const nextIndex = priorities.findIndex(p => p.name === quickAddPriority);
-                                                setQuickAddPriority(priorities[(nextIndex + 1) % priorities.length].name);
-                                            }}
-                                        >
-                                            <Ionicons
-                                                name="flag"
-                                                size={14}
-                                                color={
-                                                    quickAddPriority === "high" ? '#ef4444' :
-                                                        quickAddPriority === "medium" ? '#f97316' : '#22c55e'
-                                                }
+                        {isQuickAddVisible && (
+                            <View style={styles.quickAddContainer}>
+                                <LinearGradient
+                                    colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.95)']}
+                                    style={styles.quickAddGradient}
+                                >
+                                    <View style={styles.quickAddInputContainer}>
+                                        <View style={[
+                                            styles.quickAddInputWrapper,
+                                            isInputFocused && styles.quickAddInputWrapperFocused
+                                        ]}>
+                                            <Ionicons name="add-circle-outline" size={18} color="#6366f1" style={styles.quickAddIcon} />
+                                            <TextInput
+                                                style={styles.quickAddInput}
+                                                placeholder="Add a new task..."
+                                                placeholderTextColor="#94a3b8"
+                                                value={quickAddText}
+                                                onChangeText={setQuickAddText}
+                                                onSubmitEditing={handleQuickAdd}
+                                                onFocus={() => {
+                                                    setIsInputFocused(true);
+                                                }}
+                                                onBlur={() => {
+                                                    setIsInputFocused(false);
+                                                }}
+                                                returnKeyType="done"
+                                                multiline
+                                                numberOfLines={2}
                                             />
-                                        </TouchableOpacity>
+                                        </View>
 
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.quickAddButton,
-                                                !!quickAddText && styles.activeQuickAddButton
-                                            ]}
-                                            onPress={handleQuickAdd}
-                                            disabled={!quickAddText}
-                                        >
-                                            <Ionicons
-                                                name="arrow-up"
-                                                size={18}
-                                                color={!!quickAddText ? '#ffffff' : '#94a3b8'}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    {showCategoryTooltip && (
-                                        <View style={styles.categoryTooltip}>
-                                            {defaultCategories.map((category, index) => (
+                                        <View style={styles.quickAddActions}>
+                                            <View style={styles.actionButtonsContainer}>
                                                 <TouchableOpacity
-                                                    key={index}
                                                     style={[
-                                                        styles.categoryTooltipItem,
-                                                        category.name === quickAddCategory && styles.categoryTooltipItemActive
+                                                        styles.quickAddOption,
+                                                        showCategoryTooltip && styles.quickAddOptionActive
+                                                    ]}
+                                                    onPress={() => setShowCategoryTooltip(!showCategoryTooltip)}
+                                                >
+                                                    <Ionicons name="bookmark" size={14} color="#6366f1" />
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.quickAddOption,
+                                                        {
+                                                            backgroundColor: quickAddPriority === "high" ? '#fef2f2' :
+                                                                quickAddPriority === "medium" ? '#fff7ed' : '#f0fdf4'
+                                                        }
                                                     ]}
                                                     onPress={() => {
-                                                        setQuickAddCategory(category.name);
-                                                        setShowCategoryTooltip(false);
+                                                        const nextIndex = priorities.findIndex(p => p.name === quickAddPriority);
+                                                        setQuickAddPriority(priorities[(nextIndex + 1) % priorities.length].name);
                                                     }}
                                                 >
                                                     <Ionicons
-                                                        name="bookmark"
+                                                        name="flag"
                                                         size={14}
-                                                        color={category.name === quickAddCategory ? '#6366f1' : '#64748b'}
+                                                        color={
+                                                            quickAddPriority === "high" ? '#ef4444' :
+                                                                quickAddPriority === "medium" ? '#f97316' : '#22c55e'
+                                                        }
                                                     />
-                                                    <Text style={[
-                                                        styles.categoryTooltipText,
-                                                        category.name === quickAddCategory && styles.categoryTooltipTextActive
-                                                    ]}>
-                                                        {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                                                    </Text>
                                                 </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    )}
-                                </View>
-                            </View>
 
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.quickAddButton,
+                                                        !!quickAddText && styles.activeQuickAddButton
+                                                    ]}
+                                                    onPress={handleQuickAdd}
+                                                    disabled={!quickAddText}
+                                                >
+                                                    <Ionicons
+                                                        name="arrow-up"
+                                                        size={18}
+                                                        color={!!quickAddText ? '#ffffff' : '#94a3b8'}
+                                                    />
+                                                </TouchableOpacity>
+                                            </View>
+
+                                            {showCategoryTooltip && (
+                                                <View style={styles.categoryTooltip}>
+                                                    {defaultCategories.map((category) => (
+                                                        <TouchableOpacity
+                                                            key={category.name}
+                                                            style={[
+                                                                styles.categoryTooltipItem,
+                                                                category.name === quickAddCategory && styles.categoryTooltipItemActive
+                                                            ]}
+                                                            onPress={() => {
+                                                                setQuickAddCategory(category.name);
+                                                                setShowCategoryTooltip(false);
+                                                            }}
+                                                        >
+                                                            <Ionicons
+                                                                name="bookmark"
+                                                                size={14}
+                                                                color={category.name === quickAddCategory ? '#6366f1' : '#64748b'}
+                                                            />
+                                                            <Text style={[
+                                                                styles.categoryTooltipText,
+                                                                category.name === quickAddCategory && styles.categoryTooltipTextActive
+                                                            ]}>
+                                                                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                            )}
+                                        </View>
+                                    </View>
+                                </LinearGradient>
+                            </View>
+                        )}
 
                         <AddTodoModal
                             isModalVisible={isModalVisible}
@@ -639,28 +649,55 @@ const styles = StyleSheet.create({
     listContainer: {
         flex: 1,
         marginTop: 8,
-        
+    },
+    quickAddContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        overflow: 'visible',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: -3,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 5,
+    },
+    quickAddGradient: {
+        paddingVertical: 16,
+        paddingHorizontal: 20,
     },
     quickAddInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        padding: 20
+        gap: 10,
     },
     quickAddInputWrapper: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#ffffff',
         borderRadius: 12,
         paddingHorizontal: 12,
         borderWidth: 1,
         borderColor: '#e2e8f0',
-        marginRight: 90
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
     },
     quickAddInputWrapperFocused: {
         borderColor: '#6366f1',
-        backgroundColor: '#ffffff',
+        shadowColor: '#6366f1',
+        shadowOpacity: 0.1,
     },
     quickAddIcon: {
         marginRight: 6,
@@ -671,28 +708,37 @@ const styles = StyleSheet.create({
         color: '#1e293b',
         fontWeight: '500',
         height: '100%',
-        paddingVertical: 8,
+        paddingVertical: 12,
     },
     quickAddActions: {
-        flex: 0.07,
         position: 'relative',
+        zIndex: 999,
     },
     actionButtonsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        gap: 4,
+        gap: 8,
+        zIndex: 998,
     },
     quickAddOption: {
         padding: 8,
         borderRadius: 10,
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#ffffff',
         borderWidth: 1,
         borderColor: '#e2e8f0',
-        width: 32,
-        height: 32,
+        width: 36,
+        height: 36,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     quickAddOptionActive: {
         backgroundColor: '#eff6ff',
@@ -700,11 +746,11 @@ const styles = StyleSheet.create({
     },
     categoryTooltip: {
         position: 'absolute',
-        bottom: 40,
-        right: 0,
+        bottom: 48,
+        right: 82,
         backgroundColor: '#ffffff',
         borderRadius: 12,
-        padding: 6,
+        padding: 8,
         width: 160,
         borderWidth: 1,
         borderColor: '#e2e8f0',
@@ -716,7 +762,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-        zIndex: 1000,
+        zIndex: 999,
     },
     categoryTooltipItem: {
         flexDirection: 'row',
@@ -740,12 +786,20 @@ const styles = StyleSheet.create({
     quickAddButton: {
         backgroundColor: '#f1f5f9',
         borderRadius: 10,
-        width: 32,
-        height: 32,
+        width: 36,
+        height: 36,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: '#e2e8f0',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     activeQuickAddButton: {
         backgroundColor: '#6366f1',
