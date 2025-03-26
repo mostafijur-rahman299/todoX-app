@@ -1,28 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
+import { useSelector, useDispatch } from 'react-redux';
+import { setDisplayTasks } from '@/store/Task/task';
+import { priorities, defaultCategories } from '@/constants/GeneralData';
 
 
-function Filter({ 
-    setSelectedCategory, 
-    setSelectedPriority,
-    searchText, 
-    setSearchText, 
-    selectedCategory, 
-    selectedPriority,
-    openModal,
-    closeModal
-}) {
-
+function Filter({ openModal, closeModal }) {
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedPriority, setSelectedPriority] = useState('all');
+    const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+    const [showActiveTasks, setShowActiveTasks] = useState(true);
+    const dispatch = useDispatch();
+    const retainedTasks = useSelector((state) => state.tasks.task_list);
+    const displayTasks = useSelector((state) => state.tasks.display_tasks);
 
-    const categories = [
-        { id: 'all', icon: 'apps' },
-        { id: 'work', icon: 'briefcase' },
-        { id: 'shopping', icon: 'cart' },
-        { id: 'other', icon: 'ellipsis-horizontal' }
-    ];
+    const categories = defaultCategories
+
+
+    // Reset all filters
+    const resetFilters = () => {
+        setSelectedCategory('all');
+        setSelectedPriority('all');
+        setShowCompletedTasks(true);
+        setShowActiveTasks(true);
+    };
 
     // Render priority filter buttons
     const renderPriorityFilters = () => {
@@ -56,6 +60,56 @@ function Filter({
         ));
     };
 
+    // Handle category selection
+    const handleCategorySelect = (categoryId) => {
+        setSelectedCategory(categoryId);
+        setShowCategoryDropdown(false);
+    };
+
+    // Toggle category dropdown
+    const toggleCategoryDropdown = () => {
+        setShowCategoryDropdown(!showCategoryDropdown);
+    };
+
+    // Get current category icon
+    const getCurrentCategoryIcon = () => {
+        return categories.find(c => c.id === selectedCategory)?.icon || 'apps';
+    };
+
+    // Format text to capitalize first letter
+    const formatText = (text) => {
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    };
+
+    // Filter tasks based on selected category
+    useEffect(() => {
+        let filteredTasks = [...retainedTasks];
+        
+        // Filter by category
+        if (selectedCategory !== 'all') {
+            filteredTasks = filteredTasks.filter(task => task.category === selectedCategory);
+        }
+        
+        // Filter by priority
+        if (selectedPriority !== 'all') {
+            filteredTasks = filteredTasks.filter(task => task.priority === selectedPriority);
+        }
+        
+        // Filter by completion status
+        if (showCompletedTasks && !showActiveTasks) {
+            // Show only completed tasks
+            filteredTasks = filteredTasks.filter(task => task.is_completed === true);
+        } else if (showActiveTasks && !showCompletedTasks) {
+            // Show only active tasks
+            filteredTasks = filteredTasks.filter(task => task.is_completed === false);
+        } else if (!showActiveTasks && !showCompletedTasks) {
+            // If both are unchecked, show no tasks
+            filteredTasks = [];
+        }
+        
+        dispatch(setDisplayTasks(filteredTasks));
+    }, [selectedCategory, selectedPriority, showCompletedTasks, showActiveTasks, retainedTasks, dispatch]);
+
     return (
         <Modal
             animationType="slide"
@@ -83,21 +137,27 @@ function Filter({
                         >
                             <Ionicons name="close" size={24} color={colors.text} />
                         </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.filterActions} onPress={resetFilters}>
+                            <Ionicons name="refresh" size={20} color={colors.text} />
+                            <Text style={styles.resetButtonText}>Reset</Text>
+                        </TouchableOpacity>
                     </View>
+                    
                     <View style={styles.filterGroups}>
                         <View style={styles.filterGroup}>
                             <Text style={styles.filterLabel}>Category</Text>
                             <TouchableOpacity 
                                 style={styles.categorySelect}
-                                onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                onPress={toggleCategoryDropdown}
                             >
                                 <Ionicons 
-                                    name={categories.find(c => c.id === selectedCategory)?.icon || 'apps'} 
+                                    name={getCurrentCategoryIcon()} 
                                     size={20} 
                                     color={colors.text} 
                                 />
                                 <Text style={styles.categorySelectText}>
-                                    {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}
+                                    {formatText(selectedCategory)}
                                 </Text>
                                 <Ionicons 
                                     name={showCategoryDropdown ? "chevron-up" : "chevron-down"} 
@@ -108,24 +168,21 @@ function Filter({
                             
                             {showCategoryDropdown && (
                                 <ScrollView style={styles.dropdownMenu}>
-                                    {categories.map(({id, icon}) => (
+                                    {categories.map(({id, name}) => (
                                         <TouchableOpacity
                                             key={id}
                                             style={[
                                                 styles.dropdownItem,
-                                                selectedCategory === id && styles.selectedDropdownItem
+                                                selectedCategory === name && styles.selectedDropdownItem
                                             ]}
-                                            onPress={() => {
-                                                setSelectedCategory(id);
-                                                setShowCategoryDropdown(false);
-                                            }}
+                                            onPress={() => handleCategorySelect(name)}
                                         >
-                                            <Ionicons name={icon} size={20} color={selectedCategory === id ? 'white' : colors.text} />
                                             <Text style={[
                                                 styles.dropdownItemText,
-                                                selectedCategory === id && styles.selectedDropdownItemText
+                                                selectedCategory === name && styles.selectedDropdownItemText,
+                                                {color: colors.text}
                                             ]}>
-                                                {id.charAt(0).toUpperCase() + id.slice(1)}
+                                                {formatText(name)}
                                             </Text>
                                         </TouchableOpacity>
                                     ))}
@@ -139,11 +196,52 @@ function Filter({
                                 {renderPriorityFilters()}
                             </View>
                         </View>
+                        
+                        <View style={styles.filterGroup}>
+                            <Text style={styles.filterLabel}>Task Status</Text>
+                            <TouchableOpacity 
+                                style={styles.toggleContainer}
+                                onPress={() => setShowCompletedTasks(!showCompletedTasks)}
+                            >
+                                <Text style={styles.toggleText}>Show completed tasks</Text>
+                                <View style={[
+                                    styles.toggleSwitch, 
+                                    showCompletedTasks && styles.toggleSwitchActive
+                                ]}>
+                                    <View style={[
+                                        styles.toggleKnob, 
+                                        showCompletedTasks && styles.toggleKnobActive
+                                    ]} />
+                                </View>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity 
+                                style={styles.toggleContainer}
+                                onPress={() => setShowActiveTasks(!showActiveTasks)}
+                            >
+                                <Text style={styles.toggleText}>Show Active tasks</Text>
+                                <View style={[
+                                    styles.toggleSwitch, 
+                                    showActiveTasks && styles.toggleSwitchActive
+                                ]}>
+                                    <View style={[
+                                        styles.toggleKnob, 
+                                        showActiveTasks && styles.toggleKnobActive
+                                    ]} />
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    
+                    <View style={styles.filterStats}>
+                        <Text style={styles.filterStatsText}>
+                            Showing {displayTasks.length} of {retainedTasks.length} tasks
+                        </Text>
                     </View>
                 </View>
             </TouchableOpacity>
         </Modal>
-    )
+    );
 }
 
 export default Filter;
@@ -186,6 +284,24 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 0,
         top: -5,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        marginBottom: 20,
+        height: 50,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: 50,
+        fontSize: 15,
+        color: colors.text,
     },
     filterGroups: {
         gap: 24,
@@ -288,5 +404,64 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
+    },
+    toggleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+        padding: 14,
+        borderRadius: 12,
+    },
+    toggleText: {
+        fontSize: 15,
+        color: colors.text,
+    },
+    toggleSwitch: {
+        width: 50,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#E0E0E0',
+        padding: 2,
+    },
+    toggleSwitchActive: {
+        backgroundColor: colors.primary,
+    },
+    toggleKnob: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'white',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    toggleKnobActive: {
+        transform: [{ translateX: 22 }],
+    },
+    filterActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 30,
+        gap: 5,
+        borderWidth: 1,
+        borderColor: 'grey',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        position: 'absolute',
+        right: 40,
+        top: -35,
+        zIndex: 1000000,
+    },
+    filterStats: {
+        marginTop: 16,
+        alignItems: 'center',
+    },
+    filterStatsText: {
+        color: colors.darkGray,
+        fontSize: 13,
     }
 })

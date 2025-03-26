@@ -22,6 +22,11 @@ export const priorities = [
 
 export const defaultCategories = [
   {
+    id: 0,
+    name: "all",
+    color: "#0000FF"
+  },
+  {
     id: 1,
     name: "work",
     color: "#0000FF"

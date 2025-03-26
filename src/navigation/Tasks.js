@@ -70,19 +70,6 @@ export default function Tasks() {
                 }}
             />
             <Tab.Screen
-                name="Completed"
-                component={Completed}
-                options={{
-                    tabBarIcon: ({ focused, color, size }) => (
-                        <Ionicons
-                            name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                            size={28}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-            <Tab.Screen
                 name="Menu"
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (

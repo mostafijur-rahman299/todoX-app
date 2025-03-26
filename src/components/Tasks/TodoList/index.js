@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, Alert, Platform, RefreshControl, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AddTodoModal from '../AddTodoModal';
 import Filter from './Filter';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addTask, setTasks } from '@/store/Task/task';
 import UpdateTaskModal from '../UpdateTaskModal';
 import { generateId } from '@/utils/gnFunc';
@@ -18,44 +17,16 @@ const TodoList = () => {
     const [quickAddText, setQuickAddText] = useState('');
     const [quickAddCategory, setQuickAddCategory] = useState(defaultCategories[4].name);
     const [quickAddPriority, setQuickAddPriority] = useState(priorities[0].name);
-    const [showFilters, setShowFilters] = useState(false);
-    const [showQuickAddOptions, setShowQuickAddOptions] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedPriority, setSelectedPriority] = useState('all');
-    const [searchText, setSearchText] = useState('');
-    const tasks = useSelector((state) => state.tasks.task_list);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
     const dispatch = useDispatch();
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [showCategoryTooltip, setShowCategoryTooltip] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
-    const [keyboardVisible, setKeyboardVisible] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-    const [isQuickAddVisible, setIsQuickAddVisible] = useState(true);
+    const tasks = useSelector((state) => state.tasks.display_tasks);
 
-    const scrollOffset = useRef(0);
-    const scrollTimer = useRef(null);
-
-    const handleScroll = (event) => {
-        const currentOffset = event.nativeEvent.contentOffset.y;
-        const diff = currentOffset - scrollOffset.current;
-
-        if (scrollTimer.current) {
-            clearTimeout(scrollTimer.current);
-        }
-
-        scrollTimer.current = setTimeout(() => {
-            if (diff > 10 && isQuickAddVisible) {
-                setIsQuickAddVisible(false);
-            } else if (diff < -10 && !isQuickAddVisible) {
-                setIsQuickAddVisible(true);
-            }
-        }, 100);
-
-        scrollOffset.current = currentOffset;
-    };
-
+    // Load tasks from storage
     useEffect(() => {
         const loadTasks = async () => {
             try {
@@ -69,22 +40,6 @@ const TodoList = () => {
         };
         loadTasks();
     }, [dispatch]);
-
-    useEffect(() => {
-        const keyboardDidShow = Keyboard.addListener(
-            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-            () => setKeyboardVisible(true)
-        );
-        const keyboardDidHide = Keyboard.addListener(
-            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-            () => setKeyboardVisible(false)
-        );
-
-        return () => {
-            keyboardDidShow.remove();
-            keyboardDidHide.remove();
-        };
-    }, []);
 
     const handleQuickAdd = () => {
         if (!quickAddText.trim()) return;
@@ -154,6 +109,7 @@ const TodoList = () => {
         }, 1000);
     }, []);
 
+    // Memoize the render item function to improve performance
     const renderItem = useCallback(({ item }) => {
         if (item.type === 'header') {
             return (
@@ -182,6 +138,9 @@ const TodoList = () => {
         );
     }, [completedTasks.length]);
 
+    // Memoize the keyExtractor function to improve performance
+    const keyExtractor = useCallback((item) => item.id?.toString(), []);
+
     const handleOutsidePress = () => {
         if (isInputFocused) {
             Keyboard.dismiss();
@@ -191,6 +150,22 @@ const TodoList = () => {
             setShowCategoryTooltip(false);
         }
     };
+
+    // Prepare data for FlatList with getItemLayout for better performance
+    const listData = [
+        ...incompleteTasks,
+        ...(completedTasks.length > 0 ? [
+            { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
+            ...completedTasks.map(task => ({...task, id: `completed-${task.id}`}))
+        ] : [])
+    ];
+
+    // Optimize FlatList with getItemLayout
+    const getItemLayout = useCallback((data, index) => ({
+        length: 80, // Approximate height of each item
+        offset: 80 * index,
+        index,
+    }), []);
 
     return (
         <>
@@ -224,13 +199,13 @@ const TodoList = () => {
 
                                 <View style={styles.headerActions}>
                                     <TouchableOpacity
-                                        style={[styles.actionButton, showFilters && styles.activeActionButton]}
+                                        style={[styles.actionButton, styles.activeActionButton]}
                                         onPress={() => setShowFilterModal(true)}
                                     >
                                         <Ionicons
-                                            name={showFilters ? 'options' : 'options-outline'}
+                                            name='options'
                                             size={24}
-                                            color={showFilters ? '#ffffff' : '#6366f1'}
+                                            color='#ffffff'
                                         />
                                     </TouchableOpacity>
 
@@ -242,8 +217,6 @@ const TodoList = () => {
                                     </TouchableOpacity>
                                 </View>
                             </View>
-
-
 
                             <View style={styles.listContainer}>
                                 {tasks.length === 0 ? (
@@ -267,142 +240,137 @@ const TodoList = () => {
                                                 onRefresh={onRefresh}
                                                 tintColor="#6366f1"
                                                 colors={['#6366f1']}
+                                                progressViewOffset={20}
                                             />
                                         }
-                                        data={[
-                                            ...incompleteTasks,
-                                            ...(completedTasks.length > 0 ? [
-                                                { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
-                                                ...completedTasks.map(task => ({...task, id: `completed-${task.id}`}))
-                                            ] : [])
-                                        ]}
+                                        data={listData}
                                         renderItem={renderItem}
-                                        keyExtractor={item => item.id?.toString()}
+                                        keyExtractor={keyExtractor}
                                         contentContainerStyle={styles.listContent}
-                                        onScroll={handleScroll}
-                                        scrollEventThrottle={16}
                                         showsVerticalScrollIndicator={false}
+                                        getItemLayout={getItemLayout}
+                                        removeClippedSubviews={Platform.OS === 'android'}
+                                        initialNumToRender={10}
+                                        maxToRenderPerBatch={5}
+                                        windowSize={3}
+                                        keyboardDismissMode="on-drag"
+                                        keyboardShouldPersistTaps="handled"
                                     />
                                 )}
                             </View>
                         </View>
 
-                        {isQuickAddVisible && (
-                            <View style={styles.quickAddContainer}>
-                                <LinearGradient
-                                    colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.95)']}
-                                    style={styles.quickAddGradient}
-                                >
-                                    <View style={styles.quickAddInputContainer}>
-                                        <View style={[
-                                            styles.quickAddInputWrapper,
-                                            isInputFocused && styles.quickAddInputWrapperFocused
-                                        ]}>
-                                            <Ionicons name="add-circle-outline" size={18} color="#6366f1" style={styles.quickAddIcon} />
-                                            <TextInput
-                                                style={styles.quickAddInput}
-                                                placeholder="Add a new task..."
-                                                placeholderTextColor="#94a3b8"
-                                                value={quickAddText}
-                                                onChangeText={setQuickAddText}
-                                                onSubmitEditing={handleQuickAdd}
-                                                onFocus={() => {
-                                                    setIsInputFocused(true);
-                                                }}
-                                                onBlur={() => {
-                                                    setIsInputFocused(false);
-                                                }}
-                                                returnKeyType="done"
-                                                multiline
-                                                numberOfLines={2}
-                                            />
-                                        </View>
-
-                                        <View style={styles.quickAddActions}>
-                                            <View style={styles.actionButtonsContainer}>
-                                                <TouchableOpacity
-                                                    style={[
-                                                        styles.quickAddOption,
-                                                        showCategoryTooltip && styles.quickAddOptionActive
-                                                    ]}
-                                                    onPress={() => setShowCategoryTooltip(!showCategoryTooltip)}
-                                                >
-                                                    <Ionicons name="bookmark" size={14} color="#6366f1" />
-                                                </TouchableOpacity>
-
-                                                <TouchableOpacity
-                                                    style={[
-                                                        styles.quickAddOption,
-                                                        {
-                                                            backgroundColor: quickAddPriority === "high" ? '#fef2f2' :
-                                                                quickAddPriority === "medium" ? '#fff7ed' : '#f0fdf4'
-                                                        }
-                                                    ]}
-                                                    onPress={() => {
-                                                        const nextIndex = priorities.findIndex(p => p.name === quickAddPriority);
-                                                        setQuickAddPriority(priorities[(nextIndex + 1) % priorities.length].name);
-                                                    }}
-                                                >
-                                                    <Ionicons
-                                                        name="flag"
-                                                        size={14}
-                                                        color={
-                                                            quickAddPriority === "high" ? '#ef4444' :
-                                                                quickAddPriority === "medium" ? '#f97316' : '#22c55e'
-                                                        }
-                                                    />
-                                                </TouchableOpacity>
-
-                                                <TouchableOpacity
-                                                    style={[
-                                                        styles.quickAddButton,
-                                                        !!quickAddText && styles.activeQuickAddButton
-                                                    ]}
-                                                    onPress={handleQuickAdd}
-                                                    disabled={!quickAddText}
-                                                >
-                                                    <Ionicons
-                                                        name="arrow-up"
-                                                        size={18}
-                                                        color={!!quickAddText ? '#ffffff' : '#94a3b8'}
-                                                    />
-                                                </TouchableOpacity>
-                                            </View>
-
-                                            {showCategoryTooltip && (
-                                                <View style={styles.categoryTooltip}>
-                                                    {defaultCategories.map((category) => (
-                                                        <TouchableOpacity
-                                                            key={category.name}
-                                                            style={[
-                                                                styles.categoryTooltipItem,
-                                                                category.name === quickAddCategory && styles.categoryTooltipItemActive
-                                                            ]}
-                                                            onPress={() => {
-                                                                setQuickAddCategory(category.name);
-                                                                setShowCategoryTooltip(false);
-                                                            }}
-                                                        >
-                                                            <Ionicons
-                                                                name="bookmark"
-                                                                size={14}
-                                                                color={category.name === quickAddCategory ? '#6366f1' : '#64748b'}
-                                                            />
-                                                            <Text style={[
-                                                                styles.categoryTooltipText,
-                                                                category.name === quickAddCategory && styles.categoryTooltipTextActive
-                                                            ]}>
-                                                                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                                                            </Text>
-                                                        </TouchableOpacity>
-                                                    ))}
-                                                </View>
-                                            )}
-                                        </View>
+                        <View style={styles.quickAddContainer}>
+                            <View style={styles.quickAddGradient}>
+                                <View style={styles.quickAddInputContainer}>
+                                    <View style={[
+                                        styles.quickAddInputWrapper,
+                                        isInputFocused && styles.quickAddInputWrapperFocused
+                                    ]}>
+                                        <Ionicons name="add-circle-outline" size={18} color="#6366f1" style={styles.quickAddIcon} />
+                                        <TextInput
+                                            style={styles.quickAddInput}
+                                            placeholder="Add a new task..."
+                                            placeholderTextColor="#94a3b8"
+                                            value={quickAddText}
+                                            onChangeText={setQuickAddText}
+                                            onSubmitEditing={handleQuickAdd}
+                                            onFocus={() => {
+                                                setIsInputFocused(true);
+                                            }}
+                                            onBlur={() => {
+                                                setIsInputFocused(false);
+                                            }}
+                                            returnKeyType="done"
+                                            multiline
+                                            numberOfLines={2}
+                                        />
                                     </View>
-                                </LinearGradient>
+
+                                    <View style={styles.quickAddActions}>
+                                        <View style={styles.actionButtonsContainer}>
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.quickAddOption,
+                                                    showCategoryTooltip && styles.quickAddOptionActive
+                                                ]}
+                                                onPress={() => setShowCategoryTooltip(!showCategoryTooltip)}
+                                            >
+                                                <Ionicons name="bookmark" size={14} color="#6366f1" />
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.quickAddOption,
+                                                    {
+                                                        backgroundColor: quickAddPriority === "high" ? '#fef2f2' :
+                                                            quickAddPriority === "medium" ? '#fff7ed' : '#f0fdf4'
+                                                    }
+                                                ]}
+                                                onPress={() => {
+                                                    const nextIndex = priorities.findIndex(p => p.name === quickAddPriority);
+                                                    setQuickAddPriority(priorities[(nextIndex + 1) % priorities.length].name);
+                                                }}
+                                            >
+                                                <Ionicons
+                                                    name="flag"
+                                                    size={14}
+                                                    color={
+                                                        quickAddPriority === "high" ? '#ef4444' :
+                                                            quickAddPriority === "medium" ? '#f97316' : '#22c55e'
+                                                    }
+                                                />
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.quickAddButton,
+                                                    !!quickAddText && styles.activeQuickAddButton
+                                                ]}
+                                                onPress={handleQuickAdd}
+                                                disabled={!quickAddText}
+                                            >
+                                                <Ionicons
+                                                    name="arrow-up"
+                                                    size={18}
+                                                    color={!!quickAddText ? '#ffffff' : '#94a3b8'}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        {showCategoryTooltip && (
+                                            <View style={styles.categoryTooltip}>
+                                                {defaultCategories.map((category) => (
+                                                    <TouchableOpacity
+                                                        key={category.name}
+                                                        style={[
+                                                            styles.categoryTooltipItem,
+                                                            category.name === quickAddCategory && styles.categoryTooltipItemActive
+                                                        ]}
+                                                        onPress={() => {
+                                                            setQuickAddCategory(category.name);
+                                                            setShowCategoryTooltip(false);
+                                                        }}
+                                                    >
+                                                        <Ionicons
+                                                            name="bookmark"
+                                                            size={14}
+                                                            color={category.name === quickAddCategory ? '#6366f1' : '#64748b'}
+                                                        />
+                                                        <Text style={[
+                                                            styles.categoryTooltipText,
+                                                            category.name === quickAddCategory && styles.categoryTooltipTextActive
+                                                        ]}>
+                                                            {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        )}
+                                    </View>
+                                </View>
                             </View>
-                        )}
+                        </View>
 
                         <AddTodoModal
                             isModalVisible={isModalVisible}
@@ -421,12 +389,6 @@ const TodoList = () => {
 
 
             <Filter
-                selectedCategory={selectedCategory}
-                selectedPriority={selectedPriority}
-                setSelectedCategory={setSelectedCategory}
-                setSelectedPriority={setSelectedPriority}
-                setSearchText={setSearchText}
-                searchText={searchText}
                 openModal={showFilterModal}
                 closeModal={() => setShowFilterModal(false)}
             />
@@ -657,15 +619,8 @@ const styles = StyleSheet.create({
         right: 0,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        overflow: 'visible',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: -3,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        elevation: 5,
+        overflow: 'hidden',
+        backgroundColor: 'rgba(255,255,255,0.95)',
     },
     quickAddGradient: {
         paddingVertical: 16,
