@@ -1,10 +1,9 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Today from '@/screens/Tasks/Today';
-import Completed from '@/screens/Tasks/Completed';
 import Upcomming from '@/screens/Tasks/Upcomming';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
