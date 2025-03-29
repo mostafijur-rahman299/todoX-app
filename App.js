@@ -2,12 +2,12 @@ import { StyleSheet, Platform, StatusBar, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import StartScreen from './src/screens/StartScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Tasks from '@/navigation/Tasks';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
+import DrawerNavigation from './src/navigation/DrawerNavigation';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,32 +29,19 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      <Provider store={store}>
-        <NavigationContainer>
-          <Stack.Navigator>
-            {/* <Stack.Screen
-          options={{
-            headerShown: false,
-          }}
-
-          name="StartScreen" component={StartScreen} /> */}
-        <Stack.Screen
-          options={{
-            headerShown: false,
-          }}
-
-          name="Tasks" component={Tasks} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </Provider>
-    </View>
+    <Provider store={store}>
+      <NavigationContainer>
+        <View style={styles.container}>
+          <DrawerNavigation />
+        </View>
+      </NavigationContainer>
+    </Provider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : StatusBar.currentHeight + 50,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 });

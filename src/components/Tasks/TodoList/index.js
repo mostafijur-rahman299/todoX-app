@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, Alert, Platform, RefreshControl, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { 
+    View, 
+    Text, 
+    FlatList, 
+    TouchableOpacity, 
+    TextInput, 
+    StyleSheet, 
+    Alert, 
+    Platform, 
+    RefreshControl, 
+    TouchableWithoutFeedback, 
+    Keyboard,
+    ScrollView
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AddTodoModal from '../AddTodoModal';
 import Filter from './Filter';
@@ -156,7 +169,7 @@ const TodoList = () => {
         ...incompleteTasks,
         ...(completedTasks.length > 0 ? [
             { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
-            ...completedTasks.map(task => ({...task, id: `completed-${task.id}`}))
+            ...completedTasks.map(task => ({ ...task, id: `completed-${task.id}` }))
         ] : [])
     ];
 
@@ -289,7 +302,7 @@ const TodoList = () => {
 
                                     <View style={styles.quickAddActions}>
                                         <View style={styles.actionButtonsContainer}>
-                                            <TouchableOpacity
+                                            {/* <TouchableOpacity
                                                 style={[
                                                     styles.quickAddOption,
                                                     showCategoryTooltip && styles.quickAddOptionActive
@@ -297,7 +310,7 @@ const TodoList = () => {
                                                 onPress={() => setShowCategoryTooltip(!showCategoryTooltip)}
                                             >
                                                 <Ionicons name="bookmark" size={14} color="#6366f1" />
-                                            </TouchableOpacity>
+                                            </TouchableOpacity> */}
 
                                             <TouchableOpacity
                                                 style={[
@@ -339,33 +352,39 @@ const TodoList = () => {
                                         </View>
 
                                         {showCategoryTooltip && (
-                                            <View style={styles.categoryTooltip}>
-                                                {defaultCategories.map((category) => (
-                                                    <TouchableOpacity
-                                                        key={category.name}
-                                                        style={[
-                                                            styles.categoryTooltipItem,
-                                                            category.name === quickAddCategory && styles.categoryTooltipItemActive
-                                                        ]}
-                                                        onPress={() => {
-                                                            setQuickAddCategory(category.name);
-                                                            setShowCategoryTooltip(false);
-                                                        }}
-                                                    >
-                                                        <Ionicons
-                                                            name="bookmark"
-                                                            size={14}
-                                                            color={category.name === quickAddCategory ? '#6366f1' : '#64748b'}
-                                                        />
-                                                        <Text style={[
-                                                            styles.categoryTooltipText,
-                                                            category.name === quickAddCategory && styles.categoryTooltipTextActive
-                                                        ]}>
-                                                            {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
+                                                <ScrollView 
+                                                style={[styles.categoryTooltip, { bottom: 48 }]}
+                                                    showsVerticalScrollIndicator={false}
+                                                    bounces={false}
+                                                >
+                                                    <View style={{ padding: 8 }}>
+                                                        {defaultCategories.map((category) => (
+                                                            <TouchableOpacity
+                                                                key={category.name}
+                                                                style={[
+                                                                    styles.categoryTooltipItem,
+                                                                    category.name === quickAddCategory && styles.categoryTooltipItemActive
+                                                                ]}
+                                                                onPress={() => {
+                                                                    setQuickAddCategory(category.name);
+                                                                    setShowCategoryTooltip(false);
+                                                                }}
+                                                            >
+                                                                <Ionicons
+                                                                    name="bookmark"
+                                                                    size={14}
+                                                                    color={category.name === quickAddCategory ? '#6366f1' : '#64748b'}
+                                                                />
+                                                                <Text style={[
+                                                                    styles.categoryTooltipText,
+                                                                    category.name === quickAddCategory && styles.categoryTooltipTextActive
+                                                                ]}>
+                                                                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        ))}
+                                                    </View>
+                                                </ScrollView>
                                         )}
                                     </View>
                                 </View>
@@ -554,7 +573,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 32,
+        fontSize: 22,
         fontWeight: '800',
         color: '#1e293b',
         letterSpacing: -0.5,
@@ -619,7 +638,7 @@ const styles = StyleSheet.create({
         right: 0,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: 'rgba(255,255,255,0.95)',
     },
     quickAddGradient: {
@@ -701,12 +720,11 @@ const styles = StyleSheet.create({
     },
     categoryTooltip: {
         position: 'absolute',
-        bottom: 48,
         right: 82,
         backgroundColor: '#ffffff',
         borderRadius: 12,
-        padding: 8,
         width: 160,
+        height: 300,
         borderWidth: 1,
         borderColor: '#e2e8f0',
         shadowColor: '#000',
@@ -717,7 +735,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-        zIndex: 999,
+        zIndex: 99999,
+    },
+    categoryScrollView: {
+        flex: 1,
+    },
+    categoryScrollContent: {
+        padding: 8,
     },
     categoryTooltipItem: {
         flexDirection: 'row',

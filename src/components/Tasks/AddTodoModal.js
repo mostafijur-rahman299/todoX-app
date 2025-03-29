@@ -233,7 +233,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                                             <Text style={[
                                                 styles.priorityText,
                                                 newTask.priority === priority.name && { color: '#fff' }
-                                            ]}>{priority.name}</Text>
+                                            ]}>{priority.name.charAt(0).toUpperCase() + priority.name.slice(1)}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -262,7 +262,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                                                 <Text style={[
                                                     styles.categoryText,
                                                     newTask.category === category.name && styles.selectedCategoryText
-                                                ]}>{category.name}</Text>
+                                                ]}>{category.name.charAt(0).toUpperCase() + category.name.slice(1)}</Text>
                                             </TouchableOpacity>
                                         ))}
                                     </View>

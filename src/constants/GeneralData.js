@@ -48,6 +48,21 @@ export const defaultCategories = [
   },
   {
     id: 5,
+    name: "home",
+    color: "#0000FF"
+  },
+  {
+    id: 6,
+    name: "travel",
+    color: "#0000FF"
+  },
+  {
+    id: 7,
+    name: "education",
+    color: "#0000FF"
+  },
+  {
+    id: 8,
     name: "other",
     color: "#808080"
   }

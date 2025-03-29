@@ -1,15 +1,12 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Today from '@/screens/Tasks/Today';
-import Upcomming from '@/screens/Tasks/Upcomming';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 
 export default function Tasks() {
-    const navigation = useNavigation();
 
     return (
         <Tab.Navigator
@@ -43,25 +40,12 @@ export default function Tasks() {
             }}
         >
             <Tab.Screen
-                name="Today"
+                name="Task"
                 component={Today}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons
                             name={focused ? 'today' : 'today-outline'}
-                            size={28}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="Upcomming"
-                component={Upcomming}
-                options={{
-                    tabBarIcon: ({ focused, color, size }) => (
-                        <Ionicons
-                            name={focused ? 'calendar' : 'calendar-outline'}
                             size={28}
                             color={color}
                         />
