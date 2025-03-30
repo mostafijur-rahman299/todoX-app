@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.mahmudsajib01.TodoX"
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
@@ -28,9 +29,16 @@
       [
         "expo-font",
         {
-          "fonts": ["./src/assets/fonts/NicoMoji-Regular.ttf"]
+          "fonts": [
+            "./src/assets/fonts/NicoMoji-Regular.ttf"
+          ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ca0e863d-b4b8-42f1-b309-6369323dcbec"
+      }
+    }
   }
 }

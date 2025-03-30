@@ -1,4 +1,4 @@
-import { StyleSheet, Platform, StatusBar, View } from 'react-native';
+import { StyleSheet, Platform, StatusBar, View, SafeAreaView } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import DrawerNavigation from './src/navigation/DrawerNavigation';
+import { colors } from '@/constants/Colors';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,13 +26,20 @@ export default function App() {
   }
 
   return (
-    <Provider store={store}>
-      <NavigationContainer>
-        <View style={styles.container}>
-          <DrawerNavigation />
-        </View>
-      </NavigationContainer>
-    </Provider>
+    <>
+      <Provider store={store}>
+        <StatusBar 
+          barStyle="light-content" 
+          backgroundColor={colors.primary}
+          translucent={Platform.OS === 'android'}
+        />
+        <NavigationContainer>
+          <SafeAreaView style={styles.container}>
+            <DrawerNavigation />
+          </SafeAreaView>
+        </NavigationContainer>
+      </Provider>
+    </>
   );
 }
 
