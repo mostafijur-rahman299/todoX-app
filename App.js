@@ -3,13 +3,9 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Tasks from '@/navigation/Tasks';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import DrawerNavigation from './src/navigation/DrawerNavigation';
-
-const Stack = createNativeStackNavigator();
 
 SplashScreen.preventAutoHideAsync();
 

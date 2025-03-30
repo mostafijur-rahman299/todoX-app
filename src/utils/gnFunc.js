@@ -12,5 +12,7 @@ export const generateId = (length = 16) => {
     return `${timestamp}-${result}`;
 };
 
-
+export const randomColor = () => {
+    return '#' + Math.floor(Math.random()*16777215).toString(16);
+};
 

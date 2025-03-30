@@ -3,53 +3,68 @@ import { View, StyleSheet, Text } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-// Import your screens here
-import HomeScreen from '../screens/HomeScreen';
-// import ProfileScreen from '../screens/ProfileScreen';
-// import SettingsScreen from '../screens/SettingsScreen';
+import { colors } from '@/constants/Colors';
+import Tasks from '@/navigation/Tasks';
+import Categories from '@/screens/Category';
+import BuyMeCoffee from '@/screens/ByMeCoffee';
+import Feedback from '@/screens/Feedback';
 
 const Drawer = createDrawerNavigator();
 
 const CustomDrawerContent = (props) => {
   return (
     <DrawerContentScrollView {...props} style={styles.drawerContent}>
-      {/* Header/Profile Section */}
-      <View style={styles.profileSection}>
-        <View style={styles.profilePicContainer}>
-          <Icon name="account-circle" size={70} color="#666" />
-        </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john@example.com</Text>
-        </View>
+      {/* App Header */}
+      <View style={styles.drawerHeader}>
+        <Icon name="checkbox-marked-circle-outline" size={40} color={colors.primary} />
+        <Text style={styles.appTitle}>Task Manager</Text>
+        <Text style={styles.appSubtitle}>Organize your day</Text>
+      </View>
+      
+      {/* Main Navigation */}
+      <View style={styles.section}>
+        <DrawerItem
+          icon={({ color, size }) => (
+            <Icon name="format-list-checks" color={color} size={size} />
+          )}
+          label="My Tasks"
+          onPress={() => props.navigation.navigate('tasks')}
+          style={styles.drawerItem}
+          labelStyle={styles.drawerLabel}
+        />
+        <DrawerItem
+          icon={({ color, size }) => (
+            <Icon name="shape" color={color} size={size} />
+          )}
+          label="Categories"
+          onPress={() => props.navigation.navigate('categories')}
+          style={styles.drawerItem}
+          labelStyle={styles.drawerLabel}
+        />
       </View>
 
-      {/* Drawer Items */}
-      <DrawerItem
-        icon={({ color, size }) => (
-          <Icon name="home" color={color} size={size} />
-        )}
-        label="Home"
-        onPress={() => props.navigation.navigate('Home')}
-        style={styles.drawerItem}
-      />
-      {/* <DrawerItem
-        icon={({ color, size }) => (
-          <Icon name="account" color={color} size={size} />
-        )}
-        label="Profile"
-        onPress={() => props.navigation.navigate('Profile')}
-        style={styles.drawerItem}
-      />
-      <DrawerItem
-        icon={({ color, size }) => (
-          <Icon name="cog" color={color} size={size} />
-        )}
-        label="Settings"
-        onPress={() => props.navigation.navigate('Settings')}
-        style={styles.drawerItem}
-      /> */}
+      {/* Support Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>SUPPORT</Text>
+        <DrawerItem
+          icon={({ color, size }) => (
+            <Icon name="coffee" color={color} size={size} />
+          )}
+          label="Buy me a coffee"
+          onPress={() => props.navigation.navigate('buy-me-coffee')}
+          style={styles.drawerItem}
+          labelStyle={styles.drawerLabel}
+        />
+        <DrawerItem
+          icon={({ color, size }) => (
+            <Icon name="help-circle" color={color} size={size} />
+          )}
+          label="Help & Support"
+          onPress={() => props.navigation.navigate('feedback')}
+          style={styles.drawerItem}
+          labelStyle={styles.drawerLabel}
+        />
+      </View>
     </DrawerContentScrollView>
   );
 };
@@ -64,11 +79,28 @@ const DrawerNavigation = () => {
         headerTintColor: '#fff',
         drawerActiveTintColor: '#6200ee',
         drawerInactiveTintColor: '#666',
+        headerStyle: {
+          backgroundColor: colors.primary,
+        },
+        headerTitleStyle: {
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: "white",
+        },
       }}
     >
-      <Drawer.Screen name="Home" component={HomeScreen} />
-      {/* <Drawer.Screen name="Profile" component={ProfileScreen} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} /> */}
+      <Drawer.Screen name="tasks" component={Tasks} options={{
+        headerShown: false,
+      }} />
+      <Drawer.Screen name="categories" component={Categories} options={{
+        headerTitle: 'Categories',
+      }} />
+      <Drawer.Screen name="buy-me-coffee" component={BuyMeCoffee} options={{
+        headerTitle: 'Buy me a coffee',
+      }} />
+      <Drawer.Screen name="feedback" component={Feedback} options={{
+        headerTitle: 'Help & Support',
+      }} />
     </Drawer.Navigator>
   );
 };
@@ -76,39 +108,56 @@ const DrawerNavigation = () => {
 const styles = StyleSheet.create({
   drawer: {
     backgroundColor: '#fff',
-    width: 280,
+    width: 300, // Slightly wider drawer
   },
   drawerContent: {
     flex: 1,
   },
-  profileSection: {
-    padding: 20,
+  drawerHeader: {
+    padding: 24,
+    paddingTop: 40,
     borderBottomWidth: 1,
-    borderBottomColor: '#f4f4f4',
-  },
-  profilePicContainer: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  profileInfo: {
+    borderBottomColor: '#f0f0f0',
+    marginBottom: 8,
     alignItems: 'center',
   },
-  userName: {
-    fontSize: 18,
+  appTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.primary,
+    marginTop: 8,
   },
-  userEmail: {
+  appSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.lightGray,
+    marginTop: 4,
+  },
+  section: {
+    marginTop: 12,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.lightGray,
+    marginLeft: 16,
+    marginBottom: 8,
+    letterSpacing: 1,
   },
   drawerItem: {
-    borderRadius: 8,
-    marginHorizontal: 8,
+    borderRadius: 12,
+    marginHorizontal: 12,
     marginVertical: 4,
+    backgroundColor: '#f8f8f8',
+  },
+  drawerLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#333',
   },
   header: {
     backgroundColor: '#6200ee',
+    elevation: 0, // Removes shadow on Android
+    shadowOpacity: 0, // Removes shadow on iOS
   },
 });
 

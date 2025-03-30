@@ -14,8 +14,8 @@ function Filter({ openModal, closeModal }) {
     const [showCompletedTasks, setShowCompletedTasks] = useState(true);
     const [showActiveTasks, setShowActiveTasks] = useState(true);
     const dispatch = useDispatch();
-    const retainedTasks = useSelector((state) => state.tasks.task_list);
-    const displayTasks = useSelector((state) => state.tasks.display_tasks);
+    const retainedTasks = useSelector((state) => state.task.task_list);
+    const displayTasks = useSelector((state) => state.task.display_tasks);
 
     const categories = defaultCategories
 

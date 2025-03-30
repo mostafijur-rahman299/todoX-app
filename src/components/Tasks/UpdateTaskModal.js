@@ -26,7 +26,7 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
         completed_timestamp: null,
         sub_tasks: []
     });
-    const tasks = useSelector(state => state.tasks.task_list);
+    const tasks = useSelector(state => state.task.task_list);
 
     useEffect(() => {
         if (isModalVisible && selectedTask) {

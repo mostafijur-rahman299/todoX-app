@@ -25,7 +25,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
         completed_timestamp: null,
         sub_tasks: []
     });
-    const tasks = useSelector(state => state.tasks.task_list);
+    const tasks = useSelector(state => state.task.task_list);
     const [keyboardHeight] = useState(new Animated.Value(0));
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 

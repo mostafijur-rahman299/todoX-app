@@ -37,7 +37,7 @@ const TodoList = () => {
     const [showCategoryTooltip, setShowCategoryTooltip] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-    const tasks = useSelector((state) => state.tasks.display_tasks);
+    const tasks = useSelector((state) => state.task.display_tasks);
 
     // Load tasks from storage
     useEffect(() => {

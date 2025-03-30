@@ -54,7 +54,7 @@ export default function Tasks() {
             />
             <Tab.Screen
                 name="Menu"
-                options={{
+                options={({ navigation }) => ({
                     tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons
                             name="menu-outline"
@@ -63,9 +63,9 @@ export default function Tasks() {
                         />
                     ),
                     tabBarButton: (props) => (
-                        <Pressable {...props} onPress={() => {console.log('Menu pressed')}} />
+                        <Pressable {...props} onPress={() => navigation.openDrawer()} />
                     ),
-                }}
+                })}
                 children={() => null} 
             />
         </Tab.Navigator>
