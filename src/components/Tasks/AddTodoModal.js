@@ -3,7 +3,7 @@ import { Modal, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedbac
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { priorities, defaultCategories } from '@/constants/GeneralData';
+import { priorities } from '@/constants/GeneralData';
 import { generateId } from '@/utils/gnFunc';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTask } from '@/store/Task/task';
@@ -19,7 +19,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
         title: "",
         timestamp: new Date(),
         description: "", 
-        category: defaultCategories[4].name,
+        category: "other",
         priority: priorities[0].name,
         is_completed: false,
         completed_timestamp: null,
@@ -28,7 +28,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
     const tasks = useSelector(state => state.task.task_list);
     const [keyboardHeight] = useState(new Animated.Value(0));
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
+    const categories = useSelector(state => state.category.categories);
     // Modify keyboard handling
     useEffect(() => {
         const keyboardWillShow = Keyboard.addListener(
@@ -245,7 +245,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                                     style={styles.categoryScrollView}
                                 >
                                     <View style={styles.categoryContainer}>
-                                        {defaultCategories.map((category) => (
+                                        {categories.map((category) => (
                                             <TouchableOpacity
                                                 key={category.name}
                                                 style={[

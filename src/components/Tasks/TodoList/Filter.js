@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDisplayTasks } from '@/store/Task/task';
-import { priorities, defaultCategories } from '@/constants/GeneralData';
 
 
 function Filter({ openModal, closeModal }) {
@@ -16,8 +15,7 @@ function Filter({ openModal, closeModal }) {
     const dispatch = useDispatch();
     const retainedTasks = useSelector((state) => state.task.task_list);
     const displayTasks = useSelector((state) => state.task.display_tasks);
-
-    const categories = defaultCategories
+    const categories = useSelector((state) => state.category.categories);
 
 
     // Reset all filters

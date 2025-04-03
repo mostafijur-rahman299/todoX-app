@@ -55,6 +55,7 @@ const Categories = () => {
     const hasAssociatedTasks = tasks.some(task => task.category === categoryName);
     
     if (hasAssociatedTasks) {
+      console.log("categoryId", categoryId);
       setCategoryToDelete(categoryId);
       setShowWarning(true);
     } else {
@@ -230,7 +231,7 @@ const Categories = () => {
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  onPress={handleConfirmDelete}
+                  onPress={async () => await handleConfirmDelete()}
                   style={styles.confirmButton}
                 >
                   <LinearGradient

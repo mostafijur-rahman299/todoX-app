@@ -5,7 +5,7 @@ import { Modal, View, Text, TextInput,
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { priorities, defaultCategories } from '@/constants/GeneralData';
+import { priorities } from '@/constants/GeneralData';
 import { useDispatch, useSelector } from 'react-redux';
 import { setTasks } from '@/store/Task/task';
 import { storeData } from '@/utils/storage';
@@ -20,20 +20,21 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
         title: "",
         timestamp: new Date(),
         description: "",
-        category: defaultCategories[4]?.name || 'other',
+        category: "other",
         priority: priorities[0]?.name || 'low',
         is_completed: false,
         completed_timestamp: null,
         sub_tasks: []
     });
     const tasks = useSelector(state => state.task.task_list);
+    const categories = useSelector(state => state.category.categories);
 
     useEffect(() => {
         if (isModalVisible && selectedTask) {
             setNewTask({
                 ...selectedTask,
                 timestamp: new Date(selectedTask.timestamp),
-                category: selectedTask.category || defaultCategories[4]?.name || 'other',
+                category: selectedTask.category || "other",
                 priority: selectedTask.priority || priorities[0]?.name || 'low',
                 sub_tasks: selectedTask.sub_tasks || []
             });
@@ -309,7 +310,7 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
                                     style={styles.categoryScrollView}
                                 >
                                     <View style={styles.categoryContainer}>
-                                        {defaultCategories.map((category) => (
+                                        {categories.map((category) => (
                                             <TouchableOpacity
                                                 key={category.name}
                                                 style={[

@@ -28,7 +28,7 @@ import LottieView from 'lottie-react-native';
 const TodoList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [quickAddText, setQuickAddText] = useState('');
-    const [quickAddCategory, setQuickAddCategory] = useState(defaultCategories[4].name);
+    const [quickAddCategory, setQuickAddCategory] = useState("");
     const [quickAddPriority, setQuickAddPriority] = useState(priorities[0].name);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
@@ -62,7 +62,7 @@ const TodoList = () => {
             title: quickAddText,
             timestamp: new Date().toISOString(),
             description: "",
-            category: quickAddCategory,
+            category: quickAddCategory || "other",
             priority: quickAddPriority,
             is_completed: false,
             completed_timestamp: null,
@@ -146,7 +146,6 @@ const TodoList = () => {
                 item={item}
                 setSelectedTask={setSelectedTask}
                 setIsUpdateModalVisible={setIsUpdateModalVisible}
-                tasks={tasks}
             />
         );
     }, [completedTasks.length]);
@@ -169,7 +168,7 @@ const TodoList = () => {
         ...incompleteTasks,
         ...(completedTasks.length > 0 ? [
             { id: 'completed_header', type: 'header', title: 'Completed Tasks' },
-            ...completedTasks.map(task => ({ ...task, id: `completed-${task.id}` }))
+            ...completedTasks.map(task => ({ ...task, id: `${task.id}` }))
         ] : [])
     ];
 
@@ -418,30 +417,30 @@ const TodoList = () => {
 
 export default memo(TodoList);
 
-const TodoItem = memo(({ item, setSelectedTask, setIsUpdateModalVisible, tasks }) => {
+const TodoItem = memo(({ item, setSelectedTask, setIsUpdateModalVisible }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const dispatch = useDispatch();
+    const tasks = useSelector(state => state.task.task_list);
 
     const toggleExpand = useCallback(() => {
         setIsExpanded(!isExpanded);
     }, [isExpanded]);
 
-    const toggleComplete = (item, isSubTask = false, subItem = null) => {
+    const toggleComplete = useCallback((item, isSubTask = false, subItem = null) => {
         const updatedTasks = tasks?.map(task => {
             if (task.id === item.id) {
-                if (isSubTask === true) {
+                if (isSubTask) {
                     return {
                         ...task,
-                        sub_tasks: task.sub_tasks.map(subTask => {
-                            if (subTask.id === subItem.id) {
-                                return {
+                        sub_tasks: task.sub_tasks.map(subTask => 
+                            subTask.id === subItem.id
+                                ? {
                                     ...subTask,
                                     is_completed: !subTask.is_completed,
                                     completed_timestamp: new Date().toISOString()
-                                };
-                            }
-                            return subTask;
-                        })
+                                }
+                                : subTask
+                        )
                     };
                 } else {
                     return {
@@ -454,9 +453,11 @@ const TodoItem = memo(({ item, setSelectedTask, setIsUpdateModalVisible, tasks }
             return task;
         });
 
+        console.log('updatedTasks', updatedTasks);
+
         dispatch(setTasks(updatedTasks));
         storeData('task_list', updatedTasks);
-    }
+    }, [tasks, dispatch]);
 
     const truncateText = (text, maxLength = 40) => {
         if (text.length <= maxLength) return text;
@@ -501,12 +502,14 @@ const TodoItem = memo(({ item, setSelectedTask, setIsUpdateModalVisible, tasks }
                         <Text style={[styles.taskTitle, item.is_completed && styles.completedText]}>
                             {truncateText(item.title)}
                         </Text>
-                        <View style={styles.taskTags}>
-                            <View style={styles.categoryTag}>
-                                <Ionicons name="bookmark-outline" size={9} color="#64748b" />
-                                <Text style={styles.categoryTagText}>{item.category}</Text>
+                        {item.category !== 'other' && (
+                            <View style={styles.taskTags}>
+                                <View style={styles.categoryTag}>
+                                    <Ionicons name="bookmark-outline" size={9} color="#64748b" />
+                                    <Text style={styles.categoryTagText}>{item.category.charAt(0).toUpperCase() + item.category.slice(1)}</Text>
+                                </View>
                             </View>
-                        </View>
+                        )}
                     </View>
 
                     {item?.sub_tasks?.length > 0 && (
