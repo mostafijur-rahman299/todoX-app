@@ -5,7 +5,8 @@ export const storeData = async (key, value) => {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
     } catch (e) {
-      // saving error
+      console.error("Error storing data with key '"+ key +"':", e);
+      throw e; // Re-throw the error so caller can handle if needed
     }
 };
 
@@ -14,6 +15,7 @@ export const getData = async (key) => {
       const jsonValue = await AsyncStorage.getItem(key);
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch (e) {
-      // error reading value
+      console.error("Error getting data with key '"+ key +"':", e);
+      throw e; // Re-throw the error so caller can handle if needed
     }
 };

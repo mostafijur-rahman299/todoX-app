@@ -3,8 +3,8 @@ import { Modal, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedbac
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { priorities } from '@/constants/GeneralData';
-import { generateId } from '@/utils/gnFunc';
+import { priorities, defaultCategories } from '@/constants/GeneralData'; // Added defaultCategories, it was used later
+import { generateId, formatDate } from '@/utils/gnFunc'; // Import formatDate
 import { useDispatch, useSelector } from 'react-redux';
 import { addTask } from '@/store/Task/task';
 import { storeData } from '@/utils/storage';
@@ -89,19 +89,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
         });
     };
 
-    const formatDate = (date) => {
-        if (!(date instanceof Date)) {
-            date = new Date(date);
-        }
-        return date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-    };
+    // formatDate is now imported from '@/utils/gnFunc'
 
     const handleDateTimeChange = (event, selectedDate) => {
         if (Platform.OS === 'android') {

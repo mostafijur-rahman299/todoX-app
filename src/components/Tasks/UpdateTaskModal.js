@@ -5,11 +5,11 @@ import { Modal, View, Text, TextInput,
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { priorities } from '@/constants/GeneralData';
+import { priorities, defaultCategories } from '@/constants/GeneralData'; // Added defaultCategories
 import { useDispatch, useSelector } from 'react-redux';
 import { setTasks } from '@/store/Task/task';
 import { storeData } from '@/utils/storage';
-import { generateId } from '@/utils/gnFunc';
+import { generateId, formatDate } from '@/utils/gnFunc'; // Import formatDate
 
 const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask }) => {
     const dispatch = useDispatch();
@@ -138,24 +138,7 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
         });
     };
 
-    const formatDate = (date) => {
-        try {
-            if (!(date instanceof Date)) {
-                date = new Date(date);
-            }
-            return date.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-        } catch (error) {
-            console.error('Date formatting error:', error);
-            return 'Invalid Date';
-        }
-    };
+    // formatDate is now imported from '@/utils/gnFunc'
 
     const handleDateTimeChange = (event, selectedDate) => {
         if (!selectedDate) {

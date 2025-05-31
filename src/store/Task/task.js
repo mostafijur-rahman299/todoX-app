@@ -18,12 +18,23 @@ const taskSlice = createSlice({
 
     addTask(state, action) {
       state.task_list.push(action.payload);
+      // Consider if display_tasks should always get the new task,
+      // or if it should be re-derived based on current filters.
+      // For now, adding to both as per original logic.
       state.display_tasks.push(action.payload);
     },
 
     toggleCompleteTask(state, action) {
-      state.task_list = action.payload;
-      state.display_tasks = action.payload;
+      const taskId = action.payload; // Assuming payload is the taskId
+      const toggle = (task) => {
+        if (task.id === taskId) {
+          task.is_completed = !task.is_completed;
+          task.completed_timestamp = task.is_completed ? new Date().toISOString() : null;
+        }
+      };
+      state.task_list.forEach(toggle);
+      state.display_tasks.forEach(toggle); // Also toggle in display_tasks for consistency here.
+                                          // A more robust solution might involve re-filtering.
     },
   },
 });

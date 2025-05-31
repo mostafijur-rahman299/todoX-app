@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native'; // Import Alert
 import TodoList from '@/components/Tasks/TodoList';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
@@ -41,6 +41,10 @@ const Today = () => {
         }
       } catch (error) {
         console.error('Error managing default categories:', error);
+        Alert.alert(
+          'Initialization Error',
+          'Could not initialize app categories due to a storage issue. Please try restarting the app.'
+        );
       }
     };
 
