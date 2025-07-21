@@ -8,10 +8,13 @@ import Tasks from '@/navigation/Tasks';
 import Categories from '@/screens/Category';
 import BuyMeCoffee from '@/screens/ByMeCoffee';
 import Feedback from '@/screens/Feedback';
+import { useAuth } from '@/context/AuthContext';
 
 const Drawer = createDrawerNavigator();
 
 const CustomDrawerContent = (props) => {
+  const { logout } = useAuth();
+  
   return (
     <DrawerContentScrollView {...props} style={styles.drawerContent}>
       {/* App Header */}
@@ -63,6 +66,19 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('feedback')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
+        />
+      </View>
+      
+      {/* Logout Section */}
+      <View style={styles.section}>
+        <DrawerItem
+          icon={({ color, size }) => (
+            <Icon name="logout" color={colors.error} size={size} />
+          )}
+          label="Logout"
+          onPress={() => logout()}
+          style={[styles.drawerItem, styles.logoutItem]}
+          labelStyle={[styles.drawerLabel, { color: colors.error }]}
         />
       </View>
     </DrawerContentScrollView>
@@ -158,6 +174,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#6200ee',
     elevation: 0, // Removes shadow on Android
     shadowOpacity: 0, // Removes shadow on iOS
+  },
+  logoutItem: {
+    marginTop: 'auto',
   },
 });
 
