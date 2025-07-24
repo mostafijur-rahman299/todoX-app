@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { priorities } from '@/constants/GeneralData';
 import { useDispatch, useSelector } from 'react-redux';
 import { setTasks } from '@/store/Task/task';
-import { storeData } from '@/utils/storage';
+import { storeDataLocalStorage } from '@/utils/storage';
 import { generateId } from '@/utils/gnFunc';
 
 const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask }) => {
@@ -106,7 +106,7 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
     const handleDeleteTask = () => {
         if (!newTask?.id) return;
         const updatedTasks = tasks.filter(task => task.id !== newTask.id);
-        storeData('task_list', updatedTasks);
+        storeDataLocalStorage('task_list', updatedTasks);
         dispatch(setTasks(updatedTasks));
         setIsModalVisible(false);
     };
@@ -122,7 +122,7 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
         };
 
         const updatedTasks = tasks.map(task => task.id === newTask.id ? data : task);
-        storeData('task_list', updatedTasks);
+        storeDataLocalStorage('task_list', updatedTasks);
         dispatch(setTasks(updatedTasks));
         
         setIsModalVisible(false);
@@ -152,7 +152,6 @@ const UpdateTaskModal = memo(({ isModalVisible, setIsModalVisible, selectedTask 
                 hour12: true
             });
         } catch (error) {
-            console.error('Date formatting error:', error);
             return 'Invalid Date';
         }
     };

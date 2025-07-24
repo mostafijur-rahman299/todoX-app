@@ -10,6 +10,7 @@ export default function Tasks() {
 
     return (
         <Tab.Navigator
+            initialRouteName='today'
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: true,
@@ -40,7 +41,7 @@ export default function Tasks() {
             }}
         >
             <Tab.Screen
-                name="Task"
+                name="today"
                 component={Today}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (

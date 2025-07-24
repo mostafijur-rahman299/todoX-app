@@ -21,7 +21,7 @@ import { addTask, setTasks } from '@/store/Task/task';
 import UpdateTaskModal from '../UpdateTaskModal';
 import { generateId } from '@/utils/gnFunc';
 import { priorities, defaultCategories } from '@/constants/GeneralData';
-import { storeData, getData } from '@/utils/storage';
+import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 
@@ -43,7 +43,7 @@ const TodoList = () => {
     useEffect(() => {
         const loadTasks = async () => {
             try {
-                const storedTasks = await getData('task_list') || [];
+                const storedTasks = await getDataLocalStorage('task_list') || [];
                 if (storedTasks) {
                     dispatch(setTasks(storedTasks));
                 }
@@ -72,7 +72,7 @@ const TodoList = () => {
         try {
             dispatch(addTask(newTask));
             const updatedTasks = [...tasks, newTask];
-            storeData('task_list', updatedTasks);
+            storeDataLocalStorage('task_list', updatedTasks);
             setQuickAddText('');
 
             // Provide haptic feedback if available
@@ -104,7 +104,7 @@ const TodoList = () => {
     const handleClearCompleted = () => {
         const updatedTasks = tasks?.filter(task => !task.is_completed);
         dispatch(setTasks(updatedTasks));
-        storeData('task_list', updatedTasks);
+        storeDataLocalStorage('task_list', updatedTasks);
     };
 
     const handleClearAlert = () => {
@@ -192,7 +192,6 @@ const TodoList = () => {
                         <View style={styles.contentContainer}>
                             <View style={styles.headerContainer}>
                                 <View>
-                                    <Text style={styles.headerTitle}>Task Manager</Text>
                                     <View style={styles.taskCounterContainer}>
                                         <View style={styles.taskCountBadge}>
                                             <Ionicons name="rocket-outline" size={16} color="#6366f1" />
@@ -209,24 +208,15 @@ const TodoList = () => {
                                     </View>
                                 </View>
 
-                                <View style={styles.headerActions}>
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, styles.activeActionButton]}
-                                        onPress={() => setShowFilterModal(true)}
-                                    >
-                                        <Ionicons
-                                            name='options'
-                                            size={24}
-                                            color='#ffffff'
-                                        />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, styles.addButton]}
-                                        onPress={() => setIsModalVisible(true)}
-                                    >
-                                        <Ionicons name="add" size={24} color="#ffffff" />
-                                    </TouchableOpacity>
+                                <View>
+                                    <View style={styles.taskCounterContainer}>
+                                        <TouchableOpacity style={styles.taskCountBadge} onPress={() => setShowFilterModal(true)}>
+                                            <Ionicons name="filter" size={16} color="#6366f1" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.taskCountBadge, styles.completedBadge]} onPress={() => setIsModalVisible(true)}>
+                                            <Ionicons name="add" size={16} color="red" />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             </View>
 
@@ -239,10 +229,11 @@ const TodoList = () => {
                                             loop
                                             style={styles.emptyStateAnimation}
                                         />
-                                        <Text style={styles.emptyStateTitle}>No tasks yet</Text>
-                                        <Text style={styles.emptyStateText}>
-                                            Add your first task using the quick add bar below or the + button
-                                        </Text>
+                                        <View style={styles.emptyStateTextContainer}>
+                                            <Text style={styles.emptyStateText}>
+                                                Add your first task using the quick add bar below or the + button
+                                            </Text>
+                                        </View>
                                     </View>
                                 ) : (
                                     <FlatList
@@ -453,10 +444,8 @@ const TodoItem = memo(({ item, setSelectedTask, setIsUpdateModalVisible }) => {
             return task;
         });
 
-        console.log('updatedTasks', updatedTasks);
-
         dispatch(setTasks(updatedTasks));
-        storeData('task_list', updatedTasks);
+        storeDataLocalStorage('task_list', updatedTasks);
     }, [tasks, dispatch]);
 
     const truncateText = (text, maxLength = 40) => {
@@ -567,10 +556,10 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
     },
     headerContainer: {
-        paddingTop: Platform.OS === 'ios' ? 60 : 20,
+        paddingTop: 5,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -943,6 +932,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 24,
         paddingHorizontal: 40,
+    },
+    emptyStateTextContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 40,
+        marginTop: 80,
+        gap: 10
     },
     completedText: {
         textDecorationLine: 'line-through',

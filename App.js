@@ -1,7 +1,7 @@
 import { StyleSheet, Platform, StatusBar, View, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
@@ -9,6 +9,11 @@ import DrawerNavigation from './src/navigation/DrawerNavigation';
 import AuthNavigation from './src/navigation/AuthNavigation';
 import { colors } from '@/constants/Colors';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import Tasks from './src/navigation/Tasks';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage';
+
+const Stack = createNativeStackNavigator();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,11 +36,7 @@ export default function App() {
     <>
       <Provider store={store}>
         <AuthProvider>
-          <StatusBar 
-            barStyle="light-content" 
-            backgroundColor={colors.primary}
-            translucent={Platform.OS === 'android'}
-          />
+          <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
           <NavigationContainer>
             <AppNavigator />
           </NavigationContainer>
@@ -47,6 +48,21 @@ export default function App() {
 
 const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+
+  useEffect(() => {
+    const checkFirstLaunch = async () => {
+      const hasLaunched = await getDataLocalStorage('hasLaunched');
+      if (hasLaunched === null) {
+        await storeDataLocalStorage('hasLaunched', 'true');
+        setIsFirstLaunch(true);
+      } else {
+        setIsFirstLaunch(false);
+      }
+    };
+
+    checkFirstLaunch();
+  }, []);
   
   if (isLoading) {
     return (
@@ -57,8 +73,12 @@ const AppNavigator = () => {
   }
   
   return (
-    <SafeAreaView style={styles.container}>
-      {isAuthenticated ? <DrawerNavigation /> : <AuthNavigation />}
+    <SafeAreaView style={styles.container} initialRouteName={isFirstLaunch ? 'Auth' : 'Task'}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Auth" component={AuthNavigation} />
+        <Stack.Screen name="Drawer" component={DrawerNavigation} />
+        <Stack.Screen name="Task" component={Tasks} />
+      </Stack.Navigator>
     </SafeAreaView>
   );
 }

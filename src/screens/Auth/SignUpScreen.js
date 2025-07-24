@@ -58,10 +58,10 @@ const SignInScreen = () => {
 					<View
 						style={styles.headerContainer}>
 						<CustomText style={styles.title}>
-							Welcome Back
+							Create Account
 						</CustomText>
 						<CustomText style={styles.subtitle}>
-							Sign in to streamline your day
+							Sign up to streamline your day
 						</CustomText>
 					</View>
 
@@ -118,18 +118,18 @@ const SignInScreen = () => {
 						<CustomBigButton
 							handleSignIn={handleSignIn}
 							isLoading={isLoading}
-							buttonText="Sign In"
+							buttonText="Sign Up"
 						/>
 
 						<View
 							style={styles.signupContainer}>
 							<CustomText style={styles.signupText}>
-								New to TodoX?{" "}
+								Already have an account?{" "}
 							</CustomText>
 							<TouchableOpacity
-								onPress={() => navigation.navigate("SignUp")}>
+								onPress={() => navigation.navigate("SignIn")}>
 								<CustomText style={styles.signupLink}>
-									Create Account
+									Sign In
 								</CustomText>
 							</TouchableOpacity>
 						</View>

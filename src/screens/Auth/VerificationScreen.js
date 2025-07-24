@@ -159,7 +159,6 @@ const VerificationScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 40,
   },
   keyboardAvoidingView: {
     flex: 1,

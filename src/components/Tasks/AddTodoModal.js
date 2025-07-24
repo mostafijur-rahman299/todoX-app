@@ -7,9 +7,7 @@ import { priorities } from '@/constants/GeneralData';
 import { generateId } from '@/utils/gnFunc';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTask } from '@/store/Task/task';
-import { storeData } from '@/utils/storage';
-
-const { width, height } = Dimensions.get('window');
+import { storeDataLocalStorage } from '@/utils/storage';
 
 const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
     const dispatch = useDispatch();
@@ -74,7 +72,7 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
             timestamp: newTask.timestamp.toISOString()
         }));
 
-        storeData('task_list', [...tasks, newTask]);
+        storeDataLocalStorage('task_list', [...tasks, newTask]);
         
         setIsModalVisible(false);
         setNewTask({
@@ -172,14 +170,14 @@ const AddTodoModal = ({ isModalVisible, setIsModalVisible }) => {
                         <View style={styles.modalContent}>
                             <View style={styles.modalHandle} />
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Create New Task</Text>
-                                <TouchableOpacity 
+                                <Text style={styles.modalTitle}>New Task</Text>
+                                {/* <TouchableOpacity 
                                     onPress={() => setIsModalVisible(false)}
                                     style={styles.closeButton}
                                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                 >
                                     <Ionicons name="close" size={22} color="#1E293B" />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
 
                             <ScrollView 
@@ -324,9 +322,9 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#F8FAFF',
-        borderTopLeftRadius: 35,
-        borderTopRightRadius: 35,
+        backgroundColor: '#74515191',
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
         padding: 20,
         maxHeight: Platform.OS === 'ios' ? '85%' : '90%',
     },
@@ -351,13 +349,14 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#1E293B',
+        color: 'white',
         letterSpacing: 0.5,
+        alignSelf: 'center'
     },
     closeButton: {
         padding: 6,
         borderRadius: 10,
-        backgroundColor: '#F1F5F9',
+        // backgroundColor: '#F1F5F9',
     },
     inputContainer: {
         flexDirection: 'row',
