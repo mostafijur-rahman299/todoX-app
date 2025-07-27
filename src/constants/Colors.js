@@ -1,94 +1,93 @@
 /**
  * Enhanced color system for TodoX app
- * Provides consistent, accessible, and modern color palette
- * with support for light/dark themes and semantic color usage
+ * Dark theme design matching the provided screenshots
  */
 
 export const colors = {
-  // Primary brand colors - Modern gradient-friendly palette
-  primary: '#6366F1', // Indigo - more modern and professional
-  primaryDark: '#4F46E5',
-  primaryLight: '#8B5CF6',
-  secondary: '#EC4899', // Pink accent for gradients
-  secondaryDark: '#DB2777',
-  secondaryLight: '#F472B6',
+  // Dark theme primary colors
+  primary: '#FF6B6B', // Red accent color from screenshots
+  primaryDark: '#E55555',
+  primaryLight: '#FF8E8E',
+  secondary: '#4ECDC4', // Teal accent
+  secondaryDark: '#3BB5AD',
+  secondaryLight: '#6FD5CE',
   
-  // Neutral colors - Improved contrast and readability
-  background: '#FAFBFC',
-  backgroundSecondary: '#F1F5F9',
-  surface: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
-  overlay: 'rgba(15, 23, 42, 0.6)',
+  // Dark theme backgrounds
+  background: '#1A1A1A', // Main dark background
+  backgroundSecondary: '#2A2A2A', // Secondary dark background
+  surface: '#2D2D2D', // Card/surface background
+  surfaceElevated: '#3A3A3A', // Elevated surface
+  overlay: 'rgba(0, 0, 0, 0.8)',
   
-  // Text colors - Better hierarchy and accessibility
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  textTertiary: '#64748B',
-  textQuaternary: '#94A3B8',
+  // Dark theme text colors
+  textPrimary: '#FFFFFF', // Primary white text
+  textSecondary: '#B0B0B0', // Secondary gray text
+  textTertiary: '#808080', // Tertiary gray text
+  textQuaternary: '#606060', // Quaternary gray text
   textOnPrimary: '#FFFFFF',
   textOnDark: '#FFFFFF',
-  textPlaceholder: '#94A3B8',
+  textPlaceholder: '#666666',
   
-  // Semantic colors - Status and feedback
-  success: '#059669',
-  successLight: '#D1FAE5',
-  successDark: '#047857',
-  warning: '#D97706',
-  warningLight: '#FEF3C7',
-  warningDark: '#B45309',
-  error: '#DC2626',
-  errorLight: '#FEE2E2',
-  errorDark: '#B91C1C',
-  info: '#0284C7',
-  infoLight: '#E0F2FE',
-  infoDark: '#0369A1',
+  // Status colors for dark theme
+  success: '#4CAF50',
+  successLight: '#81C784',
+  successDark: '#388E3C',
+  warning: '#FF9800',
+  warningLight: '#FFB74D',
+  warningDark: '#F57C00',
+  error: '#F44336',
+  errorLight: '#E57373',
+  errorDark: '#D32F2F',
+  info: '#2196F3',
+  infoLight: '#64B5F6',
+  infoDark: '#1976D2',
   
-  // Border and divider colors
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
-  borderDark: '#CBD5E1',
-  divider: '#F1F5F9',
+  // Border and divider colors for dark theme
+  border: '#404040',
+  borderLight: '#505050',
+  borderDark: '#303030',
+  divider: '#404040',
   
   // Task status colors
-  completed: '#059669',
-  completedBg: '#D1FAE5',
-  pending: '#D97706',
-  pendingBg: '#FEF3C7',
-  overdue: '#DC2626',
-  overdueBg: '#FEE2E2',
+  completed: '#4CAF50',
+  completedBg: 'rgba(76, 175, 80, 0.1)',
+  pending: '#FF9800',
+  pendingBg: 'rgba(255, 152, 0, 0.1)',
+  overdue: '#F44336',
+  overdueBg: 'rgba(244, 67, 54, 0.1)',
   
-  // Priority colors with backgrounds
-  highPriority: '#DC2626',
-  highPriorityBg: '#FEE2E2',
-  mediumPriority: '#D97706',
-  mediumPriorityBg: '#FEF3C7',
-  lowPriority: '#059669',
-  lowPriorityBg: '#D1FAE5',
+  // Priority colors with dark theme backgrounds
+  highPriority: '#F44336',
+  highPriorityBg: 'rgba(244, 67, 54, 0.1)',
+  mediumPriority: '#FF9800',
+  mediumPriorityBg: 'rgba(255, 152, 0, 0.1)',
+  lowPriority: '#4CAF50',
+  lowPriorityBg: 'rgba(76, 175, 80, 0.1)',
   
-  // Interactive states
-  hover: 'rgba(99, 102, 241, 0.08)',
-  pressed: 'rgba(99, 102, 241, 0.12)',
-  focus: 'rgba(99, 102, 241, 0.16)',
-  disabled: '#F1F5F9',
-  disabledText: '#CBD5E1',
+  // Interactive states for dark theme
+  hover: 'rgba(255, 255, 255, 0.08)',
+  pressed: 'rgba(255, 255, 255, 0.12)',
+  focus: 'rgba(255, 107, 107, 0.16)',
+  disabled: '#404040',
+  disabledText: '#606060',
   
-  // Shadows and elevation
+  // Shadows for dark theme
   shadow: {
-    light: 'rgba(15, 23, 42, 0.04)',
-    medium: 'rgba(15, 23, 42, 0.08)',
-    heavy: 'rgba(15, 23, 42, 0.12)',
-    colored: 'rgba(99, 102, 241, 0.2)',
+    light: 'rgba(0, 0, 0, 0.2)',
+    medium: 'rgba(0, 0, 0, 0.3)',
+    heavy: 'rgba(0, 0, 0, 0.4)',
+    colored: 'rgba(255, 107, 107, 0.3)',
   },
   
-  // Gradient combinations
+  // Gradient combinations for dark theme
   gradients: {
-    primary: ['#6366F1', '#8B5CF6'],
-    secondary: ['#EC4899', '#F472B6'],
-    success: ['#059669', '#10B981'],
-    warm: ['#F59E0B', '#EAB308'],
-    cool: ['#0284C7', '#0EA5E9'],
-    sunset: ['#F97316', '#FB923C'],
-    ocean: ['#0891B2', '#06B6D4'],
+    primary: ['#FF6B6B', '#FF8E8E'],
+    secondary: ['#4ECDC4', '#6FD5CE'],
+    success: ['#4CAF50', '#81C784'],
+    warm: ['#FF9800', '#FFB74D'],
+    cool: ['#2196F3', '#64B5F6'],
+    sunset: ['#FF5722', '#FF8A65'],
+    ocean: ['#00BCD4', '#4DD0E1'],
   },
   
   // Utility colors
@@ -96,16 +95,16 @@ export const colors = {
   black: '#000000',
   transparent: 'transparent',
   
-  // Category colors - for task categorization
+  // Category colors for dark theme
   categories: {
-    work: '#6366F1',
-    personal: '#EC4899',
-    health: '#059669',
-    finance: '#D97706',
-    education: '#7C3AED',
-    shopping: '#DC2626',
-    travel: '#0284C7',
-    other: '#64748B',
+    work: '#2196F3',
+    personal: '#E91E63',
+    health: '#4CAF50',
+    finance: '#FF9800',
+    education: '#9C27B0',
+    shopping: '#F44336',
+    travel: '#00BCD4',
+    other: '#607D8B',
   },
 };
 
@@ -166,7 +165,7 @@ export const borderRadius = {
 };
 
 /**
- * Shadow presets for consistent elevation
+ * Shadow presets for dark theme
  */
 export const shadows = {
   sm: {

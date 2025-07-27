@@ -1,57 +1,52 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Today from '@/screens/Tasks/Today';
+import Inbox from '@/screens/Tasks/Inbox';
+import Upcoming from '@/screens/Tasks/Upcoming';
+import Browse from '@/screens/Tasks/Browse';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { StyleSheet } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
+/**
+ * Main task navigation component with bottom tabs
+ * Includes Inbox, Upcoming, and Browse screens
+ */
 export default function Tasks() {
-    const navigation = useNavigation();
-
     return (
         <Tab.Navigator
-            initialRouteName='Today'
+            initialRouteName='Inbox'
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: true,
                 tabBarLabelPosition: 'below-icon',
                 tabBarStyle: {
-                    backgroundColor: colors.primary,
-                    height: 70,
-                    borderTopWidth: 0,
-                    elevation: 8,
-                    shadowColor: colors.shadow,
-                    shadowOffset: {
-                        width: 0,
-                        height: -4,
-                    },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    borderTopLeftRadius: 20,
-                    borderTopRightRadius: 20,
+                    backgroundColor: colors.background,
+                    height: 80,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
+                    paddingBottom: 10,
+                    paddingTop: 10,
                 },
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: '500',
-                    marginBottom: 8,
+                    marginBottom: 5,
                 },
-                tabBarActiveTintColor: colors.white,
-                tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.7)',
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textTertiary,
                 tabBarIconStyle: {
-                    marginTop: 8,
+                    marginTop: 5,
                 },
             }}
         >
             <Tab.Screen
-                name="Today"
-                component={Today}
+                name="Inbox"
+                component={Inbox}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons
-                            name={focused ? 'today' : 'today-outline'}
+                            name={focused ? 'mail' : 'mail-outline'}
                             size={24}
                             color={color}
                         />
@@ -59,25 +54,27 @@ export default function Tasks() {
                 }}
             />
             <Tab.Screen
-                name="Menu"
-                component={EmptyComponent}
+                name="Upcoming"
+                component={Upcoming}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons
-                            name="menu-outline"
+                            name={focused ? 'calendar' : 'calendar-outline'}
                             size={24}
                             color={color}
                         />
                     ),
-                    tabBarButton: (props) => (
-                        <Pressable 
-                            {...props} 
-                            style={[props.style, styles.menuButton]}
-                            onPress={() => {
-                                if (navigation.openDrawer) {
-                                    navigation.openDrawer();
-                                }
-                            }} 
+                }}
+            />
+            <Tab.Screen
+                name="Browse"
+                component={Browse}
+                options={{
+                    tabBarIcon: ({ focused, color, size }) => (
+                        <Ionicons
+                            name={focused ? 'menu' : 'menu-outline'}
+                            size={24}
+                            color={color}
                         />
                     ),
                 }}
@@ -86,11 +83,6 @@ export default function Tasks() {
     );
 }
 
-// Empty component for Menu screen
-const EmptyComponent = () => null;
-
 const styles = StyleSheet.create({
-    menuButton: {
-        // Add any custom styling for the menu button here
-    }
+    // Add any custom styling here if needed
 });

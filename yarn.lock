@@ -3927,7 +3927,7 @@ react-is@^19.1.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.1.0.tgz#805bce321546b7e14c084989c77022351bbdd11b"
   integrity sha512-Oe56aUPnkHyyDxxkvqtd7KkdQP5uIUfHxd5XTb3wE9d/kRnZLmKbDB0GWk919tdQ+mxxPtG6EAs6RMT6i1qtHg==
 
-react-native-calendars@^1.1310.0:
+react-native-calendars@^1.1313.0:
   version "1.1313.0"
   resolved "https://registry.yarnpkg.com/react-native-calendars/-/react-native-calendars-1.1313.0.tgz#c2e9ac84e0043daeace899d1dc5030afaf354683"
   integrity sha512-YQ7Vg57rBRVymolamYDTxZ0lPOELTDHQbTukTWdxR47aRBYJwKI6ocRbwcY5gYgyDwNgJS4uLGu5AvmYS74LYQ==

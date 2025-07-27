@@ -11,6 +11,8 @@ import { colors } from '@/constants/Colors';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage';
+import StartScreen from './src/screens/StartScreen';
+import ErrorBoundary from './src/components/UI/ErrorBoundary';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,7 +21,7 @@ SplashScreen.preventAutoHideAsync();
 
 /**
  * Main application component that sets up the app environment
- * including fonts, state providers, and navigation
+ * including fonts, state providers, and navigation with dark theme
  */
 export default function App() {
   // Load custom fonts
@@ -44,14 +46,28 @@ export default function App() {
   }
 
   return (
-    <Provider store={store}>
-      <AuthProvider>
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
-      </AuthProvider>
-    </Provider>
+    <ErrorBoundary>
+        <Provider store={store}>
+            <AuthProvider>
+                <View style={styles.container}>
+                    <StatusBar 
+                        barStyle="dark-content" 
+                        backgroundColor={colors.background} 
+                        translucent={false}
+                    />
+                    {fontsLoaded ? (
+                        <NavigationContainer>
+                            <AppNavigator />
+                        </NavigationContainer>
+                    ) : (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        </View>
+                    )}
+                </View>
+            </AuthProvider>
+        </Provider>
+    </ErrorBoundary>
   );
 }
 
@@ -92,17 +108,16 @@ const AppNavigator = () => {
     );
   }
   
-  // Determine initial route based on auth state and first launch
-  const initialRouteName = isAuthenticated ? 'Task' : (isFirstLaunch ? 'Auth' : 'Auth');
-  
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Navigator 
-        initialRouteName={initialRouteName}
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Auth" component={AuthNavigation} />
-        <Stack.Screen name="Task" component={DrawerNavigation} />
+        {isFirstLaunch ? (
+          <Stack.Screen name="Start" component={StartScreen} />
+        ) : null}
+          <Stack.Screen name="Task" component={DrawerNavigation} />
+          <Stack.Screen name="Auth" component={AuthNavigation} />
       </Stack.Navigator>
     </SafeAreaView>
   );

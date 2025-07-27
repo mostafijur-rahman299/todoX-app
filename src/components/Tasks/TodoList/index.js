@@ -39,27 +39,38 @@ const TodoList = () => {
     const [refreshing, setRefreshing] = useState(false);
     const tasks = useSelector((state) => state.task.display_tasks);
 
-    // Load tasks from storage
+    /**
+     * Load tasks from storage with error handling
+     */
     useEffect(() => {
         const loadTasks = async () => {
             try {
-                const storedTasks = await getDataLocalStorage('task_list') || [];
-                if (storedTasks) {
+                const storedTasks = await getDataLocalStorage('task_list');
+                if (storedTasks && Array.isArray(storedTasks)) {
                     dispatch(setTasks(storedTasks));
+                } else {
+                    // Initialize with empty array if no tasks found
+                    dispatch(setTasks([]));
                 }
             } catch (error) {
                 console.error('Error loading tasks:', error);
+                // Show user-friendly error message
+                Alert.alert('Error', 'Failed to load tasks. Please try again.');
+                dispatch(setTasks([]));
             }
         };
         loadTasks();
     }, [dispatch]);
 
-    const handleQuickAdd = () => {
+    /**
+     * Handle quick add with improved error handling
+     */
+    const handleQuickAdd = async () => {
         if (!quickAddText.trim()) return;
 
         const newTask = {
             id: generateId(),
-            title: quickAddText,
+            title: quickAddText.trim(),
             timestamp: new Date().toISOString(),
             description: "",
             category: quickAddCategory || "other",
@@ -71,8 +82,9 @@ const TodoList = () => {
 
         try {
             dispatch(addTask(newTask));
-            const updatedTasks = [...tasks, newTask];
-            storeDataLocalStorage('task_list', updatedTasks);
+            const currentTasks = tasks || [];
+            const updatedTasks = [...currentTasks, newTask];
+            await storeDataLocalStorage('task_list', updatedTasks);
             setQuickAddText('');
 
             // Provide haptic feedback if available
@@ -81,6 +93,21 @@ const TodoList = () => {
             }
         } catch (error) {
             console.error('Error saving task:', error);
+            Alert.alert('Error', 'Failed to save task. Please try again.');
+        }
+    };
+
+    /**
+     * Handle clear completed with error handling
+     */
+    const handleClearCompleted = async () => {
+        try {
+            const updatedTasks = tasks?.filter(task => !task.is_completed) || [];
+            dispatch(setTasks(updatedTasks));
+            await storeDataLocalStorage('task_list', updatedTasks);
+        } catch (error) {
+            console.error('Error clearing completed tasks:', error);
+            Alert.alert('Error', 'Failed to clear completed tasks. Please try again.');
         }
     };
 
@@ -100,12 +127,6 @@ const TodoList = () => {
     const completedTasks = tasks?.filter(task => task.is_completed).sort((a, b) => {
         return new Date(b.completed_timestamp) - new Date(a.completed_timestamp);
     });
-
-    const handleClearCompleted = () => {
-        const updatedTasks = tasks?.filter(task => !task.is_completed);
-        dispatch(setTasks(updatedTasks));
-        storeDataLocalStorage('task_list', updatedTasks);
-    };
 
     const handleClearAlert = () => {
         Alert.alert('Clear All Tasks', 'Are you sure you want to clear all completed tasks?', [

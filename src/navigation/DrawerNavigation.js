@@ -9,10 +9,12 @@ import Categories from '@/screens/Category';
 import BuyMeCoffee from '@/screens/ByMeCoffee';
 import Feedback from '@/screens/Feedback';
 import { useAuth } from '@/context/AuthContext';
-import LinearGradient from 'react-native-linear-gradient';
 
 const Drawer = createDrawerNavigator();
 
+/**
+ * Custom drawer content component with dark theme
+ */
 const CustomDrawerContent = (props) => {
   const { logout } = useAuth();
   
@@ -23,10 +25,8 @@ const CustomDrawerContent = (props) => {
       contentContainerStyle={styles.drawerContentContainer}
     >
       {/* App Header */}
-      <View
-        style={styles.drawerHeader}
-      >
-        <Icon name="checkbox-marked-circle-outline" size={48} color={colors.white} />
+      <View style={styles.drawerHeader}>
+        <Icon name="checkbox-marked-circle-outline" size={48} color={colors.primary} />
         <Text style={styles.appTitle}>TodoX</Text>
         <Text style={styles.appSubtitle}>Organize your day</Text>
       </View>
@@ -41,7 +41,9 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('tasks')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
-          activeBackgroundColor={colors.primaryLight + '20'} // 20% opacity
+          activeBackgroundColor={colors.primary + '20'}
+          activeTintColor={colors.primary}
+          inactiveTintColor={colors.textSecondary}
         />
         <DrawerItem
           icon={({ color, size }) => (
@@ -51,7 +53,9 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('categories')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
-          activeBackgroundColor={colors.primaryLight + '20'}
+          activeBackgroundColor={colors.primary + '20'}
+          activeTintColor={colors.primary}
+          inactiveTintColor={colors.textSecondary}
         />
       </View>
 
@@ -66,6 +70,8 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('buy-me-coffee')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
+          activeTintColor={colors.primary}
+          inactiveTintColor={colors.textSecondary}
         />
         <DrawerItem
           icon={({ color, size }) => (
@@ -75,6 +81,8 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('feedback')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
+          activeTintColor={colors.primary}
+          inactiveTintColor={colors.textSecondary}
         />
       </View>
       
@@ -94,6 +102,9 @@ const CustomDrawerContent = (props) => {
   );
 };
 
+/**
+ * Main drawer navigation component with dark theme
+ */
 const DrawerNavigation = () => {
   return (
     <Drawer.Navigator
@@ -101,16 +112,18 @@ const DrawerNavigation = () => {
       screenOptions={{
         drawerStyle: styles.drawer,
         headerStyle: styles.header,
-        headerTintColor: '#fff',
-        drawerActiveTintColor: '#6200ee',
-        drawerInactiveTintColor: '#666',
+        headerTintColor: colors.textPrimary,
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.textSecondary,
         headerStyle: {
-          backgroundColor: colors.primary,
+          backgroundColor: colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
         },
         headerTitleStyle: {
           fontSize: 24,
           fontWeight: 'bold',
-          color: "white",
+          color: colors.textPrimary,
         },
       }}
     >
@@ -132,11 +145,12 @@ const DrawerNavigation = () => {
 
 const styles = StyleSheet.create({
   drawer: {
-    backgroundColor: '#fff',
-    width: 300, // Slightly wider drawer
+    backgroundColor: colors.background,
+    width: 300,
   },
   drawerContent: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   drawerContentContainer: {
     flexGrow: 1,
@@ -146,19 +160,20 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 40,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
     marginBottom: 8,
     alignItems: 'center',
+    backgroundColor: colors.surface,
   },
   appTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   appSubtitle: {
     fontSize: 14,
-    color: colors.lightGray,
+    color: colors.textSecondary,
     marginTop: 4,
   },
   section: {
@@ -167,7 +182,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.lightGray,
+    color: colors.textTertiary,
     marginLeft: 16,
     marginBottom: 8,
     letterSpacing: 1,
@@ -176,20 +191,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 12,
     marginVertical: 4,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: colors.surface,
   },
   drawerLabel: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#333',
+    color: colors.textPrimary,
   },
   header: {
-    backgroundColor: '#6200ee',
-    elevation: 0, // Removes shadow on Android
-    shadowOpacity: 0, // Removes shadow on iOS
+    backgroundColor: colors.background,
+    elevation: 0,
+    shadowOpacity: 0,
   },
-  logoutItem: {
+  logoutSection: {
     marginTop: 'auto',
+    paddingBottom: 20,
   },
 });
 
