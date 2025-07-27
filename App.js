@@ -1,7 +1,7 @@
-import { StyleSheet, Platform, StatusBar, View, SafeAreaView, ActivityIndicator } from 'react-native';
+import { StyleSheet, StatusBar, View, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
@@ -9,62 +9,82 @@ import DrawerNavigation from './src/navigation/DrawerNavigation';
 import AuthNavigation from './src/navigation/AuthNavigation';
 import { colors } from '@/constants/Colors';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import Tasks from './src/navigation/Tasks';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage';
 
 const Stack = createNativeStackNavigator();
 
+// Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Main application component that sets up the app environment
+ * including fonts, state providers, and navigation
+ */
 export default function App() {
-  const [loaded, error] = useFonts({
+  // Load custom fonts
+  const [fontsLoaded, fontError] = useFonts({
     'NicoMoji-Regular': require('./src/assets/fonts/NicoMoji-Regular.ttf'),
   });
 
-  useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
+  // Hide splash screen once fonts are loaded or if there's an error
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded || fontError) {
+      await SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [fontsLoaded, fontError]);
 
-  if (!loaded && !error) {
+  useEffect(() => {
+    onLayoutRootView();
+  }, [onLayoutRootView]);
+
+  // Don't render until fonts are loaded
+  if (!fontsLoaded && !fontError) {
     return null;
   }
 
   return (
-    <>
-      <Provider store={store}>
-        <AuthProvider>
-          <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
-        </AuthProvider>
-      </Provider>
-    </>
+    <Provider store={store}>
+      <AuthProvider>
+        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </Provider>
   );
 }
 
+/**
+ * AppNavigator component that handles conditional rendering
+ * based on authentication state and first launch status
+ */
 const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
+  // Check if this is the first app launch
   useEffect(() => {
     const checkFirstLaunch = async () => {
-      const hasLaunched = await getDataLocalStorage('hasLaunched');
-      if (hasLaunched === null) {
-        await storeDataLocalStorage('hasLaunched', 'true');
-        setIsFirstLaunch(true);
-      } else {
-        setIsFirstLaunch(false);
+      try {
+        const hasLaunched = await getDataLocalStorage('hasLaunched');
+        if (hasLaunched === null) {
+          await storeDataLocalStorage('hasLaunched', 'true');
+          setIsFirstLaunch(true);
+        } else {
+          setIsFirstLaunch(false);
+        }
+      } catch (error) {
+        console.error('Error checking first launch:', error);
+        setIsFirstLaunch(false); // Default to false on error
       }
     };
 
     checkFirstLaunch();
   }, []);
   
-  if (isLoading) {
+  // Show loading indicator while checking auth state
+  if (isLoading || isFirstLaunch === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -72,12 +92,17 @@ const AppNavigator = () => {
     );
   }
   
+  // Determine initial route based on auth state and first launch
+  const initialRouteName = isAuthenticated ? 'Task' : (isFirstLaunch ? 'Auth' : 'Auth');
+  
   return (
-    <SafeAreaView style={styles.container} initialRouteName={isFirstLaunch ? 'Auth' : 'Task'}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <SafeAreaView style={styles.container}>
+      <Stack.Navigator 
+        initialRouteName={initialRouteName}
+        screenOptions={{ headerShown: false }}
+      >
         <Stack.Screen name="Auth" component={AuthNavigation} />
-        <Stack.Screen name="Drawer" component={DrawerNavigation} />
-        <Stack.Screen name="Task" component={Tasks} />
+        <Stack.Screen name="Task" component={DrawerNavigation} />
       </Stack.Navigator>
     </SafeAreaView>
   );
@@ -86,7 +111,8 @@ const AppNavigator = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: colors.background,
+    paddingTop: StatusBar.currentHeight,
   },
   loadingContainer: {
     flex: 1,

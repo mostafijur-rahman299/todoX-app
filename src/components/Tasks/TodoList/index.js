@@ -549,7 +549,7 @@ const TodoItem = memo(({ item, setSelectedTask, setIsUpdateModalVisible }) => {
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f1f5f9',
     },
     gradientContainer: {
         flex: 1,
@@ -804,17 +804,17 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     checkboxInner: {
-        width: 24,
-        height: 24,
-        borderRadius: 8,
-        borderWidth: 2,
+        width: 20,
+        height: 20,
+        borderRadius: 5,
+        borderWidth: 1,
         borderColor: '#e2e8f0',
         alignItems: 'center',
         justifyContent: 'center',
     },
     checkedBox: {
         backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
+        borderColor: '#ffffff',
     },
     taskTitleContainer: {
         flex: 1,

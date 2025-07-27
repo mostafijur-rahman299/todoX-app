@@ -138,7 +138,6 @@ function Filter({ openModal, closeModal }) {
 
                         <TouchableOpacity style={styles.filterActions} onPress={resetFilters}>
                             <Ionicons name="refresh" size={20} color={colors.text} />
-                            <Text style={styles.resetButtonText}>Reset</Text>
                         </TouchableOpacity>
                     </View>
                     
@@ -253,8 +252,8 @@ const styles = StyleSheet.create({
     filterSection: {
         backgroundColor: '#fff',
         padding: 20,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
         width: '100%',
         shadowColor: '#000',
         shadowOffset: {
@@ -445,9 +444,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 30,
         gap: 5,
-        borderWidth: 1,
-        borderColor: 'grey',
-        borderRadius: 12,
         paddingHorizontal: 12,
         position: 'absolute',
         right: 40,

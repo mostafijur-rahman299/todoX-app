@@ -1,7 +1,6 @@
-import React, { useState, memo, useCallback, useEffect } from 'react';
+import React, { useState, memo, useCallback, useEffect, useRef } from 'react';
 import { 
   View, 
-  Text, 
   TextInput, 
   TouchableOpacity, 
   FlatList, 
@@ -9,119 +8,234 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  StatusBar
+  StatusBar,
+  Animated,
+  Alert
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCategory, deleteCategory } from '@/store/Task/category';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const { width } = Dimensions.get('window');
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, borderRadius, shadows, typography } from '@/constants/Colors';
 import { randomColor, generateId } from '@/utils/gnFunc';
+import CustomText from '@/components/UI/CustomText';
+import CustomButton from '@/components/UI/CustomButton';
 
+const { width } = Dimensions.get('window');
+
+/**
+ * Enhanced Categories screen with modern UI/UX design
+ * Features improved animations, better category management, and enhanced accessibility
+ */
 const Categories = () => {
   const categoriesData = useSelector((state) => state.category.categories || []);
   const tasks = useSelector((state) => state.task.task_list || []);
   const [newCategory, setNewCategory] = useState('');
   const [showWarning, setShowWarning] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [focusedInput, setFocusedInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
 
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  /**
+   * Handles adding a new category with validation
+   */
   const handleAddCategory = async () => {
-    if (newCategory.trim()) {
+    if (!newCategory.trim()) return;
+    
+    // Check for duplicate category names
+    const isDuplicate = categoriesData.some(
+      category => category.name.toLowerCase() === newCategory.trim().toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      Alert.alert('Duplicate Category', 'A category with this name already exists.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
       const newCategoryItem = {
         id: generateId(),
-        name: newCategory,
-        color: randomColor()
+        name: newCategory.trim(),
+        color: randomColor(),
+        icon: 'bookmark-outline'
       };
       
-      try {
-        dispatch(addCategory(newCategoryItem));
-        
-        const existingCategories = await AsyncStorage.getItem('categories');
-        const parsedCategories = existingCategories ? JSON.parse(existingCategories) : [];
-        const updatedCategories = [...parsedCategories, newCategoryItem];
-        await AsyncStorage.setItem('categories', JSON.stringify(updatedCategories));
-        
-        setNewCategory('');
-      } catch (error) {
-        console.error('Error saving category:', error);
-      }
+      dispatch(addCategory(newCategoryItem));
+      
+      const existingCategories = await AsyncStorage.getItem('categories');
+      const parsedCategories = existingCategories ? JSON.parse(existingCategories) : [];
+      const updatedCategories = [...parsedCategories, newCategoryItem];
+      await AsyncStorage.setItem('categories', JSON.stringify(updatedCategories));
+      
+      setNewCategory('');
+      
+      // Success animation
+      Animated.sequence([
+        Animated.timing(slideAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 100, useNativeDriver: true })
+      ]).start();
+      
+    } catch (error) {
+      console.error('Error saving category:', error);
+      Alert.alert('Error', 'Failed to create category. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  /**
+   * Handles category deletion with task validation
+   */
   const handleDeleteClick = async (categoryId, categoryName) => {
     if (!tasks) return;
     
     const hasAssociatedTasks = tasks.some(task => task.category === categoryName);
     
     if (hasAssociatedTasks) {
-      console.log("categoryId", categoryId);
       setCategoryToDelete(categoryId);
       setShowWarning(true);
     } else {
-      // Pass the categoryId to handleConfirmDelete since categoryToDelete isn't set yet
       await handleConfirmDelete(categoryId);
     }
   };
 
+  /**
+   * Confirms and executes category deletion
+   */
   const handleConfirmDelete = async (categoryId = null) => {
-      try {
-        // Use the passed categoryId if available, otherwise use the state value
-        const idToDelete = categoryId || categoryToDelete;
-        
-        const existingCategories = await AsyncStorage.getItem('categories');
-        if (existingCategories) {
-          const parsedCategories = JSON.parse(existingCategories);
-          const updatedCategories = parsedCategories.filter(
-            category => category.id !== idToDelete
-          );
-          await AsyncStorage.setItem('categories', JSON.stringify(updatedCategories));
-        }
-        
-        dispatch(deleteCategory(idToDelete));
-        setShowWarning(false);
-        setCategoryToDelete(null);
-      } catch (error) {
-        console.error('Error deleting category:', error);
+    try {
+      const idToDelete = categoryId || categoryToDelete;
+      
+      const existingCategories = await AsyncStorage.getItem('categories');
+      if (existingCategories) {
+        const parsedCategories = JSON.parse(existingCategories);
+        const updatedCategories = parsedCategories.filter(
+          category => category.id !== idToDelete
+        );
+        await AsyncStorage.setItem('categories', JSON.stringify(updatedCategories));
       }
+      
+      dispatch(deleteCategory(idToDelete));
+      setShowWarning(false);
+      setCategoryToDelete(null);
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      Alert.alert('Error', 'Failed to delete category. Please try again.');
+    }
   };
 
-  const renderCategoryItem = useCallback(({ item, index }) => (
-    <View style={styles.categoryItem}>
-      <LinearGradient
-        colors={index % 4 === 0 ? ['#4f46e5', '#4338ca'] : 
-               index % 4 === 1 ? ['#7c3aed', '#6d28d9'] : 
-               index % 4 === 2 ? ['#ec4899', '#be185d'] :
-               ['#0891b2', '#0e7490']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.categoryGradient}
+  /**
+   * Renders individual category item with enhanced design
+   */
+  const renderCategoryItem = useCallback(({ item, index }) => {
+    const taskCount = tasks?.filter(task => task.category === item.name)?.length || 0;
+    
+    return (
+      <Animated.View 
+        style={[
+          styles.categoryItem,
+          { 
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }] 
+          }
+        ]}
       >
-        <View style={styles.categoryContent}>
-          <View style={styles.categoryMainInfo}>
-            <Text style={styles.categoryText}>{item.name.charAt(0).toUpperCase() + item.name.slice(1)}</Text>
-            <View style={styles.taskCountContainer}>
-              <Text style={styles.taskCount}>
-                {tasks?.filter(task => task.category === item.name)?.length || 0}
-              </Text>
-              <Text style={styles.taskLabel}>Tasks</Text>
+        <LinearGradient
+          colors={[
+            colors.gradients.primary[0],
+            colors.gradients.primary[1]
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.categoryGradient}
+        >
+          <View style={styles.categoryContent}>
+            <View style={styles.categoryHeader}>
+              <View style={styles.categoryIconContainer}>
+                <Ionicons 
+                  name={item.icon || 'bookmark'} 
+                  size={24} 
+                  color={colors.surface} 
+                />
+              </View>
+              <View style={styles.categoryInfo}>
+                <CustomText 
+                  variant="h5" 
+                  weight="bold" 
+                  color="surface"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                </CustomText>
+                <View style={styles.taskCountBadge}>
+                  <CustomText variant="caption" weight="medium" color="surface">
+                    {taskCount} {taskCount === 1 ? 'Task' : 'Tasks'}
+                  </CustomText>
+                </View>
+              </View>
             </View>
+            
+            <TouchableOpacity 
+              onPress={() => handleDeleteClick(item.id, item.name)}
+              style={styles.deleteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="trash-outline" size={18} color={colors.surface} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            onPress={() => handleDeleteClick(item.id, item.name)}
-            style={styles.deleteButton}
-          >
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-    </View>
-  ), []);
+        </LinearGradient>
+      </Animated.View>
+    );
+  }, [tasks, fadeAnim, slideAnim]);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      
+      {/* Header */}
+      <Animated.View 
+        style={[
+          styles.header,
+          { 
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }] 
+          }
+        ]}
+      >
+        <CustomText variant="h2" weight="bold" color="textPrimary">
+          Categories
+        </CustomText>
+        <CustomText variant="body" color="textSecondary">
+          Organize your tasks by category
+        </CustomText>
+      </Animated.View>
             
+      {/* Main Content */}
       <View style={styles.mainContent}>
         {categoriesData?.length > 0 ? (
           <FlatList
@@ -136,366 +250,311 @@ const Categories = () => {
             windowSize={5}
           />
         ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No categoriesData yet</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Add your first category using the field below
-            </Text>
-          </View>
+          <Animated.View 
+            style={[
+              styles.emptyState,
+              { 
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }] 
+              }
+            ]}
+          >
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="folder-open-outline" size={64} color={colors.textTertiary} />
+            </View>
+            <CustomText variant="h4" weight="semibold" color="textPrimary" style={styles.emptyTitle}>
+              No Categories Yet
+            </CustomText>
+            <CustomText variant="body" color="textSecondary" style={styles.emptySubtitle}>
+              Create your first category to organize your tasks better
+            </CustomText>
+          </Animated.View>
         )}
       </View>
 
-      {/* Add Section at Bottom */}
-      <View style={styles.bottomContainer}>
+      {/* Add Category Section */}
+      <Animated.View 
+        style={[
+          styles.bottomContainer,
+          { 
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }] 
+          }
+        ]}
+      >
         <LinearGradient
-          colors={['rgba(248, 250, 252, 0)', 'rgba(248, 250, 252, 0)']}
+          colors={[colors.background + '00', colors.background]}
           style={styles.bottomGradient}
         >
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[
+              styles.inputWrapper,
+              focusedInput && styles.inputWrapperFocused
+            ]}>
               <View style={styles.inputIconContainer}>
-                <Text style={styles.inputIcon}>+</Text>
+                <Ionicons 
+                  name="add" 
+                  size={20} 
+                  color={focusedInput ? colors.primary : colors.textTertiary} 
+                />
               </View>
               <TextInput
                 style={styles.input}
                 value={newCategory}
                 onChangeText={setNewCategory}
                 placeholder="Create new category"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textTertiary}
                 returnKeyType="done"
                 onSubmitEditing={handleAddCategory}
                 maxLength={30}
+                onFocus={() => setFocusedInput(true)}
+                onBlur={() => setFocusedInput(false)}
               />
               {newCategory.length > 0 && (
                 <TouchableOpacity 
                   style={styles.clearButton}
                   onPress={() => setNewCategory('')}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Text style={styles.clearButtonText}>×</Text>
+                  <Ionicons name="close" size={16} color={colors.textTertiary} />
                 </TouchableOpacity>
               )}
             </View>
-            <TouchableOpacity 
+            
+            <CustomButton
+              title="Create"
               onPress={handleAddCategory}
-              disabled={!newCategory.trim()}
-              style={[
-                styles.addButton,
-                !newCategory.trim() && styles.disabledButton,
-              ]}
-            >
-              <LinearGradient
-                colors={['#4f46e5', '#4338ca']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.addButtonGradient}
-              >
-                <Text style={styles.addButtonText}>Create</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+              disabled={!newCategory.trim() || isLoading}
+              loading={isLoading}
+              variant="primary"
+              size="medium"
+              style={styles.createButton}
+            />
           </View>
         </LinearGradient>
-      </View>
+      </Animated.View>
 
+      {/* Delete Confirmation Modal */}
       {showWarning && (
         <Modal
           visible={true}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={() => setShowWarning(false)}
         >
-          <TouchableOpacity 
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowWarning(false)}
-          >
-            <View 
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}
-              onTouchEnd={e => e.stopPropagation()}
-            >
+          <View style={styles.modalBackdrop}>
+            <Animated.View style={styles.modalContent}>
               <LinearGradient
-                colors={['#1e1b4b', '#312e81']}
-                style={styles.modalHeader}
+                colors={[colors.surface, colors.surfaceVariant]}
+                style={styles.modalGradient}
               >
-                <Text style={styles.modalTitle}>Delete Category</Text>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalIconContainer}>
+                    <Ionicons name="warning" size={32} color={colors.warning} />
+                  </View>
+                  <CustomText variant="h4" weight="bold" color="textPrimary" style={styles.modalTitle}>
+                    Delete Category
+                  </CustomText>
+                </View>
+                
+                <CustomText variant="body" color="textSecondary" style={styles.modalText}>
+                  This category has associated tasks. Are you sure you want to delete it? 
+                  All associated tasks will be moved to "Other" category.
+                </CustomText>
+                
+                <View style={styles.modalButtons}>
+                  <CustomButton
+                    title="Cancel"
+                    onPress={() => setShowWarning(false)}
+                    variant="outline"
+                    size="medium"
+                    style={styles.modalButton}
+                  />
+                  <CustomButton
+                    title="Delete"
+                    onPress={async () => await handleConfirmDelete()}
+                    variant="danger"
+                    size="medium"
+                    style={styles.modalButton}
+                  />
+                </View>
               </LinearGradient>
-              <Text style={styles.modalText}>
-                This category has associated tasks. Are you sure you want to delete it?
-                All associated tasks will be updated to have no category.
-              </Text>
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  onPress={() => setShowWarning(false)}
-                  style={styles.cancelButton}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={async () => await handleConfirmDelete()}
-                  style={styles.confirmButton}
-                >
-                  <LinearGradient
-                    colors={['#dc2626', '#b91c1c']}
-                    style={styles.confirmButtonGradient}
-                  >
-                    <Text style={styles.confirmButtonText}>Delete</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
+            </Animated.View>
+          </View>
         </Modal>
       )}
     </View>
   );
 };
 
+export default memo(Categories);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
   mainContent: {
     flex: 1,
-    paddingTop: 10,
-    backgroundColor: 'transparent',
-  },
-  bottomContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'transparent',
-  },
-  bottomGradient: {
-    backgroundColor: 'transparent',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
-    alignItems: 'center',
-    gap: 12,
-  },
-  inputWrapper: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#4f46e5',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  inputIconContainer: {
-    padding: 12,
-    paddingLeft: 16,
-  },
-  inputIcon: {
-    fontSize: 24,
-    color: '#4f46e5',
-    fontWeight: '300',
-  },
-  input: {
-    flex: 1,
-    padding: 14,
-    fontSize: 16,
-    color: '#1e293b',
-    fontWeight: '500',
-  },
-  clearButton: {
-    padding: 8,
-    marginRight: 8,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
-  },
-  clearButtonText: {
-    fontSize: 20,
-    color: '#64748b',
-    fontWeight: '300',
-    lineHeight: 20,
-  },
-  addButton: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  addButtonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  categoryItem: {
-    marginHorizontal: 20,
-    marginBottom: 15,
-    borderRadius: 24,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
-  categoryGradient: {
-    padding: 24,
-  },
-  categoryContent: {
-    gap: 16,
-  },
-  categoryMainInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  categoryText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
-    flex: 1,
-    letterSpacing: 0.5,
-  },
-  taskCountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    gap: 6,
-  },
-  taskCount: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  taskLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  deleteButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 18,
-    alignSelf: 'flex-end',
-  },
-  deleteButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyStateText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyStateSubtext: {
-    fontSize: 16,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 24,
-    width: width * 0.85,
-    maxWidth: 400,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  modalText: {
-    padding: 24,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#475569',
-    textAlign: 'center',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    padding: 20,
-    paddingTop: 0,
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  confirmButton: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  confirmButtonGradient: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#64748b',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    paddingTop: spacing.sm,
   },
   list: {
     flex: 1,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  categoryItem: {
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    ...shadows.medium,
+  },
+  categoryGradient: {
+    padding: spacing.lg,
+  },
+  categoryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  categoryIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  categoryInfo: {
+    flex: 1,
+  },
+  taskCountBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
+  },
+  deleteButton: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  emptyIconContainer: {
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: {
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  bottomContainer: {
+    backgroundColor: colors.background,
+  },
+  bottomGradient: {
+    paddingTop: spacing.lg,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? spacing.xl : spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  inputWrapper: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.small,
+  },
+  inputWrapperFocused: {
+    borderColor: colors.primary,
+    ...shadows.medium,
+  },
+  inputIconContainer: {
+    padding: spacing.md,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingRight: spacing.md,
+    fontSize: typography.fontSize.base,
+    color: colors.textPrimary,
+    fontWeight: typography.fontWeight.medium,
+  },
+  clearButton: {
+    padding: spacing.sm,
+    marginRight: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surfaceVariant,
+  },
+  createButton: {
+    minWidth: 80,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: colors.backdrop,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    ...shadows.large,
+  },
+  modalGradient: {
+    padding: spacing.xl,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalIconContainer: {
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    textAlign: 'center',
+  },
+  modalText: {
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.xl,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  modalButton: {
+    flex: 1,
   },
 });
-
-export default memo(Categories);

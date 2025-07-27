@@ -9,6 +9,7 @@ import Categories from '@/screens/Category';
 import BuyMeCoffee from '@/screens/ByMeCoffee';
 import Feedback from '@/screens/Feedback';
 import { useAuth } from '@/context/AuthContext';
+import LinearGradient from 'react-native-linear-gradient';
 
 const Drawer = createDrawerNavigator();
 
@@ -16,11 +17,17 @@ const CustomDrawerContent = (props) => {
   const { logout } = useAuth();
   
   return (
-    <DrawerContentScrollView {...props} style={styles.drawerContent}>
+    <DrawerContentScrollView 
+      {...props} 
+      style={styles.drawerContent}
+      contentContainerStyle={styles.drawerContentContainer}
+    >
       {/* App Header */}
-      <View style={styles.drawerHeader}>
-        <Icon name="checkbox-marked-circle-outline" size={40} color={colors.primary} />
-        <Text style={styles.appTitle}>Task Manager</Text>
+      <View
+        style={styles.drawerHeader}
+      >
+        <Icon name="checkbox-marked-circle-outline" size={48} color={colors.white} />
+        <Text style={styles.appTitle}>TodoX</Text>
         <Text style={styles.appSubtitle}>Organize your day</Text>
       </View>
       
@@ -34,6 +41,7 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('tasks')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
+          activeBackgroundColor={colors.primaryLight + '20'} // 20% opacity
         />
         <DrawerItem
           icon={({ color, size }) => (
@@ -43,6 +51,7 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('categories')}
           style={styles.drawerItem}
           labelStyle={styles.drawerLabel}
+          activeBackgroundColor={colors.primaryLight + '20'}
         />
       </View>
 
@@ -70,14 +79,14 @@ const CustomDrawerContent = (props) => {
       </View>
       
       {/* Logout Section */}
-      <View style={styles.section}>
+      <View style={[styles.section, styles.logoutSection]}>
         <DrawerItem
           icon={({ color, size }) => (
             <Icon name="logout" color={colors.error} size={size} />
           )}
           label="Logout"
           onPress={() => logout()}
-          style={[styles.drawerItem, styles.logoutItem]}
+          style={styles.drawerItem}
           labelStyle={[styles.drawerLabel, { color: colors.error }]}
         />
       </View>
@@ -128,6 +137,10 @@ const styles = StyleSheet.create({
   },
   drawerContent: {
     flex: 1,
+  },
+  drawerContentContainer: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
   },
   drawerHeader: {
     padding: 24,

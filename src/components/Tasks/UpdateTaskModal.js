@@ -449,8 +449,8 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: '#F8FAFF',
-        borderTopLeftRadius: 35,
-        borderTopRightRadius: 35,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
         padding: 20,
         maxHeight: Platform.OS === 'ios' ? '85%' : '90%',
     },
