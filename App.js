@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
-import DrawerNavigation from './src/navigation/DrawerNavigation';
 import AuthNavigation from './src/navigation/AuthNavigation';
 import { colors } from '@/constants/Colors';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -13,6 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage';
 import StartScreen from './src/screens/StartScreen';
 import ErrorBoundary from './src/components/UI/ErrorBoundary';
+import Task from './src/navigation/Tasks';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,7 +52,7 @@ export default function App() {
                 <View style={styles.container}>
                     <StatusBar 
                         barStyle="dark-content" 
-                        backgroundColor={colors.background} 
+                        backgroundColor={colors.primary} 
                         translucent={false}
                     />
                     {fontsLoaded ? (
@@ -114,9 +114,9 @@ const AppNavigator = () => {
         screenOptions={{ headerShown: false }}
       >
         {isFirstLaunch ? (
-          <Stack.Screen name="Start" component={StartScreen} />
+          <Stack.Screen name="Start" component={StartScreen}  />
         ) : null}
-          <Stack.Screen name="Task" component={DrawerNavigation} />
+          <Stack.Screen name="Task" component={Task} />
           <Stack.Screen name="Auth" component={AuthNavigation} />
       </Stack.Navigator>
     </SafeAreaView>
@@ -127,7 +127,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: StatusBar.currentHeight,
   },
   loadingContainer: {
     flex: 1,
