@@ -351,9 +351,12 @@ const AddTaskButton = () => {
         if (showInboxOptions) {
             handleInboxToggle();
         }
+        if (showDateTimeOptions) {
+            handleDateTimeToggle();
+        }
 
         if (showPriorityOptions) {
-            // Close priority dropdown
+            // Close priority modal
             Animated.parallel([
                 Animated.timing(priorityOpacity, {
                     toValue: 0,
@@ -362,7 +365,7 @@ const AddTaskButton = () => {
                     useNativeDriver: true,
                 }),
                 Animated.timing(prioritySlideAnim, {
-                    toValue: -100,
+                    toValue: 100,
                     duration: 200,
                     easing: Easing.in(Easing.ease),
                     useNativeDriver: true,
@@ -371,7 +374,7 @@ const AddTaskButton = () => {
                 setShowPriorityOptions(false);
             });
         } else {
-            // Open priority dropdown
+            // Open priority modal
             setShowPriorityOptions(true);
             Animated.parallel([
                 Animated.timing(priorityOpacity, {
@@ -397,9 +400,12 @@ const AddTaskButton = () => {
         if (showPriorityOptions) {
             handlePriorityToggle();
         }
+        if (showDateTimeOptions) {
+            handleDateTimeToggle();
+        }
 
         if (showInboxOptions) {
-            // Close inbox dropdown
+            // Close inbox modal
             Animated.parallel([
                 Animated.timing(inboxOpacity, {
                     toValue: 0,
@@ -408,7 +414,7 @@ const AddTaskButton = () => {
                     useNativeDriver: true,
                 }),
                 Animated.timing(inboxSlideAnim, {
-                    toValue: -100,
+                    toValue: 100,
                     duration: 200,
                     easing: Easing.in(Easing.ease),
                     useNativeDriver: true,
@@ -417,7 +423,7 @@ const AddTaskButton = () => {
                 setShowInboxOptions(false);
             });
         } else {
-            // Open inbox dropdown
+            // Open inbox modal
             setShowInboxOptions(true);
             Animated.parallel([
                 Animated.timing(inboxOpacity, {
@@ -492,7 +498,7 @@ const AddTaskButton = () => {
         }
 
         if (showDateTimeOptions) {
-            // Close datetime dropdown
+            // Close datetime modal
             Animated.parallel([
                 Animated.timing(dateTimeOpacity, {
                     toValue: 0,
@@ -501,7 +507,7 @@ const AddTaskButton = () => {
                     useNativeDriver: true,
                 }),
                 Animated.timing(dateTimeSlideAnim, {
-                    toValue: -100,
+                    toValue: 100,
                     duration: 200,
                     easing: Easing.in(Easing.ease),
                     useNativeDriver: true,
@@ -510,7 +516,7 @@ const AddTaskButton = () => {
                 setShowDateTimeOptions(false);
             });
         } else {
-            // Open datetime dropdown
+            // Open datetime modal
             setShowDateTimeOptions(true);
             Animated.parallel([
                 Animated.timing(dateTimeOpacity, {
@@ -907,58 +913,83 @@ const AddTaskButton = () => {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Enhanced DateTime Options Dropdown */}
+                        {/* Enhanced DateTime Options Modal */}
                         {showDateTimeOptions && (
-                            <Animated.View
-                                style={[
-                                    styles.dateTimeDropdown,
-                                    {
-                                        opacity: dateTimeOpacity,
-                                        transform: [
-                                            { translateY: dateTimeSlideAnim },
-                                        ],
-                                    },
-                                ]}>
-                                <ScrollView
-                                    style={styles.dateTimeScrollView}
-                                    showsVerticalScrollIndicator={false}
-                                    nestedScrollEnabled={true}
-                                >
-                                    {dateTimeOptions.map(
-                                        (dateTimeOption, index) => (
-                                            <TouchableOpacity
-                                                key={index}
+                            <Modal
+                                transparent={true}
+                                visible={showDateTimeOptions}
+                                animationType="fade"
+                                onRequestClose={handleDateTimeToggle}
+                                statusBarTranslucent={true}
+                            >
+                                <TouchableWithoutFeedback onPress={handleDateTimeToggle}>
+                                    <View style={styles.selectionModalOverlay}>
+                                        <TouchableWithoutFeedback>
+                                            <Animated.View
                                                 style={[
-                                                    styles.dateTimeOption,
-                                                ]}
-                                                onPress={() =>
-                                                    handleDateTimeSelect(
-                                                        dateTimeOption,
-                                                    )
-                                                }
-                                                activeOpacity={0.8}
-                                            >
-                                                <View style={[
-                                                    styles.dateTimeIconContainer,
-                                                    { backgroundColor: dateTimeOption.color + '20' }
+                                                    styles.selectionModal,
+                                                    {
+                                                        opacity: dateTimeOpacity,
+                                                        transform: [
+                                                            { translateY: dateTimeSlideAnim },
+                                                        ],
+                                                    },
                                                 ]}>
-                                                    <Ionicons
-                                                        name={dateTimeOption.icon}
-                                                        size={18}
-                                                        color={dateTimeOption.color}
-                                                    />
+                                                <View style={styles.selectionModalHeader}>
+                                                    <Text style={styles.selectionModalTitle}>Select Date & Time</Text>
+                                                    <TouchableOpacity 
+                                                        onPress={handleDateTimeToggle}
+                                                        style={styles.selectionModalCloseBtn}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Ionicons name="close" size={22} color={colors.textSecondary} />
+                                                    </TouchableOpacity>
                                                 </View>
-                                                <Text
-                                                    style={[
-                                                        styles.dateTimeOptionText,
-                                                    ]}>
-                                                    {dateTimeOption.label}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ),
-                                    )}
-                                </ScrollView>
-                            </Animated.View>
+                                                <ScrollView
+                                                    style={styles.selectionScrollView}
+                                                    showsVerticalScrollIndicator={false}
+                                                    nestedScrollEnabled={true}
+                                                    contentContainerStyle={{ paddingBottom: 12 }}
+                                                >
+                                                    {dateTimeOptions.map(
+                                                        (dateTimeOption, index) => (
+                                                            <TouchableOpacity
+                                                                key={index}
+                                                                style={[
+                                                                    styles.selectionOption,
+                                                                ]}
+                                                                onPress={() =>
+                                                                    handleDateTimeSelect(
+                                                                        dateTimeOption,
+                                                                    )
+                                                                }
+                                                                activeOpacity={0.7}
+                                                            >
+                                                                <View style={[
+                                                                    styles.selectionIconContainer,
+                                                                    { backgroundColor: dateTimeOption.color + '20' }
+                                                                ]}>
+                                                                    <Ionicons
+                                                                        name={dateTimeOption.icon}
+                                                                        size={22}
+                                                                        color={dateTimeOption.color}
+                                                                    />
+                                                                </View>
+                                                                <Text
+                                                                    style={[
+                                                                        styles.selectionOptionText,
+                                                                    ]}>
+                                                                    {dateTimeOption.label}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        ),
+                                                    )}
+                                                </ScrollView>
+                                            </Animated.View>
+                                        </TouchableWithoutFeedback>
+                                    </View>
+                                </TouchableWithoutFeedback>
+                            </Modal>
                         )}
 
                         {/* DateTime Display */}
@@ -987,64 +1018,93 @@ const AddTaskButton = () => {
                             </View>
                         )}
 
-                        {/* Enhanced Priority Options Dropdown */}
+                        {/* Enhanced Priority Options Modal */}
                         {showPriorityOptions && (
-                            <Animated.View
-                                style={[
-                                    styles.priorityDropdown,
-                                    {
-                                        opacity: priorityOpacity,
-                                        transform: [
-                                            { translateY: prioritySlideAnim },
-                                        ],
-                                    },
-                                ]}>
-                                <ScrollView
-                                    style={styles.priorityScrollView}
-                                    showsVerticalScrollIndicator={false}
-                                    nestedScrollEnabled={true}
-                                >
-                                    {priorityOptions.map(
-                                        (priority, index) => (
-                                            <TouchableOpacity
-                                                key={index}
+                            <Modal
+                                transparent={true}
+                                visible={showPriorityOptions}
+                                animationType="fade"
+                                onRequestClose={handlePriorityToggle}
+                                statusBarTranslucent={true}
+                            >
+                                <TouchableWithoutFeedback onPress={handlePriorityToggle}>
+                                    <View style={styles.selectionModalOverlay}>
+                                        <TouchableWithoutFeedback>
+                                            <Animated.View
                                                 style={[
-                                                    styles.priorityOption,
-                                                    newTask.priority ===
-                                                        priority.value &&
-                                                        styles.priorityOptionSelected,
-                                                ]}
-                                                onPress={() =>
-                                                    handlePrioritySelect(
-                                                        priority,
-                                                    )
-                                                }
-                                                activeOpacity={0.8}
-                                            >
-                                                <View style={[
-                                                    styles.priorityIconContainer,
-                                                    { backgroundColor: priority.color + '20' }
+                                                    styles.selectionModal,
+                                                    {
+                                                        opacity: priorityOpacity,
+                                                        transform: [
+                                                            { translateY: prioritySlideAnim },
+                                                        ],
+                                                    },
                                                 ]}>
-                                                    <Ionicons
-                                                        name={priority.icon}
-                                                        size={18}
-                                                        color={priority.color}
-                                                    />
+                                                <View style={styles.selectionModalHeader}>
+                                                    <Text style={styles.selectionModalTitle}>Select Priority</Text>
+                                                    <TouchableOpacity 
+                                                        onPress={handlePriorityToggle}
+                                                        style={styles.selectionModalCloseBtn}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Ionicons name="close" size={22} color={colors.textSecondary} />
+                                                    </TouchableOpacity>
                                                 </View>
-                                                <Text
-                                                    style={[
-                                                        styles.priorityOptionText,
-                                                        newTask.priority ===
-                                                            priority.value &&
-                                                            styles.priorityOptionTextSelected,
-                                                    ]}>
-                                                    {priority.label}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ),
-                                    )}
-                                </ScrollView>
-                            </Animated.View>
+                                                <ScrollView
+                                                    style={styles.selectionScrollView}
+                                                    showsVerticalScrollIndicator={false}
+                                                    nestedScrollEnabled={true}
+                                                    contentContainerStyle={{ paddingBottom: 12 }}
+                                                >
+                                                    {priorityOptions.map(
+                                                        (priority, index) => (
+                                                            <TouchableOpacity
+                                                                key={index}
+                                                                style={[
+                                                                    styles.selectionOption,
+                                                                    newTask.priority === priority.value && styles.selectionOptionSelected,
+                                                                ]}
+                                                                onPress={() =>
+                                                                    handlePrioritySelect(
+                                                                        priority,
+                                                                    )
+                                                                }
+                                                                activeOpacity={0.7}
+                                                            >
+                                                                <View style={[
+                                                                    styles.selectionIconContainer,
+                                                                    { backgroundColor: priority.color + '20' }
+                                                                ]}>
+                                                                    <Ionicons
+                                                                        name={priority.icon}
+                                                                        size={22}
+                                                                        color={priority.color}
+                                                                    />
+                                                                </View>
+                                                                <Text
+                                                                    style={[
+                                                                        styles.selectionOptionText,
+                                                                    ]}>
+                                                                    {priority.label}
+                                                                </Text>
+                                                                {newTask.priority === priority.value && (
+                                                                    <View style={styles.selectionCheckmark}>
+                                                                        <Ionicons
+                                                                            name="checkmark"
+                                                                            size={16}
+                                                                            color={colors.white}
+                                                                        />
+                                                                    </View>
+                                                                )}
+                                                            </TouchableOpacity>
+                                                        ),
+                                                    )}
+                                                </ScrollView>
+                                            </Animated.View>
+                                        </TouchableWithoutFeedback>
+                                    </View>
+                                </TouchableWithoutFeedback>
+                            </Modal>
                         )}
 
                         {/* Enhanced Inbox/Category Selector */}
@@ -1081,64 +1141,93 @@ const AddTaskButton = () => {
                             />
                         </TouchableOpacity>
 
-                        {/* Enhanced Inbox Options Dropdown */}
+                        {/* Enhanced Inbox Options Modal */}
                         {showInboxOptions && (
-                            <Animated.View
-                                style={[
-                                    styles.inboxDropdown,
-                                    {
-                                        opacity: inboxOpacity,
-                                        transform: [
-                                            { translateY: inboxSlideAnim },
-                                        ],
-                                    },
-                                ]}>
-                                <ScrollView
-                                    style={styles.inboxScrollView}
-                                    showsVerticalScrollIndicator={false}
-                                    nestedScrollEnabled={true}
-                                >
-                                    {inboxOptions.map(
-                                        (inbox, index) => (
-                                            <TouchableOpacity
-                                                key={index}
+                            <Modal
+                                transparent={true}
+                                visible={showInboxOptions}
+                                animationType="fade"
+                                onRequestClose={handleInboxToggle}
+                                statusBarTranslucent={true}
+                            >
+                                <TouchableWithoutFeedback onPress={handleInboxToggle}>
+                                    <View style={styles.selectionModalOverlay}>
+                                        <TouchableWithoutFeedback>
+                                            <Animated.View
                                                 style={[
-                                                    styles.inboxOption,
-                                                    newTask.tag ===
-                                                        inbox.value &&
-                                                        styles.inboxOptionSelected,
-                                                ]}
-                                                onPress={() =>
-                                                    handleInboxSelect(
-                                                        inbox,
-                                                    )
-                                                }
-                                                activeOpacity={0.8}
-                                            >
-                                                <View style={[
-                                                    styles.inboxOptionIconContainer,
-                                                    { backgroundColor: inbox.color + '20' }
+                                                    styles.selectionModal,
+                                                    {
+                                                        opacity: inboxOpacity,
+                                                        transform: [
+                                                            { translateY: inboxSlideAnim },
+                                                        ],
+                                                    },
                                                 ]}>
-                                                    <Ionicons
-                                                        name={inbox.icon}
-                                                        size={18}
-                                                        color={inbox.color}
-                                                    />
+                                                <View style={styles.selectionModalHeader}>
+                                                    <Text style={styles.selectionModalTitle}>Select Category</Text>
+                                                    <TouchableOpacity 
+                                                        onPress={handleInboxToggle}
+                                                        style={styles.selectionModalCloseBtn}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Ionicons name="close" size={22} color={colors.textSecondary} />
+                                                    </TouchableOpacity>
                                                 </View>
-                                                <Text
-                                                    style={[
-                                                        styles.inboxOptionText,
-                                                        newTask.tag ===
-                                                            inbox.value &&
-                                                            styles.inboxOptionTextSelected,
-                                                    ]}>
-                                                    {inbox.label}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ),
-                                    )}
-                                </ScrollView>
-                            </Animated.View>
+                                                <ScrollView
+                                                    style={styles.selectionScrollView}
+                                                    showsVerticalScrollIndicator={false}
+                                                    nestedScrollEnabled={true}
+                                                    contentContainerStyle={{ paddingBottom: 12 }}
+                                                >
+                                                    {inboxOptions.map(
+                                                        (inbox, index) => (
+                                                            <TouchableOpacity
+                                                                key={index}
+                                                                style={[
+                                                                    styles.selectionOption,
+                                                                    newTask.tag === inbox.value && styles.selectionOptionSelected,
+                                                                ]}
+                                                                onPress={() =>
+                                                                    handleInboxSelect(
+                                                                        inbox,
+                                                                    )
+                                                                }
+                                                                activeOpacity={0.7}
+                                                            >
+                                                                <View style={[
+                                                                    styles.selectionIconContainer,
+                                                                    { backgroundColor: inbox.color + '20' }
+                                                                ]}>
+                                                                    <Ionicons
+                                                                        name={inbox.icon}
+                                                                        size={22}
+                                                                        color={inbox.color}
+                                                                    />
+                                                                </View>
+                                                                <Text
+                                                                    style={[
+                                                                        styles.selectionOptionText,
+                                                                    ]}>
+                                                                    {inbox.label}
+                                                                </Text>
+                                                                {newTask.tag === inbox.value && (
+                                                                    <View style={styles.selectionCheckmark}>
+                                                                        <Ionicons
+                                                                            name="checkmark"
+                                                                            size={16}
+                                                                            color={colors.white}
+                                                                        />
+                                                                    </View>
+                                                                )}
+                                                            </TouchableOpacity>
+                                                        ),
+                                                    )}
+                                                </ScrollView>
+                                            </Animated.View>
+                                        </TouchableWithoutFeedback>
+                                    </View>
+                                </TouchableWithoutFeedback>
+                            </Modal>
                         )}
 
                         {/* Enhanced Send Button */}
@@ -1325,48 +1414,7 @@ const styles = StyleSheet.create({
         color: colors.textPrimary,
         fontWeight: '600',
     },
-    priorityDropdown: {
-        backgroundColor: colors.background,
-        borderRadius: 16,
-        marginBottom: 20,
-        maxHeight: 220,
-        borderWidth: 1,
-        borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    priorityScrollView: {
-        maxHeight: 200,
-    },
-    priorityOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        gap: 12,
-    },
-    priorityOptionSelected: {
-        backgroundColor: colors.primary + '15',
-    },
-    priorityIconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    priorityOptionText: {
-        fontSize: 16,
-        color: colors.textPrimary,
-        fontWeight: '500',
-    },
-    priorityOptionTextSelected: {
-        color: colors.primary,
-        fontWeight: '600',
-    },
+
     inboxSelector: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1389,47 +1437,12 @@ const styles = StyleSheet.create({
         color: colors.textPrimary,
         fontWeight: '500',
     },
-    inboxDropdown: {
-        backgroundColor: colors.background,
-        borderRadius: 16,
-        marginBottom: 20,
-        maxHeight: 220,
-        borderWidth: 1,
-        borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    inboxScrollView: {
-        maxHeight: 200,
-    },
-    inboxOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        gap: 12,
-    },
-    inboxOptionSelected: {
-        backgroundColor: colors.primary + '15',
-    },
-    inboxOptionIconContainer: {
+    inboxIconContainer: {
         width: 32,
         height: 32,
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    inboxOptionText: {
-        fontSize: 16,
-        color: colors.textPrimary,
-        fontWeight: '500',
-    },
-    inboxOptionTextSelected: {
-        color: colors.primary,
-        fontWeight: '600',
     },
     sendButton: {
         position: 'absolute',
@@ -1448,41 +1461,6 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
     },
     // DateTime styles
-    dateTimeDropdown: {
-        backgroundColor: colors.background,
-        borderRadius: 16,
-        marginBottom: 20,
-        maxHeight: 220,
-        borderWidth: 1,
-        borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    dateTimeScrollView: {
-        maxHeight: 200,
-    },
-    dateTimeOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        gap: 12,
-    },
-    dateTimeIconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    dateTimeOptionText: {
-        fontSize: 16,
-        color: colors.textPrimary,
-        fontWeight: '500',
-    },
     dateTimeDisplay: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1507,6 +1485,12 @@ const styles = StyleSheet.create({
     },
     clearDateTimeButton: {
         padding: 4,
+    },
+    datePickerModal: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
     },
     datePickerOverlay: {
         flex: 1,
@@ -1548,6 +1532,82 @@ const styles = StyleSheet.create({
     datePickerContent: {
         paddingHorizontal: 20,
         paddingVertical: 20,
+    },
+    // Unified Selection Modal Styles
+    selectionModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    selectionModal: {
+        backgroundColor: colors.surface,
+        borderRadius: 20,
+        width: '100%',
+        maxWidth: 400,
+        maxHeight: screenHeight * 0.7,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 16,
+        elevation: 16,
+    },
+    selectionModalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    selectionModalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: colors.textPrimary,
+    },
+    selectionModalCloseBtn: {
+        padding: 8,
+        borderRadius: 12,
+        backgroundColor: colors.background,
+    },
+    selectionScrollView: {
+        maxHeight: screenHeight * 0.5,
+        paddingVertical: 8,
+    },
+    selectionOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        gap: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border + '20',
+    },
+    selectionOptionSelected: {
+        backgroundColor: colors.primary + '10',
+    },
+    selectionIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    selectionOptionText: {
+        flex: 1,
+        fontSize: 16,
+        color: colors.textPrimary,
+        fontWeight: '500',
+    },
+    selectionCheckmark: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: colors.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
 
