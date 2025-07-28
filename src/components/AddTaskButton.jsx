@@ -25,8 +25,9 @@ import { colors } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateId } from '@/utils/gnFunc';
 import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
+import { inboxOptions, priorityOptions, dateTimeOptions } from '@/constants/GeneralData';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { height: screenHeight } = Dimensions.get('window');
 
 /**
  * Inbox screen component - main task list view with enhanced animations
@@ -67,111 +68,7 @@ const AddTaskButton = () => {
     const addButtonScale = useRef(new Animated.Value(1)).current;
     const addButtonRotation = useRef(new Animated.Value(0)).current;
     const modalScale = useRef(new Animated.Value(0.9)).current;
-    const inputFocusAnim = useRef(new Animated.Value(0)).current;
-
-    // Available priority options with enhanced styling
-    const priorityOptions = [
-        {
-            label: "High Priority",
-            value: "high",
-            color: colors.error,
-            icon: "flag",
-            gradient: ['#FF6B6B', '#FF5252'],
-        },
-        {
-            label: "Medium Priority", 
-            value: "medium",
-            color: colors.warning,
-            icon: "flag",
-            gradient: ['#FFB74D', '#FF9800'],
-        },
-        {
-            label: "Low Priority",
-            value: "low",
-            color: colors.success,
-            icon: "flag",
-            gradient: ['#81C784', '#4CAF50'],
-        },
-    ];
-
-    // Enhanced inbox/tag options with colors and gradients
-    const inboxOptions = [
-        {
-            label: "Inbox",
-            value: "Inbox",
-            icon: "mail-outline",
-            color: colors.primary,
-            gradient: ['#6366F1', '#4F46E5'],
-        },
-        {
-            label: "Work",
-            value: "Work", 
-            icon: "briefcase-outline",
-            color: colors.info,
-            gradient: ['#06B6D4', '#0891B2'],
-        },
-        {
-            label: "Personal",
-            value: "Personal",
-            icon: "person-outline",
-            color: colors.success,
-            gradient: ['#10B981', '#059669'],
-        },
-        {
-            label: "Shopping",
-            value: "Shopping",
-            icon: "bag-outline",
-            color: colors.warning,
-            gradient: ['#F59E0B', '#D97706'],
-        },
-        {
-            label: "Health",
-            value: "Health",
-            icon: "fitness-outline",
-            color: colors.error,
-            gradient: ['#EF4444', '#DC2626'],
-        },
-    ];
-
-    // Enhanced datetime options with quick selections
-    const dateTimeOptions = [
-        {
-            label: "Today",
-            value: "today",
-            icon: "today-outline",
-            color: colors.primary,
-            getDate: () => new Date(),
-        },
-        {
-            label: "Tomorrow",
-            value: "tomorrow",
-            icon: "calendar-outline",
-            color: colors.info,
-            getDate: () => {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                return tomorrow;
-            },
-        },
-        {
-            label: "Next Week",
-            value: "next_week",
-            icon: "calendar-outline",
-            color: colors.warning,
-            getDate: () => {
-                const nextWeek = new Date();
-                nextWeek.setDate(nextWeek.getDate() + 7);
-                return nextWeek;
-            },
-        },
-        {
-            label: "Custom Date",
-            value: "custom",
-            icon: "calendar",
-            color: colors.success,
-            getDate: () => new Date(),
-        },
-    ];
+    const inputFocusAnim = useRef(new Animated.Value(0)).current;    
 
     useEffect(() => {
         const initializeCategories = async () => {
@@ -217,9 +114,6 @@ const AddTaskButton = () => {
         loadTasks();
     }, [dispatch]);
 
-    /**
-     * Enhanced add button press with multiple animations
-     */
     const handleAddPress = () => {
         // Haptic feedback
         if (Platform.OS === 'ios') {

@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage';
 import StartScreen from './src/screens/StartScreen';
 import ErrorBoundary from './src/components/UI/ErrorBoundary';
-import Task from './src/navigation/Tasks';
+import Task from './src/navigation/Tasks'; 
 
 const Stack = createNativeStackNavigator();
 

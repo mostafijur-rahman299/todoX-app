@@ -1,168 +1,161 @@
+import { colors } from "@/constants/Colors";
 
-export const priorities = [
-  {
-    id: 1,
-    name: "high",
-    color: "#FF0000",
-    colorLight: "#ff00002b",
-  },
-  {
-    id: 2,
-    name: "medium",
-    color: "#FFA500",
-    colorLight: "#f8b9172b",
-  },
-  {
-    id: 3,
-    name: "low",
-    color: "#008000",
-    colorLight: "#00800038",
-  }
-]
+export const priorityOptions = [
+	{
+		label: "High Priority",
+		value: "high",
+		color: colors.error,
+		icon: "flag",
+		gradient: ["#FF6B6B", "#FF5252"],
+	},
+	{
+		label: "Medium Priority",
+		value: "medium",
+		color: colors.warning,
+		icon: "flag",
+		gradient: ["#FFB74D", "#FF9800"],
+	},
+	{
+		label: "Low Priority",
+		value: "low",
+		color: colors.success,
+		icon: "flag",
+		gradient: ["#81C784", "#4CAF50"],
+	},
+];
 
-export const defaultCategories = [
-  {
-    id: 0,
-    name: "all",
-    color: "#0000FF"
-  },
-  {
-    id: 1,
-    name: "work",
-    color: "#0000FF"
-  },
-  {
-    id: 2,
-    name: "personal",
-    color: "#008000"
-  },
-  {
-    id: 3,
-    name: "shopping",
-    color: "#FFA500"
-  },
-  {
-    id: 4,
-    name: "health",
-    color: "#008000"
-  },
-  {
-    id: 5,
-    name: "home",
-    color: "#0000FF"
-  },
-  {
-    id: 6,
-    name: "travel",
-    color: "#0000FF"
-  },
-  {
-    id: 7,
-    name: "education",
-    color: "#0000FF"
-  },
-  {
-    id: 8,
-    name: "other",
-    color: "#808080"
-  }
-]
+export const inboxOptions = [
+	{
+		label: "Inbox",
+		value: "Inbox",
+		icon: "mail-outline",
+		color: colors.primary,
+		gradient: ["#6366F1", "#4F46E5"],
+	},
+	{
+		label: "Work",
+		value: "Work",
+		icon: "briefcase-outline",
+		color: colors.info,
+		gradient: ["#06B6D4", "#0891B2"],
+	},
+	{
+		label: "Personal",
+		value: "Personal",
+		icon: "person-outline",
+		color: colors.success,
+		gradient: ["#10B981", "#059669"],
+	},
+	{
+		label: "Shopping",
+		value: "Shopping",
+		icon: "bag-outline",
+		color: colors.warning,
+		gradient: ["#F59E0B", "#D97706"],
+	},
+	{
+		label: "Health",
+		value: "Health",
+		icon: "fitness-outline",
+		color: colors.error,
+		gradient: ["#EF4444", "#DC2626"],
+	},
+];
 
-// Add labels/tags data
-export const defaultLabels = [
-  {
-    id: 1,
-    name: "urgent",
-    color: "#FF0000",
-    icon: "flash"
-  },
-  {
-    id: 2,
-    name: "important",
-    color: "#FFA500",
-    icon: "star"
-  },
-  {
-    id: 3,
-    name: "meeting",
-    color: "#0000FF",
-    icon: "people"
-  },
-  {
-    id: 4,
-    name: "call",
-    color: "#008000",
-    icon: "call"
-  },
-  {
-    id: 5,
-    name: "email",
-    color: "#800080",
-    icon: "mail"
-  },
-  {
-    id: 6,
-    name: "review",
-    color: "#FF69B4",
-    icon: "eye"
-  }
+export const dateTimeOptions = [
+	{
+		label: "Today",
+		value: "today",
+		icon: "today-outline",
+		color: colors.primary,
+		getDate: () => new Date(),
+	},
+	{
+		label: "Tomorrow",
+		value: "tomorrow",
+		icon: "calendar-outline",
+		color: colors.info,
+		getDate: () => {
+			const tomorrow = new Date();
+			tomorrow.setDate(tomorrow.getDate() + 1);
+			return tomorrow;
+		},
+	},
+	{
+		label: "Next Week",
+		value: "next_week",
+		icon: "calendar-outline",
+		color: colors.warning,
+		getDate: () => {
+			const nextWeek = new Date();
+			nextWeek.setDate(nextWeek.getDate() + 7);
+			return nextWeek;
+		},
+	},
+	{
+		label: "Custom Date",
+		value: "custom",
+		icon: "calendar",
+		color: colors.success,
+		getDate: () => new Date(),
+	},
 ];
 
 // Add reminder options
 export const reminderOptions = [
-  {
-    id: 1,
-    name: "5 minutes before",
-    value: 5,
-    unit: "minutes"
-  },
-  {
-    id: 2,
-    name: "15 minutes before",
-    value: 15,
-    unit: "minutes"
-  },
-  {
-    id: 3,
-    name: "30 minutes before",
-    value: 30,
-    unit: "minutes"
-  },
-  {
-    id: 4,
-    name: "1 hour before",
-    value: 1,
-    unit: "hours"
-  },
-  {
-    id: 5,
-    name: "1 day before",
-    value: 1,
-    unit: "days"
-  }
+	{
+		id: 1,
+		name: "5 minutes before",
+		value: 5,
+		unit: "minutes",
+	},
+	{
+		id: 2,
+		name: "15 minutes before",
+		value: 15,
+		unit: "minutes",
+	},
+	{
+		id: 3,
+		name: "30 minutes before",
+		value: 30,
+		unit: "minutes",
+	},
+	{
+		id: 4,
+		name: "1 hour before",
+		value: 1,
+		unit: "hours",
+	},
+	{
+		id: 5,
+		name: "1 day before",
+		value: 1,
+		unit: "days",
+	},
 ];
 
 // Add quick action buttons
 export const quickActions = [
-  {
-    id: 1,
-    name: "Today",
-    icon: "today",
-    color: "#22c55e",
-    action: "setToday"
-  },
-  {
-    id: 2,
-    name: "Priority",
-    icon: "flag",
-    color: "#ef4444",
-    action: "setPriority"
-  },
-  {
-    id: 3,
-    name: "Reminders",
-    icon: "notifications",
-    color: "#3b82f6",
-    action: "setReminder"
-  }
+	{
+		id: 1,
+		name: "Today",
+		icon: "today",
+		color: "#22c55e",
+		action: "setToday",
+	},
+	{
+		id: 2,
+		name: "Priority",
+		icon: "flag",
+		color: "#ef4444",
+		action: "setPriority",
+	},
+	{
+		id: 3,
+		name: "Reminders",
+		icon: "notifications",
+		color: "#3b82f6",
+		action: "setReminder",
+	},
 ];

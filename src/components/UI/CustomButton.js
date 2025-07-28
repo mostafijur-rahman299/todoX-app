@@ -5,8 +5,8 @@ import CustomText from './CustomText';
 import { colors, spacing, borderRadius, shadows } from '@/constants/Colors';
 
 /**
- * Enhanced CustomButton component with multiple variants and improved accessibility
- * Supports primary, secondary, outline, ghost, and danger variants
+ * Enhanced CustomButton component with refined design and versatile usage
+ * Supports primary, secondary, outline, ghost, and danger variants with rounded options
  */
 const CustomButton = ({ 
   title, 
@@ -20,6 +20,7 @@ const CustomButton = ({
   icon,
   iconPosition = 'left',
   fullWidth = false,
+  rounded = false, // New prop for pill-shaped buttons
   ...props 
 }) => {
   const buttonStyles = [
@@ -27,6 +28,7 @@ const CustomButton = ({
     styles[variant],
     styles[size],
     fullWidth && styles.fullWidth,
+    rounded && styles.rounded, // Apply rounded style if prop is true
     disabled && styles.disabled,
     style
   ];
@@ -48,9 +50,17 @@ const CustomButton = ({
         />
       ) : (
         <>
-          {icon && iconPosition === 'left' && icon}
+          {icon && iconPosition === 'left' && (
+            <View style={styles.iconWrapper}>
+              {icon}
+            </View>
+          )}
           <CustomText style={textStyles}>{title}</CustomText>
-          {icon && iconPosition === 'right' && icon}
+          {icon && iconPosition === 'right' && (
+            <View style={styles.iconWrapper}>
+              {icon}
+            </View>
+          )}
         </>
       )}
     </>
@@ -70,18 +80,19 @@ const CustomButton = ({
         onPress={onPress}
         disabled={disabled || loading}
         android_ripple={{ 
-          color: colors.white + '20',
+          color: colors.white + '30', // Softer ripple effect
           borderless: false 
         }}
         accessibilityRole="button"
         accessibilityState={{ disabled: disabled || loading }}
+        accessibilityLabel={title}
         {...props}
       >
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.gradient}
+          style={[styles.gradient, rounded && styles.roundedGradient]}
         >
           {renderContent()}
         </LinearGradient>
@@ -98,11 +109,12 @@ const CustomButton = ({
       onPress={onPress}
       disabled={disabled || loading}
       android_ripple={{ 
-        color: colors.primary + '20',
+        color: colors.primary + '30', // Softer ripple effect
         borderless: false 
       }}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading }}
+      accessibilityLabel={title}
       {...props}
     >
       {renderContent()}
@@ -117,6 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     overflow: 'hidden',
+    ...shadows.sm, // Slightly stronger shadow for better depth
   },
   
   // Variants
@@ -126,13 +139,13 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border + '80', // Slightly more opaque border
     ...shadows.sm,
   },
   outline: {
     backgroundColor: colors.transparent,
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: colors.primary + 'CC', // Slightly translucent primary color
   },
   ghost: {
     backgroundColor: colors.transparent,
@@ -143,32 +156,35 @@ const styles = StyleSheet.create({
   
   // Sizes
   small: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    minHeight: 36,
+    paddingHorizontal: spacing.sm, // More compact padding
+    paddingVertical: spacing.xs,
+    minHeight: 32, // Smaller height
   },
   medium: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: 40, // Slightly smaller than before
   },
   large: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    minHeight: 52,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    minHeight: 48,
   },
   
   // States
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5, // Slightly less opacity for better contrast
     shadowOpacity: 0,
     elevation: 0,
   },
   pressed: {
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.95 }], // More pronounced press effect
   },
   fullWidth: {
     width: '100%',
+  },
+  rounded: {
+    borderRadius: 999, // Pill-shaped buttons
   },
   
   // Gradient container
@@ -178,9 +194,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: 40, // Match medium size
+  },
+  roundedGradient: {
+    borderRadius: 999, // Ensure gradient matches rounded style
   },
   
   // Text styles
@@ -204,16 +223,21 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   text_small: {
-    fontSize: 14,
+    fontSize: 13, // Slightly smaller font
   },
   text_medium: {
-    fontSize: 16,
+    fontSize: 15,
   },
   text_large: {
-    fontSize: 18,
+    fontSize: 17,
   },
   textDisabled: {
     color: colors.disabledText,
+  },
+  
+  // Icon wrapper for consistent spacing
+  iconWrapper: {
+    marginHorizontal: spacing.xs, // Consistent spacing for icons
   },
 });
 
