@@ -569,7 +569,7 @@ const TaskDetailModal = ({
                         }
                     ]}
                 >
-                    <ScrollView 
+                    <View 
                         style={styles.scrollView}
                         showsVerticalScrollIndicator={false}
                         bounces={false}
@@ -616,7 +616,7 @@ const TaskDetailModal = ({
                         </View>
 
                         {/* Task Content */}
-                        <View style={styles.taskContent}>
+                        <ScrollView style={styles.taskContent}>
                             {/* Task Title */}
                             <View style={styles.taskTitleContainer}>
                                 <TouchableOpacity 
@@ -857,8 +857,8 @@ const TaskDetailModal = ({
                                     <Text style={styles.deleteButtonText}>Delete Task</Text>
                                 </TouchableOpacity>
                             )}
-                        </View>
-                    </ScrollView>
+                        </ScrollView>
+                    </View>
                 </Animated.View>
 
                 {/* Priority Selection Modal */}
@@ -1231,7 +1231,6 @@ const styles = StyleSheet.create({
         color: colors.textTertiary,
     },
     descriptionContainer: {
-        marginBottom: 40,
         marginLeft: 36,
     },
     taskDescription: {
@@ -1254,6 +1253,7 @@ const styles = StyleSheet.create({
     propertyCards: {
         gap: 12,
         marginBottom: 32,
+        marginTop: 30
     },
     propertyCard: {
         flexDirection: 'row',
@@ -1376,6 +1376,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingVertical: 5,
         marginTop: 16,
+        marginBottom: 40
     },
     deleteButtonText: {
         fontSize: 14,

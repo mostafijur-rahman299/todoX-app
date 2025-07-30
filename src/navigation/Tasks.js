@@ -5,6 +5,7 @@ import Browse from '@/screens/Tasks/Browse';
 import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet } from 'react-native';
+import TimelineCalendarScreen from '@/screens/Tasks/Timeline';
 
 const Tab = createBottomTabNavigator();
 
@@ -55,7 +56,7 @@ export default function Tasks() {
             />
             <Tab.Screen
                 name="Upcoming"
-                component={Upcoming}
+                component={TimelineCalendarScreen}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons

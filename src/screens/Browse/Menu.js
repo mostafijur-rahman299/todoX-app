@@ -8,14 +8,10 @@ import {
     ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/constants/Colors';
+import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
 import { useNavigation } from '@react-navigation/native';
 import CustomAlert from '@/components/UI/CustomAlert';
 
-/**
- * Browse screen component - navigation and menu options
- * Provides access to different sections and settings
- */
 const BrowseMenu = () => {
     const navigation = useNavigation();
     const [alertConfig, setAlertConfig] = useState({
@@ -31,30 +27,40 @@ const BrowseMenu = () => {
         {
             id: 'projects',
             title: 'Projects',
+            subtitle: 'Organize your workflow',
             icon: 'folder-outline',
             count: 3,
+            color: colors.info,
         },
         {
             id: 'labels',
             title: 'Labels',
+            subtitle: 'Tag and categorize',
             icon: 'pricetag-outline',
             count: 5,
+            color: colors.secondary,
         },
         {
             id: 'filters',
             title: 'Filters & Labels',
+            subtitle: 'Advanced filtering',
             icon: 'funnel-outline',
+            color: colors.warning,
         },
         {
             id: 'completed',
             title: 'Completed',
+            subtitle: 'View finished tasks',
             icon: 'checkmark-circle-outline',
+            color: colors.success,
         },
         {
             id: 'trash',
             title: 'Trash',
+            subtitle: 'Recover deleted items',
             icon: 'trash-outline',
             isPremium: true,
+            color: colors.error,
         },
     ];
 
@@ -62,18 +68,24 @@ const BrowseMenu = () => {
         {
             id: 'settings',
             title: 'Settings',
+            subtitle: 'App preferences',
             icon: 'settings-outline',
+            color: colors.textSecondary,
         },
         {
             id: 'help',
             title: 'Help & Feedback',
+            subtitle: 'Get support',
             icon: 'help-circle-outline',
+            color: colors.textSecondary,
         },
         {
             id: 'upgrade',
             title: 'Upgrade to Pro',
+            subtitle: 'Unlock premium features',
             icon: 'star-outline',
             isPro: true,
+            color: colors.warning,
         },
     ];
 
@@ -180,71 +192,115 @@ const BrowseMenu = () => {
     };
 
     /**
-     * Render menu item with navigation handler
+     * Render professional menu item with enhanced design
      */
     const renderMenuItem = (item) => (
         <TouchableOpacity 
             key={item.id} 
-            style={styles.menuItem}
+            style={[
+                styles.menuItem,
+                item.isPro && styles.proMenuItem,
+                item.isPremium && styles.premiumMenuItem
+            ]}
             onPress={() => handleMenuItemPress(item.id)}
+            activeOpacity={0.7}
         >
-            <View style={styles.menuItemLeft}>
-                <Ionicons 
-                    name={item.icon} 
-                    size={20} 
-                    color={item.isPro ? colors.warning : colors.textSecondary} 
-                />
-                <Text style={[
-                    styles.menuItemText,
-                    item.isPro && styles.proText
-                ]}>
-                    {item.title}
-                </Text>
+            <View style={styles.menuItemContent}>
+                <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
+                    <Ionicons 
+                        name={item.icon} 
+                        size={22} 
+                        color={item.isPro ? colors.warning : item.color} 
+                    />
+                </View>
+                <View style={styles.menuItemTextContainer}>
+                    <Text style={[
+                        styles.menuItemTitle,
+                        item.isPro && styles.proText
+                    ]}>
+                        {item.title}
+                        {item.isPremium && (
+                            <View style={styles.premiumBadge}>
+                                <Ionicons name="diamond" size={12} color={colors.warning} />
+                            </View>
+                        )}
+                    </Text>
+                    {item.subtitle && (
+                        <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                    )}
+                </View>
             </View>
             <View style={styles.menuItemRight}>
                 {item.count && (
-                    <Text style={styles.countText}>{item.count}</Text>
+                    <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{item.count}</Text>
+                    </View>
                 )}
                 <Ionicons 
                     name="chevron-forward" 
-                    size={16} 
+                    size={18} 
                     color={colors.textTertiary} 
                 />
             </View>
         </TouchableOpacity>
     );
 
+    /**
+     * Render section header with professional styling
+     */
+    const renderSectionHeader = (title, subtitle) => (
+        <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+            {subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
+        </View>
+    );
+
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
+            {/* Professional Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Browse</Text>
-                {/* <TouchableOpacity style={styles.menuButton}>
-                    <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
-                </TouchableOpacity> */}
+                <View style={styles.headerContent}>
+                    <Text style={styles.headerTitle}>Browse</Text>
+                    <Text style={styles.headerSubtitle}>Explore your workspace</Text>
+                </View>
             </View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                style={styles.content} 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
                 {/* Main Menu Section */}
+                {renderSectionHeader('Workspace', 'Manage your tasks and projects')}
                 <View style={styles.section}>
                     {menuItems.map(renderMenuItem)}
                 </View>
 
-                {/* Divider */}
-                <View style={styles.divider} />
-
                 {/* Settings Section */}
+                {renderSectionHeader('Preferences', 'App settings and support')}
                 <View style={styles.section}>
                     {settingsItems.map(renderMenuItem)}
                 </View>
 
-                {/* App Info */}
+                {/* Enhanced App Info */}
                 <View style={styles.appInfo}>
-                    <Text style={styles.appName}>TodoX</Text>
-                    <Text style={styles.appVersion}>Version 1.0.0</Text>
-                    <Text style={styles.appDescription}>
-                        Organize your tasks and boost productivity
-                    </Text>
+                    <View style={styles.appLogoContainer}>
+                        <View style={styles.appLogo}>
+                            <Ionicons name="checkmark-circle" size={32} color={colors.primary} />
+                        </View>
+                        <Text style={styles.appName}>TodoX</Text>
+                        <Text style={styles.appTagline}>Professional Task Management</Text>
+                    </View>
+                    
+                    <View style={styles.appDetails}>
+                        <View style={styles.appDetailItem}>
+                            <Text style={styles.appVersion}>Version 1.0.0</Text>
+                            <Text style={styles.appBuild}>Build 2024.1</Text>
+                        </View>
+                        <Text style={styles.appDescription}>
+                            Streamline your productivity with intelligent task organization and seamless workflow management.
+                        </Text>
+                    </View>
                 </View>
             </ScrollView>
 
@@ -268,95 +324,186 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.md,
+        paddingBottom: spacing.xl,
+        backgroundColor: colors.background,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
     },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: colors.textPrimary,
+    headerContent: {
+        alignItems: 'flex-start',
     },
-    menuButton: {
-        padding: 5,
+    headerTitle: {
+        fontSize: typography.fontSize['3xl'],
+        fontWeight: typography.fontWeight.bold,
+        color: colors.textPrimary,
+        marginBottom: spacing.xs,
+    },
+    headerSubtitle: {
+        fontSize: typography.fontSize.base,
+        color: colors.textSecondary,
+        fontWeight: typography.fontWeight.medium,
     },
     content: {
         flex: 1,
     },
+    scrollContent: {
+        paddingBottom: spacing.xl,
+    },
+    sectionHeader: {
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.xl,
+        paddingBottom: spacing.md,
+    },
+    sectionTitle: {
+        fontSize: typography.fontSize.lg,
+        fontWeight: typography.fontWeight.semibold,
+        color: colors.textPrimary,
+        marginBottom: spacing.xs,
+    },
+    sectionSubtitle: {
+        fontSize: typography.fontSize.sm,
+        color: colors.textTertiary,
+        fontWeight: typography.fontWeight.medium,
+    },
     section: {
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingHorizontal: spacing.lg,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 15,
-        paddingHorizontal: 16,
+        paddingVertical: spacing.lg,
+        paddingHorizontal: spacing.lg,
         backgroundColor: colors.surface,
-        borderRadius: 12,
-        marginBottom: 8,
+        borderRadius: borderRadius.xl,
+        marginBottom: spacing.md,
+        ...shadows.sm,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
-    menuItemLeft: {
+    proMenuItem: {
+        borderColor: colors.warning,
+        backgroundColor: `${colors.warning}08`,
+    },
+    premiumMenuItem: {
+        borderColor: colors.error,
+        backgroundColor: `${colors.error}08`,
+    },
+    menuItemContent: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
     },
-    menuItemText: {
-        fontSize: 16,
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: borderRadius.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.md,
+    },
+    menuItemTextContainer: {
+        flex: 1,
+    },
+    menuItemTitle: {
+        fontSize: typography.fontSize.base,
         color: colors.textPrimary,
-        marginLeft: 12,
-        fontWeight: '500',
+        fontWeight: typography.fontWeight.semibold,
+        marginBottom: spacing.xs,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    menuItemSubtitle: {
+        fontSize: typography.fontSize.sm,
+        color: colors.textTertiary,
+        fontWeight: typography.fontWeight.medium,
     },
     proText: {
         color: colors.warning,
     },
+    premiumBadge: {
+        marginLeft: spacing.xs,
+    },
     menuItemRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: spacing.md,
+    },
+    countBadge: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.full,
+        minWidth: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     countText: {
-        fontSize: 14,
-        color: colors.textTertiary,
-        backgroundColor: colors.backgroundSecondary,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
-        minWidth: 24,
-        textAlign: 'center',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: colors.border,
-        marginHorizontal: 20,
-        marginVertical: 10,
+        fontSize: typography.fontSize.sm,
+        color: colors.white,
+        fontWeight: typography.fontWeight.semibold,
     },
     appInfo: {
         alignItems: 'center',
-        paddingVertical: 30,
-        paddingHorizontal: 20,
+        paddingVertical: spacing.xxxl,
+        paddingHorizontal: spacing.lg,
+        marginTop: spacing.xl,
+    },
+    appLogoContainer: {
+        alignItems: 'center',
+        marginBottom: spacing.xl,
+    },
+    appLogo: {
+        width: 64,
+        height: 64,
+        borderRadius: borderRadius['2xl'],
+        backgroundColor: `${colors.primary}15`,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.md,
+        ...shadows.md,
     },
     appName: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: typography.fontSize['2xl'],
+        fontWeight: typography.fontWeight.bold,
         color: colors.textPrimary,
-        marginBottom: 4,
+        marginBottom: spacing.xs,
+    },
+    appTagline: {
+        fontSize: typography.fontSize.base,
+        color: colors.textSecondary,
+        fontWeight: typography.fontWeight.medium,
+    },
+    appDetails: {
+        alignItems: 'center',
+        width: '100%',
+    },
+    appDetailItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        marginBottom: spacing.md,
     },
     appVersion: {
-        fontSize: 14,
+        fontSize: typography.fontSize.sm,
         color: colors.textTertiary,
-        marginBottom: 8,
+        fontWeight: typography.fontWeight.medium,
+    },
+    appBuild: {
+        fontSize: typography.fontSize.sm,
+        color: colors.textTertiary,
+        fontWeight: typography.fontWeight.medium,
+        opacity: 0.7,
     },
     appDescription: {
-        fontSize: 14,
+        fontSize: typography.fontSize.sm,
         color: colors.textSecondary,
         textAlign: 'center',
-        lineHeight: 20,
+        lineHeight: typography.fontSize.sm * 1.5,
+        fontWeight: typography.fontWeight.medium,
+        maxWidth: '90%',
     },
 });
 
