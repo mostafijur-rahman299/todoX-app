@@ -116,9 +116,9 @@ const AppNavigator = () => {
       <Stack.Navigator 
         screenOptions={{ headerShown: false }}
       >
-        {isFirstLaunch ? (
+        {!isFirstLaunch && (
           <Stack.Screen name="Start" component={StartScreen}  />
-        ) : null}
+        )}
           <Stack.Screen name="Task" component={Task} />
           <Stack.Screen name="Auth" component={AuthNavigation} />
       </Stack.Navigator>

@@ -8,14 +8,14 @@ import CompletedTask from '../Browse/CompletedTask';
 
 const Stack = createNativeStackNavigator();
 
-export default function App() {
-
+/**
+ * Browse navigation component with stack navigator
+ * Handles navigation between browse-related screens
+ */
+export default function Browse() {
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Navigator 
-        screenOptions={{ headerShown: false }}
-        defaultScreen="BrowseMenu"
-      >
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="BrowseMenu" component={BrowseMenu} />
         <Stack.Screen name="HelpAndFeedback" component={HelpAndFeedback} />
         <Stack.Screen name="Settings" component={Settings} />
@@ -24,7 +24,6 @@ export default function App() {
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

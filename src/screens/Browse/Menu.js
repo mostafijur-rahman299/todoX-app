@@ -250,8 +250,8 @@ const BrowseMenu = () => {
      */
     const renderSectionHeader = (title, subtitle) => (
         <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{title}</Text>
-            {subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
+            {/* <Text style={styles.sectionTitle}>{title}</Text>
+            {subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>} */}
         </View>
     );
 
@@ -260,7 +260,7 @@ const BrowseMenu = () => {
             {/* Professional Header */}
             <View style={styles.header}>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerTitle}>Browse</Text>
+                    <Text style={styles.headerTitle}>TodoX</Text>
                     <Text style={styles.headerSubtitle}>Explore your workspace</Text>
                 </View>
             </View>
@@ -324,9 +324,9 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
     },
     header: {
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.md,
-        paddingBottom: spacing.xl,
+        paddingHorizontal: spacing.md,
+        paddingTop: spacing.sm,
+        paddingBottom: spacing.sm,
         backgroundColor: colors.background,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
@@ -335,13 +335,13 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     headerTitle: {
-        fontSize: typography.fontSize['3xl'],
+        fontSize: typography.fontSize['2xl'],
         fontWeight: typography.fontWeight.bold,
         color: colors.textPrimary,
         marginBottom: spacing.xs,
     },
     headerSubtitle: {
-        fontSize: typography.fontSize.base,
+        fontSize: typography.fontSize.sm,
         color: colors.textSecondary,
         fontWeight: typography.fontWeight.medium,
     },
@@ -349,36 +349,36 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: spacing.xl,
+        paddingBottom: spacing.lg,
     },
     sectionHeader: {
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.xl,
-        paddingBottom: spacing.md,
+        paddingHorizontal: spacing.md,
+        paddingTop: spacing.lg,
+        paddingBottom: spacing.sm,
     },
     sectionTitle: {
-        fontSize: typography.fontSize.lg,
+        fontSize: typography.fontSize.base,
         fontWeight: typography.fontWeight.semibold,
         color: colors.textPrimary,
         marginBottom: spacing.xs,
     },
     sectionSubtitle: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.xs,
         color: colors.textTertiary,
         fontWeight: typography.fontWeight.medium,
     },
     section: {
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: spacing.md,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: spacing.lg,
-        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.md,
         backgroundColor: colors.surface,
-        borderRadius: borderRadius.xl,
-        marginBottom: spacing.md,
+        borderRadius: borderRadius.lg,
+        marginBottom: spacing.sm,
         ...shadows.sm,
         borderWidth: 1,
         borderColor: colors.border,
@@ -397,26 +397,26 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: borderRadius.lg,
+        width: 40,
+        height: 40,
+        borderRadius: borderRadius.md,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: spacing.md,
+        marginRight: spacing.sm,
     },
     menuItemTextContainer: {
         flex: 1,
     },
     menuItemTitle: {
-        fontSize: typography.fontSize.base,
+        fontSize: typography.fontSize.sm,
         color: colors.textPrimary,
         fontWeight: typography.fontWeight.semibold,
-        marginBottom: spacing.xs,
+        marginBottom: 2,
         flexDirection: 'row',
         alignItems: 'center',
     },
     menuItemSubtitle: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.xs,
         color: colors.textTertiary,
         fontWeight: typography.fontWeight.medium,
     },
@@ -429,50 +429,50 @@ const styles = StyleSheet.create({
     menuItemRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.md,
+        gap: spacing.sm,
     },
     countBadge: {
         backgroundColor: colors.primary,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
         borderRadius: borderRadius.full,
-        minWidth: 28,
+        minWidth: 24,
         alignItems: 'center',
         justifyContent: 'center',
     },
     countText: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.xs,
         color: colors.white,
         fontWeight: typography.fontWeight.semibold,
     },
     appInfo: {
         alignItems: 'center',
-        paddingVertical: spacing.xxxl,
-        paddingHorizontal: spacing.lg,
-        marginTop: spacing.xl,
+        paddingVertical: spacing.xl,
+        paddingHorizontal: spacing.md,
+        marginTop: spacing.md,
     },
     appLogoContainer: {
         alignItems: 'center',
-        marginBottom: spacing.xl,
+        marginBottom: spacing.lg,
     },
     appLogo: {
-        width: 64,
-        height: 64,
-        borderRadius: borderRadius['2xl'],
+        width: 48,
+        height: 48,
+        borderRadius: borderRadius.xl,
         backgroundColor: `${colors.primary}15`,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: spacing.md,
-        ...shadows.md,
+        marginBottom: spacing.sm,
+        ...shadows.sm,
     },
     appName: {
-        fontSize: typography.fontSize['2xl'],
+        fontSize: typography.fontSize.lg,
         fontWeight: typography.fontWeight.bold,
         color: colors.textPrimary,
-        marginBottom: spacing.xs,
+        marginBottom: 2,
     },
     appTagline: {
-        fontSize: typography.fontSize.base,
+        fontSize: typography.fontSize.sm,
         color: colors.textSecondary,
         fontWeight: typography.fontWeight.medium,
     },
@@ -483,25 +483,25 @@ const styles = StyleSheet.create({
     appDetailItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.md,
-        marginBottom: spacing.md,
+        gap: spacing.sm,
+        marginBottom: spacing.sm,
     },
     appVersion: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.xs,
         color: colors.textTertiary,
         fontWeight: typography.fontWeight.medium,
     },
     appBuild: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.xs,
         color: colors.textTertiary,
         fontWeight: typography.fontWeight.medium,
         opacity: 0.7,
     },
     appDescription: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.xs,
         color: colors.textSecondary,
         textAlign: 'center',
-        lineHeight: typography.fontSize.sm * 1.5,
+        lineHeight: typography.fontSize.xs * 1.4,
         fontWeight: typography.fontWeight.medium,
         maxWidth: '90%',
     },

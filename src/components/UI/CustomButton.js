@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { Pressable, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomText from './CustomText';
 import { colors, spacing, borderRadius, shadows } from '@/constants/Colors';
