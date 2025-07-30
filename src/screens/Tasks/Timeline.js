@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,43 +7,80 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
+  Animated
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import groupBy from 'lodash/groupBy';
-import filter from 'lodash/filter';
 import {
   ExpandableCalendar,
   TimelineList,
   CalendarProvider,
   CalendarUtils,
 } from 'react-native-calendars';
-import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
+import { colors, spacing, typography, shadows } from '@/constants/Colors';
+import leftArrowIcon from "@/assets/icons/previous.png";
+import rightArrowIcon from "@/assets/icons/next.png";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const today = new Date();
 
 export const getDate = (offset = 0) =>
   CalendarUtils.getCalendarDateString(new Date().setDate(today.getDate() + offset));
 
+console.log(getDate());
 
 const INITIAL_TIME = { hour: 1, minutes: 0 }; // Start at 1 AM
 
+/**
+ * Array of beautiful colors for random event assignment
+ */
+const eventColors = [
+  '#FF6B6B', // Coral Red
+  '#4ECDC4', // Turquoise
+  '#45B7D1', // Sky Blue
+  '#96CEB4', // Mint Green
+  '#FFEAA7', // Warm Yellow
+  '#DDA0DD', // Plum
+  '#98D8C8', // Seafoam
+  '#F7DC6F', // Golden Yellow
+  '#BB8FCE', // Lavender
+  '#85C1E9', // Light Blue
+  '#F8C471', // Peach
+  '#82E0AA', // Light Green
+  '#F1948A', // Salmon
+  '#85C1E9', // Powder Blue
+  '#D7BDE2', // Light Purple
+  '#A9DFBF', // Pale Green
+  '#F9E79F', // Light Yellow
+  '#AED6F1', // Baby Blue
+  '#F5B7B1', // Pink
+  '#A3E4D7', // Aqua
+];
+
+/**
+ * Get a random color from the eventColors array
+ */
+const getRandomEventColor = () => {
+  return eventColors[Math.floor(Math.random() * eventColors.length)];
+};
 
 export const timelineEvents = [
   {
     start: `${getDate()} 01:00:00`,
     end: `${getDate()} 02:30:00`,
     title: 'Night Shift',
-    summary: '1ᵃᵐ - 2:30ᵃᵐ\n★ Emergency\nNight Duty',
-    color: '#3F51B5', // Indigo for night
+    summary: 'Hi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of people',
+    color: '#6366F1', // Indigo
     priority: 'high',
+    textColor: '#000000', // Black text
   },
   {
     start: `${getDate()} 03:00:00`,
     end: `${getDate()} 04:00:00`,
     title: 'Security Round',
     summary: '3ᵃᵐ - 4ᵃᵐ\n★ Building\nSecurity Check',
-    color: '#424242', // Dark grey for security
+    color: '#64748B', // Slate
     priority: 'medium',
+    textColor: '#000000', // Black text
   },
   
   // Morning (7 AM - 12 PM)
@@ -52,24 +89,27 @@ export const timelineEvents = [
     end: `${getDate()} 08:30:00`,
     title: 'Palomorfologia',
     summary: '7ᵃᵐ - 8:30ᵃᵐ\n★ 12\nSzpital Kliniczny im. Heliodora Święcickiego',
-    color: '#8E24AA', // Modern purple
+    color: '#8B5CF6', // Purple
     priority: 'high',
+    textColor: '#000000', // Black text
   },
   {
     start: `${getDate()} 09:00:00`,
     end: `${getDate()} 10:30:00`,
     title: 'Dermatologia',
     summary: '9ᵃᵐ - 10:30ᵃᵐ\n★ AULA\nSzpital Kliniczny',
-    color: '#66BB6A', // Modern green
+    color: '#10B981', // Emerald
     priority: 'high',
+    textColor: '#000000', // Black text
   },
   {
     start: `${getDate()} 11:00:00`,
     end: `${getDate()} 12:30:00`,
     title: 'Kardiologia',
     summary: '11ᵃᵐ - 12:30ᵖᵐ\n★ 15\nCentrum Medyczne',
-    color: '#FF7043', // Modern orange
+    color: '#F59E0B', // Amber
     priority: 'medium',
+    textColor: '#000000', // Black text
   },
   
   // Afternoon (1 PM - 6 PM)
@@ -78,24 +118,27 @@ export const timelineEvents = [
     end: `${getDate()} 14:30:00`,
     title: 'Neurologia',
     summary: '1ᵖᵐ - 2:30ᵖᵐ\n★ 8\nSzpital Uniwersytecki',
-    color: '#42A5F5', // Modern blue
+    color: '#3B82F6', // Blue
     priority: 'high',
+    textColor: '#000000', // Black text
   },
   {
     start: `${getDate()} 15:00:00`,
     end: `${getDate()} 16:30:00`,
     title: 'Pediatria',
     summary: '3ᵖᵐ - 4:30ᵖᵐ\n★ 22\nKlinika Dziecięca',
-    color: '#EF5350', // Modern red
+    color: '#EF4444', // Red
     priority: 'medium',
+    textColor: '#000000', // Black text
   },
   {
     start: `${getDate()} 17:00:00`,
     end: `${getDate()} 18:00:00`,
     title: 'Consultation',
     summary: '5ᵖᵐ - 6ᵖᵐ\n★ 45\nPrivate Practice',
-    color: '#AB47BC', // Purple variant
+    color: '#EC4899', // Pink
     priority: 'medium',
+    textColor: '#000000', // Black text
   },
   
   // Evening (7 PM - 11 PM)
@@ -104,16 +147,18 @@ export const timelineEvents = [
     end: `${getDate()} 20:30:00`,
     title: 'Evening Clinic',
     summary: '7ᵖᵐ - 8:30ᵖᵐ\n★ 12\nEvening Shift',
-    color: '#FF9800', // Orange for evening
+    color: '#F97316', // Orange
     priority: 'medium',
+    textColor: '#000000', // Black text
   },
   {
     start: `${getDate()} 21:00:00`,
     end: `${getDate()} 22:30:00`,
     title: 'Emergency Call',
     summary: '9ᵖᵐ - 10:30ᵖᵐ\n★ ER\nEmergency Department',
-    color: '#F44336', // Red for emergency
+    color: '#DC2626', // Red
     priority: 'high',
+    textColor: '#000000', // Black text
   },
   
   // Late Night (11 PM - 12 AM)
@@ -122,16 +167,15 @@ export const timelineEvents = [
     end: `${getDate()} 23:59:00`,
     title: 'Night Preparation',
     summary: '11ᵖᵐ - 12ᵃᵐ\n★ Office\nEnd of Day Tasks',
-    color: '#607D8B', // Blue-grey for late night
+    color: '#475569', // Slate
     priority: 'low',
+    textColor: '#000000', // Black text
   },
 ];
 
-// const INITIAL_TIME = { hour: 24, minutes: 0 };
-
 /**
  * Professional Timeline Calendar Component
- * Displays tasks and events in a beautiful timeline view
+ * Displays tasks and events in a beautiful timeline view with enhanced design
  */
 const TimelineCalendarScreen = () => {
   // State management with hooks
@@ -144,15 +188,18 @@ const TimelineCalendarScreen = () => {
     [events]
   );
 
-  // Updated markedDates to include event count
+  // Enhanced markedDates with gradient indicators
   const markedDates = useMemo(() => {
     const marked = {};
     Object.keys(eventsByDate).forEach((date) => {
+      const dayEvents = eventsByDate[date];
       marked[date] = {
         marked: true,
         dotColor: colors.primary,
         selectedColor: colors.primary,
-        eventCount: eventsByDate[date].length, // Store the number of events
+        eventCount: dayEvents.length,
+        // Add priority indicator
+        hasHighPriority: dayEvents.some(event => event.priority === 'high'),
       };
     });
     marked[currentDate] = {
@@ -179,7 +226,7 @@ const TimelineCalendarScreen = () => {
   }, []);
 
   /**
-   * Create new event on timeline long press
+   * Create new event on timeline long press with random color
    */
   const createNewEvent = useCallback((timeString, timeObject) => {
     const hourString = String(timeObject.hour + 1).padStart(2, '0');
@@ -191,8 +238,9 @@ const TimelineCalendarScreen = () => {
       end: `${timeObject.date} ${hourString}:${minutesString}:00`,
       title: 'New Task',
       summary: 'Tap to edit details',
-      color: colors.surface,
+      color: getRandomEventColor(), // Use random color
       priority: 'medium',
+      textColor: '#000000', // Black text for readability
     };
 
     if (timeObject.date) {
@@ -209,7 +257,7 @@ const TimelineCalendarScreen = () => {
   }, [eventsByDate]);
 
   /**
-   * Approve and finalize new event creation
+   * Approve and finalize new event creation with random color
    */
   const approveNewEvent = useCallback((_timeString, timeObject) => {
     Alert.prompt(
@@ -239,8 +287,9 @@ const TimelineCalendarScreen = () => {
                         ...e,
                         id: Date.now().toString(),
                         title: eventTitle || 'New Task',
-                        color: colors.success,
+                        color: getRandomEventColor(), // Assign new random color
                         summary: 'Created via timeline',
+                        textColor: '#000000', // Black text for readability
                       }
                     : e
                 )
@@ -259,82 +308,454 @@ const TimelineCalendarScreen = () => {
     );
   }, []);
 
-  // Modern timeline configuration with enhanced styling
-  // Complete 24-hour timeline configuration (1 AM to 12 AM)
+  /**
+   * Handle event/task click to show detailed information
+   */
+  const handleEventPress = useCallback((event) => {
+    const startTime = new Date(event.start).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    const endTime = new Date(event.end).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    const priorityEmoji = {
+      high: '🔴',
+      medium: '🟡',
+      low: '🟢'
+    };
+
+    Alert.alert(
+      `${priorityEmoji[event.priority]} ${event.title}`,
+      `📅 Time: ${startTime} - ${endTime}\n\n📝 Details:\n${event.summary}\n\n⚡ Priority: ${event.priority.toUpperCase()}`,
+      [
+        {
+          text: 'Edit',
+          style: 'default',
+          onPress: () => {
+            // Handle edit functionality
+            Alert.prompt(
+              'Edit Task',
+              'Update task title:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Save',
+                  onPress: (newTitle) => {
+                    if (newTitle && newTitle.trim()) {
+                      setEvents(prevEvents =>
+                        prevEvents.map(e =>
+                          e.id === event.id
+                            ? { ...e, title: newTitle.trim() }
+                            : e
+                        )
+                      );
+                    }
+                  }
+                }
+              ],
+              'plain-text',
+              event.title
+            );
+          }
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Delete Task',
+              'Are you sure you want to delete this task?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () => {
+                    setEvents(prevEvents =>
+                      prevEvents.filter(e => e.id !== event.id)
+                    );
+                  }
+                }
+              ]
+            );
+          }
+        },
+        {
+          text: 'Close',
+          style: 'cancel'
+        }
+      ]
+    );
+  }, []);
+
+  // Ultra-premium timeline configuration with luxury design
   const timelineProps = useMemo(
     () => ({
       theme: {
         timelineContainer: {
           marginBottom: 90,
-        //   paddingHorizontal: 16,
         },
-        // Modern event styling
         event: {
-          borderRadius: 12,
-          marginHorizontal: 8,
-          marginVertical: 2,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 2,
-          },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 3,
+          borderRadius: 10,
+          paddingLeft: 10,
+          paddingRight: 10,
+          marginLeft: 5,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 24,
+          elevation: 12,
+          borderWidth: 1,
+          borderColor: '#F1F5F9',
         },
-        // Modern time label styling
-        // timeLabel: {
-        //   fontSize: 12,
-        //   fontWeight: '600',
-        //   color: colors.textSecondary,
-        //   backgroundColor: colors.surface,
-        //   paddingHorizontal: 8,
-        //   paddingVertical: 4,
-        //   borderRadius: 8,
-        //   marginRight: 12,
-        //   minWidth: 50,
-        //   textAlign: 'center',
-        // },
-        // Timeline line styling
+        timeLabel: {
+          color: 'white',
+          fontSize: 10,
+          fontWeight: '800',
+          paddingHorizontal: 5,
+          paddingVertical: 3,
+          backgroundColor: colors.primary,
+          borderRadius: 5,
+          marginVertical: 8,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 5,
+          elevation: 6,
+          borderWidth: 1.5,
+          borderColor: '#E2E8F0',
+          letterSpacing: 1.2,
+          textTransform: 'uppercase',
+        },
         verticalLine: {
-          backgroundColor: colors.border,
           width: 2,
-          borderRadius: 1,
+          backgroundColor: '#CBD5E0',
+          borderRadius: 2,
+          shadowColor: '#94A3B8',
+          shadowOffset: { width: 2, height: 0 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+          elevation: 2,
         },
-        
+        nowIndicatorLine: {
+          backgroundColor: colors.primary,
+          width: 3,
+          borderRadius: 3,
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        nowIndicatorKnob: {
+          backgroundColor: colors.primary,
+          width: 15,
+          height: 15,
+          borderRadius: 10,
+          borderWidth: 3,
+          borderColor: '#FFFFFF',
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.6,
+          shadowRadius: 12,
+          elevation: 10,
+        },
+        // Ultra-premium timeline text styling
+        eventTitle: {
+          color: '#0F172A',
+          fontSize: 15,
+          fontWeight: '700',
+          letterSpacing: -0.3,
+        },
+        eventSummary: {
+          color: '#475569',
+          fontSize: 13,
+          fontWeight: '500',
+          letterSpacing: 0.2,
+        },
+        eventText: {
+         paddingHorizontal: 10,
+         paddingVertical: 5
+        },
       },
-      format24h: false, // Use 12-hour format to show AM/PM
+      format24h: false,
       onBackgroundLongPress: createNewEvent,
       onBackgroundLongPressOut: approveNewEvent,
-      unavailableHours: [
-        // Remove all unavailable hours to show complete 24-hour timeline
-        // No hours are hidden - showing 1 AM to 12 AM (complete day)
-      ],
-      overlapEventsSpacing: 10, // Increased spacing for modern look
-      rightEdgeSpacing: 24,
+      onEventPress: handleEventPress,
+      unavailableHours: [],
+      overlapEventsSpacing: 28,
+      rightEdgeSpacing: 36,
       scrollToFirst: true,
-      start: 0,  // Start at 1 AM
-      end: 23,   // End at 12 AM (midnight) - shows complete 24 hours
-      // Modern event text styling
-      eventTitleStyle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#FFFFFF',
-        marginBottom: 4,
-        letterSpacing: 0.3,
-      },
-      eventSummaryStyle: {
-        fontSize: 12,
-        color: '#FFFFFF',
-        opacity: 0.9,
-        lineHeight: 16,
-        fontWeight: '500',
-      },
+      start: 0,
+      end: 24,
+      
+      renderEvent: renderEvent,
     }),
-    [createNewEvent, approveNewEvent]
+    [createNewEvent, approveNewEvent, handleEventPress, renderEvent]
   );
 
-  // Enhanced calendar theme with modern styling
+  // Ultra-premium custom render function for events with luxury design
+  const renderEvent = useCallback((event) => {
+    const priorityConfig = {
+      high: { 
+        color: '#DC2626', 
+        bgColor: '#FEF2F2', 
+        accentColor: '#EF4444',
+        icon: '⚡', 
+        label: 'URGENT',
+        gradient: ['#FEF2F2', '#FFFFFF'],
+        glowColor: '#DC262620'
+      },
+      medium: { 
+        color: '#D97706', 
+        bgColor: '#FFFBEB', 
+        accentColor: '#F59E0B',
+        icon: '⏰', 
+        label: 'NORMAL',
+        gradient: ['#FFFBEB', '#FFFFFF'],
+        glowColor: '#D9770620'
+      },
+      low: { 
+        color: '#059669', 
+        bgColor: '#F0FDF4', 
+        accentColor: '#10B981',
+        icon: '✓', 
+        label: 'LOW',
+        gradient: ['#F0FDF4', '#FFFFFF'],
+        glowColor: '#05966920'
+      }
+    };
+    
+    const priority = priorityConfig[event.priority] || priorityConfig.medium;
+
+    return (
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 24,
+          padding: 24,
+          marginHorizontal: 20,
+          marginVertical: 12,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 24,
+          elevation: 12,
+          borderWidth: 1,
+          borderColor: '#F1F5F9',
+          position: 'relative',
+          overflow: 'hidden',
+          // Glass morphism effect
+          backdropFilter: 'blur(10px)',
+        }}
+        onPress={() => handleEventPress(event)}
+        activeOpacity={0.88}
+      >
+        {/* Ultra-premium glass morphism overlay */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100%',
+            backgroundColor: `${priority.glowColor}`,
+            opacity: 0.4,
+          }}
+        />
+        
+        {/* Luxury gradient accent bar with glow */}
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+            backgroundColor: priority.color,
+            borderTopLeftRadius: 24,
+            borderBottomLeftRadius: 24,
+            shadowColor: priority.color,
+            shadowOffset: { width: 3, height: 0 },
+            shadowOpacity: 0.5,
+            shadowRadius: 8,
+            elevation: 4,
+          }}
+        />
+
+        {/* Premium floating priority badge */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: priority.bgColor,
+            borderRadius: 16,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderWidth: 1.5,
+            borderColor: `${priority.color}25`,
+            shadowColor: priority.color,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 6,
+          }}
+        >
+          <Text style={{ 
+            fontSize: 12, 
+            marginRight: 6,
+            color: priority.color
+          }}>
+            {priority.icon}
+          </Text>
+          <Text style={{ 
+            fontSize: 10, 
+            color: priority.color, 
+            fontWeight: '800',
+            letterSpacing: 1,
+            textTransform: 'uppercase'
+          }}>
+            {priority.label}
+          </Text>
+        </View>
+
+        {/* Luxury event content with enhanced typography */}
+        <View style={{ paddingRight: 100, paddingLeft: 16 }}>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '800',
+              color: '#0F172A',
+              marginBottom: 10,
+              lineHeight: 26,
+              letterSpacing: -0.3,
+              textShadowColor: 'rgba(0,0,0,0.05)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2,
+            }}
+            numberOfLines={2}
+          >
+            {event.title}
+          </Text>
+          
+          {event.summary && (
+            <Text
+              style={{
+                fontSize: 15,
+                color: '#475569',
+                lineHeight: 22,
+                fontWeight: '500',
+                letterSpacing: 0.2,
+                opacity: 0.9,
+              }}
+              numberOfLines={3}
+            >
+              {event.summary}
+            </Text>
+          )}
+        </View>
+
+        {/* Ultra-premium time indicator with glass effect */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            right: 20,
+            backgroundColor: 'rgba(248, 250, 252, 0.9)',
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderWidth: 1,
+            borderColor: 'rgba(226, 232, 240, 0.8)',
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Text style={{ 
+            fontSize: 12, 
+            color: '#64748B', 
+            fontWeight: '700',
+            letterSpacing: 0.5
+          }}>
+            {event.start?.split(' ')[1] || ''}
+          </Text>
+        </View>
+
+        {/* Luxury shimmer highlight */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 24,
+            right: 24,
+            height: 2,
+            backgroundColor: priority.accentColor,
+            opacity: 0.3,
+            borderRadius: 1,
+          }}
+        />
+
+        {/* Premium corner accent */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: 40,
+            height: 40,
+            backgroundColor: `${priority.color}08`,
+            borderTopRightRadius: 24,
+            borderBottomLeftRadius: 20,
+          }}
+        />
+      </TouchableOpacity>
+    );
+  }, [handleEventPress]);
+
+  const toggleCalendarExpansion = useCallback(() => {
+		const isOpen = calendarRef.current?.toggleCalendarPosition();
+		Animated.timing(rotation.current, {
+			toValue: isOpen ? 1 : 0,
+			duration: 250,
+			useNativeDriver: true,
+			easing: Easing.bezier(0.4, 0.0, 0.2, 1),
+		}).start();
+	}, []);
+
+  const calendarRef = useRef(null);
+	const rotation = useRef(new Animated.Value(0));
+
+  const renderHeader = useCallback(
+		(date) => {			
+			return (
+				<View style={styles.calendarHeaderContainer}>
+					<TouchableOpacity
+						style={styles.calendarHeader}
+						onPress={toggleCalendarExpansion}
+						activeOpacity={0.9}>
+						<Text style={styles.calendarHeaderTitle}>
+							{date?.toString("MMMM yyyy")}
+						</Text>
+					</TouchableOpacity>
+				</View>
+			);
+		},
+		[toggleCalendarExpansion],
+	);
+
+  // Premium calendar theme for professional design
   const calendarTheme = useMemo(
     () => ({
       backgroundColor: colors.background,
@@ -379,28 +800,56 @@ const TimelineCalendarScreen = () => {
     []
   );
 
-  // Custom render function for day to show event count
+  // Enhanced custom render function for day with priority indicators
   const renderDay = useCallback(
     (date, item) => {
       const day = date.day;
       const eventCount = item.eventCount || 0;
       const isSelected = item.selected || false;
+      const isToday = date.dateString === getDate();
+      const hasHighPriority = item.hasHighPriority || false;
 
       return (
         <View style={styles.dayContainer}>
-          <Text
-            style={[
-              styles.dayText,
-              isSelected && styles.selectedDayText,
-              date.dateString === getDate() && styles.todayText,
-            ]}
-          >
-            {day}
-          </Text>
-          {eventCount > 0 && (
-            <View style={styles.eventCountContainer}>
-              <Text style={styles.eventCountText}>{eventCount}</Text>
-            </View>
+          <View style={[
+            styles.dayWrapper,
+            isSelected && styles.selectedDayWrapper,
+            isToday && styles.todayWrapper,
+            hasHighPriority && styles.highPriorityDayWrapper,
+          ]}>
+            <Text
+              style={[
+                styles.dayText,
+                isSelected && styles.selectedDayText,
+                isToday && styles.todayText,
+              ]}
+            >
+              {day}
+            </Text>
+            
+            {/* Event count indicator with modern design */}
+            {eventCount > 0 && (
+              <View style={[
+                styles.eventCountContainer,
+                hasHighPriority && styles.highPriorityIndicator,
+                isSelected && styles.selectedEventCount,
+              ]}>
+                <Text style={[
+                  styles.eventCountText,
+                  isSelected && styles.selectedEventCountText,
+                ]}>
+                  {eventCount}
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          {/* Priority indicator dot */}
+          {hasHighPriority && (
+            <View style={[
+              styles.priorityDot,
+              isSelected && styles.selectedPriorityDot,
+            ]} />
           )}
         </View>
       );
@@ -408,8 +857,25 @@ const TimelineCalendarScreen = () => {
     []
   );
 
+  const onCalendarToggled = useCallback((isOpen) => {
+		rotation.current.setValue(isOpen ? 1 : 0);
+	}, []);
+
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+				<Text style={styles.headerTitle}>Timeline</Text>
+				<View style={styles.headerActions}>
+					<TouchableOpacity style={styles.headerButton}>
+						<Ionicons
+							name="ellipsis-vertical"
+							size={20}
+							color={colors.textSecondary}
+						/>
+					</TouchableOpacity>
+				</View>
+			</View>
+
       <CalendarProvider
         date={currentDate}
         onDateChanged={handleDateChanged}
@@ -417,17 +883,20 @@ const TimelineCalendarScreen = () => {
         showTodayButton
         disabledOpacity={0.6}
         theme={calendarTheme}
+        todayButtonStyle={styles.todayButton}
       >
         <ExpandableCalendar
+          ref={calendarRef}
           firstDay={1}
           markedDates={markedDates}
           theme={calendarTheme}
-          style={styles.calendar}
           hideKnob={false}
           initialPosition="closed"
-          calendarStyle={styles.calendarStyle}
-          headerStyle={styles.calendarHeader}
           renderDay={renderDay}
+          leftArrowImageSource={leftArrowIcon}
+					rightArrowImageSource={rightArrowIcon}
+          renderHeader={renderHeader}
+          onCalendarToggled={onCalendarToggled}
         />
         <View style={styles.timelineContainer}>
           <TimelineList
@@ -437,6 +906,7 @@ const TimelineCalendarScreen = () => {
             scrollToFirst
             initialTime={INITIAL_TIME}
             theme={calendarTheme}
+            style={styles.timeline}
           />
         </View>
       </CalendarProvider>
@@ -447,8 +917,26 @@ const TimelineCalendarScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F1F5F9',
   },
+  header: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		paddingHorizontal: spacing.lg,
+		paddingTop: spacing.sm,
+		backgroundColor: colors.background,
+	},
+	headerTitle: {
+		fontSize: typography.fontSize["xl"],
+		fontWeight: typography.fontWeight.semibold,
+		color: colors.textSecondary,
+	},
+	headerActions: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		alignItems: "center",
+	},
   calendar: {
     backgroundColor: colors.background,
     borderBottomWidth: 1,
@@ -518,6 +1006,87 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
+
+  selectedEventCount: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#4ECDC4',
+  },
+  highPriorityIndicator: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  eventCountText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  selectedEventCountText: {
+    color: '#4ECDC4',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  // Ultra-premium priority dots
+  priorityDot: {
+    position: 'absolute',
+    bottom: 3,
+    alignSelf: 'center',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4ECDC4',
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  selectedPriorityDot: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  todayButton: {
+		backgroundColor: colors.primary,
+		borderRadius: spacing.sm,
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		textAlign: "center",
+    color: 'white'
+	},
+  calendarHeaderContainer: {
+		// backgroundColor: colors.surface,
+	},
+	calendarHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center"
+	},
+	calendarHeaderTitle: {
+		fontSize: typography.fontSize.lg,
+		fontWeight: typography.fontWeight.medium,
+		color: colors.textPrimary,
+		letterSpacing: -0.3,
+	},
 });
 
 export default TimelineCalendarScreen;

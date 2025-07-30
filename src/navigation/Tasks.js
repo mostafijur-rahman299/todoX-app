@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator();
 export default function Tasks() {
     return (
         <Tab.Navigator
-            initialRouteName='Inbox'
+            initialRouteName='Upcoming'
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: true,
@@ -24,8 +24,6 @@ export default function Tasks() {
                 tabBarStyle: {
                     backgroundColor: colors.background,
                     height: 80,
-                    borderTopWidth: 1,
-                    borderTopColor: colors.border,
                     paddingBottom: 10,
                     paddingTop: 10,
                 },
@@ -56,6 +54,19 @@ export default function Tasks() {
             />
             <Tab.Screen
                 name="Upcoming"
+                component={Upcoming}
+                options={{
+                    tabBarIcon: ({ focused, color, size }) => (
+                        <Ionicons
+                            name={focused ? 'calendar' : 'calendar-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="Timeline"
                 component={TimelineCalendarScreen}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useState, useMemo } from "react";
 import {
 	Animated,
 	Easing,
@@ -407,6 +407,50 @@ const Upcoming = ({ weekView }) => {
 	const onCalendarToggled = useCallback((isOpen) => {
 		rotation.current.setValue(isOpen ? 1 : 0);
 	}, []);
+
+	const calendarTheme = useMemo(
+    () => ({
+      backgroundColor: colors.background,
+      calendarBackground: colors.background,
+      textSectionTitleColor: colors.textSecondary,
+      selectedDayBackgroundColor: colors.primary,
+      selectedDayTextColor: colors.white,
+      todayTextColor: colors.primary,
+      dayTextColor: colors.textPrimary,
+      textDisabledColor: colors.textTertiary,
+      dotColor: colors.primary,
+      selectedDotColor: colors.white,
+      arrowColor: colors.primary,
+      monthTextColor: colors.textPrimary,
+      indicatorColor: colors.primary,
+      textDayFontFamily: 'System',
+      textMonthFontFamily: 'System',
+      textDayHeaderFontFamily: 'System',
+      textDayFontWeight: '600',
+      textMonthFontWeight: '700',
+      textDayHeaderFontWeight: '600',
+      textDayFontSize: 16,
+      textMonthFontSize: 20,
+      textDayHeaderFontSize: 13,
+      agendaDayTextColor: colors.textPrimary,
+      agendaDayNumColor: colors.textSecondary,
+      agendaTodayColor: colors.primary,
+      agendaKnobColor: colors.primary,
+      // Modern calendar styling
+      'stylesheet.calendar.header': {
+        week: {
+          marginTop: 5,
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          backgroundColor: colors.surface,
+          borderRadius: 12,
+          marginHorizontal: 16,
+          paddingVertical: 8,
+        },
+      },
+    }),
+    []
+  );
 	
 	return (
 		<View style={styles.container}>
@@ -436,21 +480,7 @@ const Upcoming = ({ weekView }) => {
 				date={agendaItems[1]?.title}
 				showTodayButton
 				todayButtonStyle={styles.todayButton}
-				theme={{
-					backgroundColor: colors.background,
-					calendarBackground: colors.surface,
-					textSectionTitleColor: colors.textSecondary,
-					selectedDayBackgroundColor: colors.primary,
-					selectedDayTextColor: colors.white,
-					todayTextColor: colors.primary,
-					dayTextColor: colors.textPrimary,
-					textDisabledColor: colors.textTertiary,
-					dotColor: colors.primary,
-					selectedDotColor: colors.white,
-					arrowColor: colors.textSecondary,
-					monthTextColor: colors.textPrimary,
-					indicatorColor: colors.primary,
-				}}>
+				theme={calendarTheme}>
 				{weekView ? (
 					<WeekCalendar
 						testID="week_calendar"
@@ -463,14 +493,7 @@ const Upcoming = ({ weekView }) => {
 						renderHeader={renderHeader}
 						ref={calendarRef}
 						onCalendarToggled={onCalendarToggled}
-						theme={{
-							calendarBackground: colors.surface,
-							todayTextColor: colors.primary,
-							selectedDayBackgroundColor: colors.primary,
-							dayTextColor: colors.textPrimary,
-							textDisabledColor: colors.textTertiary,
-							arrowColor: colors.textSecondary,
-						}}
+						theme={calendarTheme}
 						firstDay={1}
 						markedDates={marked.current}
 						leftArrowImageSource={leftArrowIcon}
@@ -481,14 +504,7 @@ const Upcoming = ({ weekView }) => {
 					sections={agendaItems}
 					renderItem={renderItem}
 					sectionStyle={styles.section}
-					theme={{
-						backgroundColor: colors.background,
-						agendaKnobColor: colors.textTertiary,
-						agendaDayTextColor: colors.textPrimary,
-						agendaDayNumColor: colors.textPrimary,
-						agendaTodayColor: colors.primary,
-						reservationsBackgroundColor: colors.background,
-					}}
+					theme={calendarTheme}
 				/>
 			</CalendarProvider>
 
@@ -513,7 +529,6 @@ const styles = StyleSheet.create({
 		justifyContent: "space-between",
 		alignItems: "center",
 		paddingHorizontal: spacing.lg,
-		paddingVertical: spacing.sm,
 		backgroundColor: colors.background,
 	},
 	headerTitle: {
@@ -527,7 +542,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	calendarHeaderContainer: {
-		backgroundColor: colors.surface,
+		// backgroundColor: colors.surface,
 	},
 	calendarHeader: {
 		flexDirection: "row",
@@ -535,7 +550,7 @@ const styles = StyleSheet.create({
 		alignItems: "center"
 	},
 	calendarHeaderTitle: {
-		fontSize: typography.fontSize.md,
+		fontSize: typography.fontSize.lg,
 		fontWeight: typography.fontWeight.medium,
 		color: colors.textPrimary,
 		letterSpacing: -0.3,

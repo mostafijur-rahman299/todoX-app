@@ -13,6 +13,7 @@ import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage'
 import StartScreen from './src/screens/StartScreen';
 import ErrorBoundary from './src/components/UI/ErrorBoundary';
 import Task from './src/navigation/Tasks'; 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Stack = createNativeStackNavigator();
 
@@ -46,28 +47,30 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
         <Provider store={store}>
-            <AuthProvider>
-                <View style={styles.container}>
-                    <StatusBar 
-                        barStyle="dark-content" 
-                        backgroundColor={colors.primary} 
-                        translucent={false}
-                    />
-                    {fontsLoaded ? (
-                        <NavigationContainer>
-                            <AppNavigator />
-                        </NavigationContainer>
-                    ) : (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={colors.primary} />
-                        </View>
-                    )}
+          <AuthProvider>
+            <View style={styles.container}>
+              <StatusBar 
+                barStyle="dark-content" 
+                backgroundColor={colors.primary} 
+                translucent={false}
+              />
+              {fontsLoaded ? (
+                <NavigationContainer>
+                  <AppNavigator />
+                </NavigationContainer>
+              ) : (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
                 </View>
-            </AuthProvider>
+              )}
+            </View>
+          </AuthProvider>
         </Provider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
 
