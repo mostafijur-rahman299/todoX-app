@@ -26,6 +26,7 @@ import {
 	agendaItems,
 	upcomingStyles,
 } from "@/components/Upcoming";
+import AddTaskButton from '@/components/AddTaskButton';
 
 const Upcoming = ({ weekView }) => {
 	const dispatch = useDispatch();
@@ -292,6 +293,8 @@ const Upcoming = ({ weekView }) => {
 					theme={calendarTheme}
 				/>
 			</CalendarProvider>
+
+			<AddTaskButton />
 		</View>
 	);
 };

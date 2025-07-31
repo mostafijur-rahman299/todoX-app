@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Animated,
   Easing,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import groupBy from 'lodash/groupBy';
 import {
@@ -14,6 +15,7 @@ import {
   CalendarProvider,
   CalendarUtils,
 } from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
@@ -34,6 +36,87 @@ import {
   getTimelineTheme, 
   getCalendarTheme 
 } from '@/components/Timeline/TimelineStyles';
+import AddTaskButton from '@/components/AddTaskButton';
+
+/**
+ * Auto-hiding help text component for timeline instructions
+ */
+const TimelineHelpText = () => {
+  const [isVisible, setIsVisible] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Start slide-in animation
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+
+    // Auto-hide after 4 seconds
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -1,
+          duration: 800,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setIsVisible(false);
+      });
+    }, 4000);
+
+    return () => {
+      clearTimeout(timer);
+      fadeAnim.stopAnimation();
+      slideAnim.stopAnimation();
+    };
+  }, [fadeAnim, slideAnim]);
+
+  if (!isVisible) return null;
+
+  return (
+    <Animated.View 
+      style={[
+        helpTextStyles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateY: slideAnim.interpolate({
+                inputRange: [-1, 0, 1],
+                outputRange: [-50, 0, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={helpTextStyles.helpItem}>
+        <Ionicons name="hand-left-outline" size={16} color={colors.textSecondary} />
+        <Text style={helpTextStyles.helpText}>
+          Long press on timeline to add a task
+        </Text>
+      </View>
+      <View style={helpTextStyles.separator} />
+      <View style={helpTextStyles.helpItem}>
+        <Ionicons name="add-circle-outline" size={16} color={colors.textSecondary} />
+        <Text style={helpTextStyles.helpText}>
+          Or use the add button
+        </Text>
+      </View>
+    </Animated.View>
+  );
+};
 
 /**
  * Professional Timeline Calendar Component
@@ -314,6 +397,9 @@ const TimelineCalendarScreen = () => {
             />
           </View>
           
+          {/* Auto-hiding Help Text */}
+          <TimelineHelpText />
+          
           {/* Timeline Container with proper flex and overflow handling */}
           <View style={[timelineStyles.timelineContainer]}>
             <TimelineList
@@ -323,10 +409,41 @@ const TimelineCalendarScreen = () => {
               showNowIndicator
             />
           </View>
+          <AddTaskButton />
         </CalendarProvider>
       </View>
     </SafeAreaView>
   );
+};
+
+// Styles for the help text component
+const helpTextStyles = {
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  helpItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  helpText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  separator: {
+    width: 1,
+    height: 12,
+    backgroundColor: colors.border,
+    marginHorizontal: 12,
+  },
 };
 
 export default TimelineCalendarScreen;
