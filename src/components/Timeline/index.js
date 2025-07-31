@@ -1,6 +1,8 @@
 // Timeline Components Export
 export { default as TimelineCalendarHeader } from './TimelineCalendarHeader';
 export { default as TimelineCalendarDay } from './TimelineCalendarDay';
+export { default as TimelineHeader } from './TimelineHeader';
+export { default as TimelineMenuDropdown } from './TimelineMenuDropdown';
 export { useTimelineEventHandlers } from './TimelineEventHandlers';
 export { 
   timelineStyles, 
@@ -16,6 +18,3 @@ export {
   priorityConfig, 
   priorityEmoji 
 } from './TimelineConstants';
-
-// Main Timeline Component
-export { default } from '../../../screens/Tasks/Timeline';

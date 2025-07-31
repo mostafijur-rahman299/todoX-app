@@ -93,7 +93,7 @@ export const timelineEvents = [
     start: `${getDate()} 01:00:00`,
     end: `${getDate()} 02:30:00`,
     title: 'Night Shift',
-    summary: 'Hi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of people',
+    summary: 'Hi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of peopleHi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of peopleHi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of peopleHi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of peopleHi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of peopleHi every one this is me from bangladesh so we have todo so many things so be prepare and make happy of people',
     color: '#6366F1', // Indigo
     priority: 'high',
     textColor: '#000000', // Black text

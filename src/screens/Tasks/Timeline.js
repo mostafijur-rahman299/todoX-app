@@ -3,10 +3,9 @@ import {
   View,
   Text,
   SafeAreaView,
-  TouchableOpacity,
   Animated,
   Easing,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 import groupBy from 'lodash/groupBy';
 import {
@@ -18,7 +17,6 @@ import {
 import { colors } from '@/constants/Colors';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Timeline } from "react-native-calendars";
 
 // Import Timeline components
@@ -28,6 +26,8 @@ import {
 } from '@/components/Timeline/TimelineConstants';
 import TimelineCalendarHeader from '@/components/Timeline/TimelineCalendarHeader';
 import TimelineCalendarDay from '@/components/Timeline/TimelineCalendarDay';
+import TimelineHeader from '@/components/Timeline/TimelineHeader';
+import TimelineMenuDropdown from '@/components/Timeline/TimelineMenuDropdown';
 import { useTimelineEventHandlers } from '@/components/Timeline/TimelineEventHandlers';
 import { 
   timelineStyles, 
@@ -46,6 +46,10 @@ const TimelineCalendarScreen = () => {
   // State management with hooks
   const [currentDate, setCurrentDate] = useState(getDate());
   const [events, setEvents] = useState(timelineEvents);
+  const [showMenu, setShowMenu] = useState(false);
+  const [filterBy, setFilterBy] = useState('all');
+  const [viewMode, setViewMode] = useState('timeline');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Refs for calendar and animation
   const calendarRef = useRef(null);
@@ -57,11 +61,30 @@ const TimelineCalendarScreen = () => {
     [events]
   );
 
+  /**
+   * Filter events based on current filter
+   */
+  const getFilteredEvents = useCallback(() => {
+    let filtered = events || [];
+    
+    if (filterBy !== 'all') {
+      filtered = filtered.filter(event => event.priority === filterBy);
+    }
+    
+    return filtered;
+  }, [events, filterBy]);
+
+  const filteredEvents = getFilteredEvents();
+  const filteredEventsByDate = useMemo(
+    () => groupBy(filteredEvents, (e) => CalendarUtils.getCalendarDateString(e.start)),
+    [filteredEvents]
+  );
+
   // Enhanced markedDates with gradient indicators
   const markedDates = useMemo(() => {
     const marked = {};
-    Object.keys(eventsByDate).forEach((date) => {
-      const dayEvents = eventsByDate[date];
+    Object.keys(filteredEventsByDate).forEach((date) => {
+      const dayEvents = filteredEventsByDate[date];
       marked[date] = {
         marked: true,
         dotColor: colors.primary,
@@ -77,7 +100,7 @@ const TimelineCalendarScreen = () => {
       selectedColor: colors.primary,
     };
     return marked;
-  }, [eventsByDate, currentDate]);
+  }, [filteredEventsByDate, currentDate]);
 
   // Event handlers from custom hook
   const {
@@ -86,7 +109,7 @@ const TimelineCalendarScreen = () => {
     handleEventPress,
     handleDateChanged: onDateChanged,
     handleMonthChange,
-  } = useTimelineEventHandlers(eventsByDate, setEvents);
+  } = useTimelineEventHandlers(filteredEventsByDate, setEvents);
 
   /**
    * Handle date change in calendar with state update
@@ -95,6 +118,47 @@ const TimelineCalendarScreen = () => {
     setCurrentDate(date);
     onDateChanged(date, source);
   }, [onDateChanged]);
+
+  /**
+   * Handle filter change
+   */
+  const handleFilterChange = (filter) => {
+    setFilterBy(filter);
+    setShowMenu(false);
+  };
+
+  /**
+   * Handle view mode change
+   */
+  const handleViewChange = (mode) => {
+    setViewMode(mode);
+    setShowMenu(false);
+  };
+
+  /**
+   * Handle refresh events
+   */
+  const handleRefreshEvents = async () => {
+    setIsRefreshing(true);
+    setShowMenu(false);
+    try {
+      // Simulate refresh delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Here you would typically reload events from your data source
+      console.log('Events refreshed');
+    } catch (error) {
+      console.error('Error refreshing events:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  /**
+   * Handle closing menu
+   */
+  const handleCloseMenu = () => {
+    setShowMenu(false);
+  };
 
   /**
    * Toggle calendar expansion with animation
@@ -189,6 +253,9 @@ const TimelineCalendarScreen = () => {
             <Text style={{ color: 'white', fontWeight: 'bold' }}>
               {event.title}
             </Text>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>
+              {event.summary}
+            </Text>
           </View>
         )}
       />
@@ -197,18 +264,26 @@ const TimelineCalendarScreen = () => {
 
   return (
     <SafeAreaView style={timelineStyles.container}>
-      {/* Fixed Header */}
-      <View style={timelineStyles.header}>
-        <Text style={timelineStyles.headerTitle}>Timeline</Text>
-        <View style={timelineStyles.headerActions}>
-          <TouchableOpacity style={timelineStyles.headerButton}>
-            <Ionicons
-              name="ellipsis-vertical"
-              size={20}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
+      {/* Enhanced Header with Dropdown */}
+      <View style={timelineStyles.headerWrapper}>
+        <TimelineHeader
+          filteredEventsCount={filteredEvents.length}
+          filterBy={filterBy}
+          showMenu={showMenu}
+          setShowMenu={setShowMenu}
+          viewMode={viewMode}
+        />
+
+        <TimelineMenuDropdown
+          showMenu={showMenu}
+          filterBy={filterBy}
+          isRefreshing={isRefreshing}
+          onRefreshEvents={handleRefreshEvents}
+          onFilterChange={handleFilterChange}
+          onViewChange={handleViewChange}
+          viewMode={viewMode}
+          onClose={handleCloseMenu}
+        />
       </View>
 
       {/* Calendar and Timeline Container with proper flex constraints */}
@@ -223,7 +298,7 @@ const TimelineCalendarScreen = () => {
           todayButtonStyle={timelineStyles.todayButton}
         >
           {/* Calendar with constrained height */}
-          <View style={{ maxHeight: screenHeight * 0.4 }}>
+          <View>
             <ExpandableCalendar
               ref={calendarRef}
               firstDay={1}
@@ -240,9 +315,9 @@ const TimelineCalendarScreen = () => {
           </View>
           
           {/* Timeline Container with proper flex and overflow handling */}
-          <View style={[timelineStyles.timelineContainer, { flex: 1, minHeight: 0 }]}>
+          <View style={[timelineStyles.timelineContainer]}>
             <TimelineList
-              events={eventsByDate}
+              events={filteredEventsByDate}
               timelineProps={timelineProps}
               renderItem={renderItem}
               showNowIndicator
