@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback,useRef } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
@@ -10,8 +9,6 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
 import { setTasks, toggleTaskComplete } from '@/store/Task/task';
@@ -22,57 +19,16 @@ import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
 import AddTaskButton from '@/components/AddTaskButton';
 import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
 
+
+// Import new components
+import EmptyState from '@/components/Inbox/EmptyState';
+import InboxHeader from '@/components/Inbox/InboxHeader';
+import MenuDropdown from '@/components/Inbox/MenuDropdown';
+import TaskItem from '@/components/Inbox/TaskItem';
+
 /**
- * Empty state component to display when no tasks are available
+ * Main Inbox component for displaying and managing tasks
  */
-const EmptyState = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, scaleAnim]);
-
-  return (
-    <Animated.View 
-      style={[
-        styles.emptyStateContainer,
-        {
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
-        },
-      ]}
-    >
-      <View style={styles.emptyStateIconContainer}>
-        <Ionicons 
-          name="checkmark-circle-outline" 
-          size={80} 
-          color={colors.primary} 
-          style={styles.emptyStateIcon}
-        />
-      </View>
-      <Text style={styles.emptyStateTitle}>All caught up!</Text>
-      <Text style={styles.emptyStateSubtitle}>
-        You have no pending tasks.{'\n'}
-        Tap the + button to add a new task.
-      </Text>
-    </Animated.View>
-  );
-};
-
 const Inbox = () => {
   const dispatch = useDispatch();
   const tasks = useSelector((state) => state.task.display_tasks);
@@ -274,131 +230,6 @@ const Inbox = () => {
   }, [tasks, filterBy]);
 
   /**
-   * Animate menu visibility
-   */
-  useEffect(() => {
-    Animated.timing(menuOpacity, {
-      toValue: showMenu ? 1 : 0,
-      duration: 200,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  }, [showMenu, menuOpacity]);
-
-  /**
-   * Render menu dropdown component
-   */
-  const renderMenuDropdown = () => {
-    if (!showMenu) return null;
-
-    return (
-      <Animated.View style={[styles.menuDropdown, { opacity: menuOpacity }]}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={handleEnterSelectionMode}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="checkmark-circle-outline" size={18} color={colors.primary} />
-          <Text style={styles.menuItemText}>Select Tasks</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={handleRefreshTasks}
-          activeOpacity={0.7}
-          disabled={isRefreshing}
-        >
-          <Ionicons 
-            name={isRefreshing ? "sync" : "refresh-outline"} 
-            size={18} 
-            color={isRefreshing ? colors.textTertiary : colors.success} 
-          />
-          <Text style={[styles.menuItemText, isRefreshing && styles.disabledText]}>
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.menuSeparator} />
-
-        <Text style={styles.menuSectionTitle}>Filter by Priority</Text>
-        
-        <TouchableOpacity
-          style={[styles.menuItem, filterBy === 'all' && styles.activeMenuItem]}
-          onPress={() => handleFilterChange('all')}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="list-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.menuItemText}>All Tasks</Text>
-          {filterBy === 'all' && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.menuItem, filterBy === 'high' && styles.activeMenuItem]}
-          onPress={() => handleFilterChange('high')}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.priorityDot, { backgroundColor: colors.error }]} />
-          <Text style={styles.menuItemText}>High Priority</Text>
-          {filterBy === 'high' && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.menuItem, filterBy === 'medium' && styles.activeMenuItem]}
-          onPress={() => handleFilterChange('medium')}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.priorityDot, { backgroundColor: colors.warning }]} />
-          <Text style={styles.menuItemText}>Medium Priority</Text>
-          {filterBy === 'medium' && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.menuItem, filterBy === 'low' && styles.activeMenuItem]}
-          onPress={() => handleFilterChange('low')}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.priorityDot, { backgroundColor: colors.success }]} />
-          <Text style={styles.menuItemText}>Low Priority</Text>
-          {filterBy === 'low' && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  };
-
-  /**
-   * Render selection mode header
-   */
-  const renderSelectionHeader = () => {
-    if (!isSelectionMode) return null;
-
-    return (
-      <View style={styles.selectionHeader}>
-        <TouchableOpacity
-          style={styles.selectionButton}
-          onPress={handleExitSelectionMode}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="close" size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
-        
-        <Text style={styles.selectionTitle}>
-          {selectedTaskIds.length} selected
-        </Text>
-        
-        {selectedTaskIds.length > 0 && (
-          <TouchableOpacity
-            style={styles.selectionButton}
-            onPress={handleBulkComplete}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="checkmark-done" size={20} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
-
-  /**
    * Render individual task item
    */
   const renderTaskItem = useCallback(
@@ -428,33 +259,25 @@ const Inbox = () => {
         />
       )}
 
-      <Animated.View style={[styles.headerContainer, { opacity: headerOpacity }]}>
-        {isSelectionMode ? (
-          renderSelectionHeader()
-        ) : (
-          <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>Inbox</Text>
-              <Text style={styles.headerSubtitle}>
-                {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} 
-                {filterBy !== 'all' && ` (${filterBy} priority)`}
-              </Text>
-            </View>
-            <View style={styles.menuContainer}>
-              <TouchableOpacity
-                style={styles.menuButton}
-                onPress={() => setShowMenu(!showMenu)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.menuButtonInner}>
-                  <Ionicons name="ellipsis-vertical" size={16} color={colors.textSecondary} />
-                </View>
-              </TouchableOpacity>
-              {renderMenuDropdown()}
-            </View>
-          </View>
-        )}
-      </Animated.View>
+      <InboxHeader
+        filteredTasksCount={filteredTasks.length}
+        filterBy={filterBy}
+        showMenu={showMenu}
+        setShowMenu={setShowMenu}
+        isSelectionMode={isSelectionMode}
+        selectedTaskIds={selectedTaskIds}
+        onExitSelectionMode={handleExitSelectionMode}
+        onBulkComplete={handleBulkComplete}
+      />
+
+      <MenuDropdown
+        showMenu={showMenu}
+        filterBy={filterBy}
+        isRefreshing={isRefreshing}
+        onEnterSelectionMode={handleEnterSelectionMode}
+        onRefreshTasks={handleRefreshTasks}
+        onFilterChange={handleFilterChange}
+      />
 
       {filteredTasks.length === 0 ? (
         <EmptyState />
@@ -486,219 +309,7 @@ const Inbox = () => {
   );
 };
 
-const TaskItem = React.memo(({ 
-  item, 
-  index, 
-  onToggleComplete, 
-  onTaskPress, 
-  getPriorityColor, 
-  isSelectionMode = false, 
-  isSelected = false 
-}) => {
-  const itemAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const shadowAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    const animation = Animated.timing(itemAnim, {
-      toValue: 1,
-      duration: 400,
-      delay: index * 80,
-      easing: Easing.out(Easing.bezier(0.25, 0.46, 0.45, 0.94)),
-      useNativeDriver: true,
-    }).start();
-  }, [itemAnim, index]);
-
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.97,
-        useNativeDriver: true,
-        tension: 400,
-        friction: 10,
-      }),
-      Animated.timing(shadowAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 400,
-        friction: 10,
-      }),
-      Animated.timing(shadowAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-
-  const getPriorityLabel = (priority) => {
-    switch (priority) {
-      case 'high':
-        return 'High';
-      case 'medium':
-        return 'Med';
-      case 'low':
-        return 'Low';
-      default:
-        return '';
-    }
-  };
-
-  const getPriorityLabelColor = (priority) => {
-    switch (priority) {
-      case 'high':
-        return colors.error;
-      case 'medium':
-        return colors.warning;
-      case 'low':
-        return colors.success;
-      default:
-        return colors.textTertiary;
-    }
-  };
-
-  const getTaskTag = () => {
-    if (item.category && item.category !== 'inbox') {
-      return item.category;
-    }
-    if (item.priority) {
-      return item.priority;
-    }
-    return 'task';
-  };
-
-  const getPriorityGradient = (priority) => {
-    switch (priority) {
-      case 'high':
-        return [colors.error + '80', colors.error + '20'];
-      case 'medium':
-        return [colors.warning + '80', colors.warning + '20'];
-      case 'low':
-        return [colors.success + '80', colors.success + '20'];
-      default:
-        return [colors.textTertiary + 40, colors.textTertiary + '10'];
-    }
-  };
-
-  const animatedShadowStyle = {
-    shadowOpacity: shadowAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.06, 0.15],
-    }),
-    elevation: shadowAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [4, 8],
-    }),
-  };
-
-  return (
-    <Animated.View
-      style={[
-        styles.taskItemContainer,
-        {
-          opacity: itemAnim,
-          transform: [
-            {
-              translateY: itemAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [30, 0],
-              }),
-            },
-            { scale: scaleAnim },
-          ],
-        },
-      ]}
-    >
-      <Animated.View style={[
-        styles.taskItem, 
-        animatedShadowStyle,
-        isSelected && styles.selectedTaskItem
-      ]}>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => onTaskPress(item)}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          style={{ flex: 1 }}
-        >
-          <LinearGradient
-            colors={getPriorityGradient(item.priority)}
-            style={styles.taskItemGradient}
-          />
-          <View style={styles.taskContent}>
-            {isSelectionMode ? (
-              <TouchableOpacity
-                style={styles.selectionCheckbox}
-                onPress={() => onTaskPress(item)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.selectionCheckboxInner, isSelected && styles.selectedCheckbox]}>
-                  {isSelected && <Ionicons name="checkmark" size={14} color={colors.white} />}
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.checkbox}
-                onPress={() => onToggleComplete(item.id)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.checkboxInner, item.is_completed && styles.checkedBox]}>
-                  {item.is_completed && <Ionicons name="checkmark" size={14} color={colors.white} />}
-                </View>
-              </TouchableOpacity>
-            )}
-            
-            <View style={styles.taskDetails}>
-              <Text
-                style={[styles.taskTitle, item.is_completed && styles.completedText]}
-              >
-                {item.title}
-              </Text>
-              <View style={styles.taskMeta}>
-                <Text style={styles.taskDate}>
-                  {new Date(item.timestamp).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year:
-                      new Date(item.timestamp).getFullYear() !== new Date().getFullYear()
-                        ? 'numeric'
-                        : undefined,
-                  })}
-                </Text>
-                <View style={styles.taskTag}>
-                  <Text style={styles.taskTagText}>{getTaskTag()}</Text>
-                </View>
-              </View>
-            </View>
-            <View style={styles.prioritySection}>
-              <View
-                style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(item.priority) }]}
-              />
-              {item.priority && (
-                <Text
-                  style={[styles.priorityLabel, { color: getPriorityLabelColor(item.priority) }]}
-                >
-                  {getPriorityLabel(item.priority)}
-                </Text>
-              )}
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-    </Animated.View>
-    
-  );
-});
 
 const styles = StyleSheet.create({
   container: {

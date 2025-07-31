@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     headerTitle: {
-        fontSize: typography.fontSize['2xl'],
+        fontSize: typography.fontSize['lg'],
         fontWeight: typography.fontWeight.bold,
         color: colors.textPrimary,
         marginBottom: spacing.xs,

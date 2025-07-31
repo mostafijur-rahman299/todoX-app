@@ -1,0 +1,235 @@
+import React, { useCallback } from 'react';
+import {
+	View,
+	Text,
+	TouchableOpacity,
+	StyleSheet,
+	Alert,
+} from 'react-native';
+import isEmpty from 'lodash/isEmpty';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { colors, spacing, typography } from '@/constants/Colors';
+import { getPriorityColor } from '@/utils/gnFunc';
+
+/**
+ * Ultra-clean agenda item component with refined aesthetics
+ */
+const UpcomingAgendaItem = React.memo(({ item, onToggleCompletion }) => {
+	/**
+	 * Handle item press to show details
+	 */
+	const itemPressed = useCallback(() => {
+		Alert.alert(item.title);
+	}, [item]);
+
+	/**
+	 * Handle task completion toggle
+	 */
+	const handleToggleCompletion = useCallback(() => {
+		if (onToggleCompletion) {
+			onToggleCompletion(item.id);
+		}
+	}, [item.id, onToggleCompletion]);
+
+	// Render empty state for days with no tasks
+	if (isEmpty(item)) {
+		return (
+			<View style={styles.emptyItem}>
+				<View style={styles.emptyIconContainer}>
+					<Ionicons
+						name="calendar-clear-outline"
+						size={16}
+						color={colors.textTertiary}
+					/>
+				</View>
+				<Text style={styles.emptyItemText}>
+					No tasks today
+				</Text>
+			</View>
+		);
+	}
+
+	const priorityColor = !item.is_completed
+		? getPriorityColor(item.priority || "low")
+		: colors.success;
+
+	return (
+		<TouchableOpacity 
+			style={styles.taskItem} 
+			activeOpacity={0.85}
+			onPress={itemPressed}
+		>
+			<View style={styles.taskContent}>
+				<TouchableOpacity
+					style={styles.checkboxContainer}
+					onPress={handleToggleCompletion}
+					activeOpacity={0.7}>
+					<View
+						style={[
+							styles.checkbox,
+							{ borderColor: priorityColor },
+							item.is_completed && {
+								backgroundColor: priorityColor,
+								borderColor: priorityColor,
+							},
+						]}>
+						{item.is_completed && (
+							<Ionicons
+								name="checkmark"
+								size={9}
+								color={colors.white}
+							/>
+						)}
+					</View>
+				</TouchableOpacity>
+
+				<View style={styles.taskDetails}>
+					<View style={styles.taskTitleRow}>
+						<Text
+							style={[
+								styles.taskTitle,
+								item.is_completed && styles.completedText,
+							]}
+							numberOfLines={1}>
+							{item.title || "Untitled Task"}
+						</Text>
+						<View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+					</View>
+					
+					{(item.time || item.category) && (
+						<View style={styles.taskMeta}>
+							{item.time && (
+								<Text style={styles.timeText}>
+									{item.time}
+								</Text>
+							)}
+							
+							{item.time && item.category && (
+								<View style={styles.separator} />
+							)}
+							
+							{item.category && (
+								<Text style={styles.categoryText}>
+									{item.category}
+								</Text>
+							)}
+						</View>
+					)}
+				</View>
+			</View>
+		</TouchableOpacity>
+	);
+});
+
+const styles = StyleSheet.create({
+	// Ultra-clean Task Item Design
+	taskItem: {
+		marginHorizontal: spacing.lg,
+		marginBottom: spacing.xs,
+		backgroundColor: colors.surface,
+		borderRadius: spacing.sm,
+	},
+	taskContent: {
+		flexDirection: "row",
+		alignItems: "flex-start",
+		padding: spacing.md,
+		gap: spacing.sm,
+	},
+	
+	// Refined Checkbox
+	checkboxContainer: {
+		paddingTop: 1,
+	},
+	checkbox: {
+		width: 14,
+		height: 14,
+		borderRadius: 7,
+		borderWidth: 1.5,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: 'transparent',
+	},
+	
+	// Clean Task Details
+	taskDetails: {
+		flex: 1,
+		gap: spacing.xs,
+	},
+	taskTitleRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+	},
+	taskTitle: {
+		fontSize: typography.fontSize.sm,
+		fontWeight: typography.fontWeight.medium,
+		color: colors.textPrimary,
+		flex: 1,
+		lineHeight: 18,
+		letterSpacing: -0.1,
+	},
+	taskMeta: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	timeText: {
+		fontSize: typography.fontSize.xs,
+		color: colors.primary,
+		fontWeight: typography.fontWeight.medium,
+	},
+	categoryText: {
+		fontSize: typography.fontSize.xs,
+		color: colors.textTertiary,
+		fontWeight: typography.fontWeight.normal,
+		textTransform: 'capitalize',
+	},
+	separator: {
+		width: 2,
+		height: 2,
+		borderRadius: 1,
+		backgroundColor: colors.textTertiary,
+		opacity: 0.4,
+	},
+	
+	// Beautiful Priority Dot
+	priorityDot: {
+		width: 6,
+		height: 6,
+		borderRadius: 3,
+		marginLeft: spacing.sm,
+	},
+	
+	// Completed Task Style
+	completedText: {
+		textDecorationLine: "line-through",
+		color: colors.textTertiary,
+		opacity: 0.5,
+	},
+	
+	// Refined Empty State
+	emptyItem: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		paddingVertical: spacing.lg,
+		gap: spacing.sm,
+		marginHorizontal: spacing.lg,
+		marginBottom: spacing.xs,
+	},
+	emptyIconContainer: {
+		width: 24,
+		height: 24,
+		borderRadius: 12,
+		backgroundColor: colors.backgroundSecondary,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	emptyItemText: {
+		fontSize: typography.fontSize.xs,
+		color: colors.textTertiary,
+		fontWeight: typography.fontWeight.medium,
+	},
+});
+
+export default UpcomingAgendaItem;
