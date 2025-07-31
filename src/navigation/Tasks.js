@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator();
 export default function Tasks() {
     return (
         <Tab.Navigator
-            initialRouteName='Upcoming'
+            initialRouteName='Inbox'
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: true,
