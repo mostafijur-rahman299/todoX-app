@@ -1,5 +1,4 @@
 // Timeline Components Export
-export { default as TimelineEvent } from './TimelineEvent';
 export { default as TimelineCalendarHeader } from './TimelineCalendarHeader';
 export { default as TimelineCalendarDay } from './TimelineCalendarDay';
 export { useTimelineEventHandlers } from './TimelineEventHandlers';

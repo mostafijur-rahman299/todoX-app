@@ -6,6 +6,7 @@ import { colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet } from 'react-native';
 import TimelineCalendarScreen from '@/screens/Tasks/Timeline';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 
@@ -70,8 +71,8 @@ export default function Tasks() {
                 component={TimelineCalendarScreen}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (
-                        <Ionicons
-                            name={focused ? 'calendar' : 'calendar-outline'}
+                        <MaterialCommunityIcons
+                            name={focused ? 'timeline-text' : 'timeline-text-outline'}
                             size={24}
                             color={color}
                         />

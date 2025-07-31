@@ -84,19 +84,6 @@ const TaskItem = React.memo(({
     return 'task';
   };
 
-  const getPriorityGradient = (priority) => {
-    switch (priority) {
-      case 'high':
-        return [colors.error + '80', colors.error + '20'];
-      case 'medium':
-        return [colors.warning + '80', colors.warning + '20'];
-      case 'low':
-        return [colors.success + '80', colors.success + '20'];
-      default:
-        return [colors.textTertiary + '40', colors.textTertiary + '10'];
-    }
-  };
-
   const animatedShadowStyle = {
     shadowOpacity: shadowAnim.interpolate({
       inputRange: [0, 1],
@@ -202,7 +189,7 @@ const TaskItem = React.memo(({
 
 const styles = {
   taskItemContainer: {
-    marginHorizontal: 20,
+    marginHorizontal: 10,
   },
   taskItem: {
     backgroundColor: colors.surface,

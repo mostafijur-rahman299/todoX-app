@@ -1,8 +1,9 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useState, useEffect } from "react";
 import {
 	Animated,
 	Easing,
 	View,
+	Alert,
 } from "react-native";
 import {
 	ExpandableCalendar,
@@ -10,37 +11,141 @@ import {
 	CalendarProvider,
 	WeekCalendar,
 } from "react-native-calendars";
+import { useDispatch, useSelector } from 'react-redux';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
 import { getMarkedDates } from "@/utils/gnFunc";
-import TaskFilterModal from "@/components/Tasks/TaskFilterModal";
+import { getDataLocalStorage } from "@/utils/storage";
+import { setTasks } from "@/store/Task/task";
 import {
 	UpcomingHeader,
 	UpcomingAgendaItem,
 	UpcomingCalendarHeader,
+	UpcomingMenuDropdown,
 	useUpcomingCalendarTheme,
 	agendaItems,
 	upcomingStyles,
 } from "@/components/Upcoming";
 
 const Upcoming = ({ weekView }) => {
+	const dispatch = useDispatch();
+	const tasks = useSelector((state) => state.task.display_tasks);
 	const marked = useRef(getMarkedDates(agendaItems));
-	const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 	const calendarTheme = useUpcomingCalendarTheme();
+	
+	// State management for menu functionality
+	const [showMenu, setShowMenu] = useState(false);
+	const [isSelectionMode, setIsSelectionMode] = useState(false);
+	const [selectedTaskIds, setSelectedTaskIds] = useState([]);
+	const [filterBy, setFilterBy] = useState('all');
+	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [filteredAgendaItems, setFilteredAgendaItems] = useState(agendaItems);
 
 	/**
-	 * Handle opening the filter modal
+	 * Filter agenda items based on current filter
 	 */
-	const handleOpenFilterModal = useCallback(() => {
-		setIsFilterModalVisible(true);
-	}, []);
+	const filterAgendaItems = useCallback(() => {
+		if (filterBy === 'all') {
+			setFilteredAgendaItems(agendaItems);
+			return;
+		}
+
+		const filtered = agendaItems.map(section => ({
+			...section,
+			data: section.data.filter(item => {
+				// Skip empty items
+				if (!item.title) return false;
+				return item.priority === filterBy;
+			})
+		})).filter(section => section.data.length > 0);
+
+		setFilteredAgendaItems(filtered);
+	}, [filterBy]);
 
 	/**
-	 * Handle closing the filter modal
+	 * Get total filtered tasks count
 	 */
-	const handleCloseFilterModal = useCallback(() => {
-		setIsFilterModalVisible(false);
-	}, []);
+	const getFilteredTasksCount = useCallback(() => {
+		return filteredAgendaItems.reduce((total, section) => {
+			return total + section.data.filter(item => item.title).length;
+		}, 0);
+	}, [filteredAgendaItems]);
+
+	/**
+	 * Apply filters when filterBy changes
+	 */
+	useEffect(() => {
+		filterAgendaItems();
+	}, [filterAgendaItems]);
+
+	/**
+	 * Handle entering selection mode
+	 */
+	const handleEnterSelectionMode = () => {
+		setIsSelectionMode(true);
+		setSelectedTaskIds([]);
+		setShowMenu(false);
+	};
+
+	/**
+	 * Handle exiting selection mode
+	 */
+	const handleExitSelectionMode = () => {
+		setIsSelectionMode(false);
+		setSelectedTaskIds([]);
+	};
+
+	/**
+	 * Handle refresh tasks from storage
+	 */
+	const handleRefreshTasks = async () => {
+		setIsRefreshing(true);
+		try {
+			const storedTasks = await getDataLocalStorage('task_list') || [];
+			dispatch(setTasks(storedTasks));
+			Alert.alert('Success', 'Tasks refreshed successfully');
+		} catch (error) {
+			console.error('Error refreshing tasks:', error);
+			Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
+		} finally {
+			setIsRefreshing(false);
+			setShowMenu(false);
+		}
+	};
+
+	/**
+	 * Handle task selection in selection mode
+	 */
+	const handleTaskSelection = (taskId) => {
+		if (selectedTaskIds.includes(taskId)) {
+			setSelectedTaskIds(selectedTaskIds.filter(id => id !== taskId));
+		} else {
+			setSelectedTaskIds([...selectedTaskIds, taskId]);
+		}
+	};
+
+	/**
+	 * Handle bulk actions on selected tasks
+	 */
+	const handleBulkComplete = async () => {
+		try {
+			// Implement bulk complete logic here
+			Alert.alert('Success', `${selectedTaskIds.length} tasks completed`);
+			setIsSelectionMode(false);
+			setSelectedTaskIds([]);
+		} catch (error) {
+			console.error('Error completing tasks:', error);
+			Alert.alert('Error', 'Failed to complete tasks. Please try again.');
+		}
+	};
+
+	/**
+	 * Handle filter change
+	 */
+	const handleFilterChange = (filter) => {
+		setFilterBy(filter);
+		setShowMenu(false);
+	};
 
 	/**
 	 * Handle applying filters from the modal
@@ -54,28 +159,44 @@ const Upcoming = ({ weekView }) => {
 	 * Handle menu button press
 	 */
 	const handleMenuPress = useCallback(() => {
-		// Implement menu functionality here
+		setShowMenu(!showMenu);
+	}, [showMenu]);
+
+	/**
+	 * Handle menu close (for outside click)
+	 */
+	const handleMenuClose = useCallback(() => {
+		setShowMenu(false);
 	}, []);
 
 	/**
 	 * Handle task completion toggle
 	 */
 	const handleToggleTaskCompletion = useCallback((taskId) => {
-		// Implement task completion toggle logic here
-		console.log('Toggle task completion:', taskId);
-	}, []);
+		if (isSelectionMode) {
+			handleTaskSelection(taskId);
+		} else {
+			// Implement task completion toggle logic here
+			console.log('Toggle task completion:', taskId);
+		}
+	}, [isSelectionMode, selectedTaskIds]);
 
 	/**
 	 * Render agenda item component
 	 */
 	const renderItem = useCallback(({ item }) => {
+		// Generate a unique ID for agenda items if they don't have one
+		const itemId = item.id || `${item.title}_${item.time || 'no-time'}`;
+		
 		return (
 			<UpcomingAgendaItem 
-				item={item} 
+				item={{ ...item, id: itemId }} 
 				onToggleCompletion={handleToggleTaskCompletion}
+				isSelectionMode={isSelectionMode}
+				isSelected={selectedTaskIds.includes(itemId)}
 			/>
 		);
-	}, [handleToggleTaskCompletion]);
+	}, [handleToggleTaskCompletion, isSelectionMode, selectedTaskIds]);
 
 	const calendarRef = useRef(null);
 	const rotation = useRef(new Animated.Value(0));
@@ -117,10 +238,28 @@ const Upcoming = ({ weekView }) => {
 	
 	return (
 		<View style={upcomingStyles.container}>
-			<UpcomingHeader 
-				onFilterPress={handleOpenFilterModal}
-				onMenuPress={handleMenuPress}
-			/>
+			<View style={{ position: 'relative' }}>
+				<UpcomingHeader 
+					filteredTasksCount={getFilteredTasksCount()}
+					filterBy={filterBy}
+					showMenu={showMenu}
+					setShowMenu={setShowMenu}
+					isSelectionMode={isSelectionMode}
+					selectedTaskIds={selectedTaskIds}
+					onExitSelectionMode={handleExitSelectionMode}
+					onBulkComplete={handleBulkComplete}
+				/>
+
+				<UpcomingMenuDropdown
+					showMenu={showMenu}
+					filterBy={filterBy}
+					isRefreshing={isRefreshing}
+					onEnterSelectionMode={handleEnterSelectionMode}
+					onRefreshTasks={handleRefreshTasks}
+					onFilterChange={handleFilterChange}
+					onClose={handleMenuClose}
+				/>
+			</View>
 
 			<CalendarProvider
 				date={agendaItems[1]?.title}
@@ -147,18 +286,12 @@ const Upcoming = ({ weekView }) => {
 					/>
 				)}
 				<AgendaList
-					sections={agendaItems}
+					sections={filteredAgendaItems}
 					renderItem={renderItem}
 					sectionStyle={upcomingStyles.section}
 					theme={calendarTheme}
 				/>
 			</CalendarProvider>
-
-			<TaskFilterModal
-				visible={isFilterModalVisible}
-				onClose={handleCloseFilterModal}
-				onApply={handleApplyFilters}
-			/>
 		</View>
 	);
 };

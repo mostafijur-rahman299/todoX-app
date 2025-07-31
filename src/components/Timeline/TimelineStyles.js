@@ -12,7 +12,10 @@ export const timelineStyles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: typography.fontSize["xl"],
@@ -36,6 +39,11 @@ export const timelineStyles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   timelineContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    overflow: 'hidden', // Prevent overflow
+  },
+  timeline: {
     flex: 1,
     backgroundColor: colors.background,
   },
@@ -67,13 +75,16 @@ export const timelineStyles = StyleSheet.create({
  */
 export const getTimelineTheme = (colors) => ({
   timelineContainer: {
-    marginBottom: 90,
+    flex: 1,
+    marginBottom: 79, // Reduced from 90 to prevent overflow
+    overflow: 'hidden',
   },
   event: {
     borderRadius: 10,
     paddingLeft: 10,
     paddingRight: 10,
     marginLeft: 5,
+    marginRight: 5, // Added right margin to prevent edge overflow
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,

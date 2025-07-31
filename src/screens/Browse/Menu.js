@@ -41,13 +41,6 @@ const BrowseMenu = () => {
             color: colors.secondary,
         },
         {
-            id: 'filters',
-            title: 'Filters & Labels',
-            subtitle: 'Advanced filtering',
-            icon: 'funnel-outline',
-            color: colors.warning,
-        },
-        {
             id: 'completed',
             title: 'Completed',
             subtitle: 'View finished tasks',

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback,useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   FlatList,
@@ -18,7 +18,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
 import AddTaskButton from '@/components/AddTaskButton';
 import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
-
 
 // Import new components
 import EmptyState from '@/components/Inbox/EmptyState';
@@ -238,7 +237,7 @@ const Inbox = () => {
         item={item}
         index={index}
         onToggleComplete={handleToggleComplete}
-        onTaskPress={isSelectionMode ? () => handleTaskSelection(item.id) : handleTaskPress}
+        onTaskPress={isSelectionMode ? () => handleTaskSelection(item.id) : () => handleTaskPress(item)}
         getPriorityColor={getPriorityColor}
         isSelectionMode={isSelectionMode}
         isSelected={selectedTaskIds.includes(item.id)}
@@ -259,25 +258,27 @@ const Inbox = () => {
         />
       )}
 
-      <InboxHeader
-        filteredTasksCount={filteredTasks.length}
-        filterBy={filterBy}
-        showMenu={showMenu}
-        setShowMenu={setShowMenu}
-        isSelectionMode={isSelectionMode}
-        selectedTaskIds={selectedTaskIds}
-        onExitSelectionMode={handleExitSelectionMode}
-        onBulkComplete={handleBulkComplete}
-      />
+      <View style={styles.headerWrapper}>
+        <InboxHeader
+          filteredTasksCount={filteredTasks.length}
+          filterBy={filterBy}
+          showMenu={showMenu}
+          setShowMenu={setShowMenu}
+          isSelectionMode={isSelectionMode}
+          selectedTaskIds={selectedTaskIds}
+          onExitSelectionMode={handleExitSelectionMode}
+          onBulkComplete={handleBulkComplete}
+        />
 
-      <MenuDropdown
-        showMenu={showMenu}
-        filterBy={filterBy}
-        isRefreshing={isRefreshing}
-        onEnterSelectionMode={handleEnterSelectionMode}
-        onRefreshTasks={handleRefreshTasks}
-        onFilterChange={handleFilterChange}
-      />
+        <MenuDropdown
+          showMenu={showMenu}
+          filterBy={filterBy}
+          isRefreshing={isRefreshing}
+          onEnterSelectionMode={handleEnterSelectionMode}
+          onRefreshTasks={handleRefreshTasks}
+          onFilterChange={handleFilterChange}
+        />
+      </View>
 
       {filteredTasks.length === 0 ? (
         <EmptyState />
@@ -309,12 +310,14 @@ const Inbox = () => {
   );
 };
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  headerWrapper: {
+    position: 'relative',
+    zIndex: 1000,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -366,7 +369,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.2)',
-    zIndex: 1500, // Higher than other content but lower than menuDropdown
+    zIndex: 999,
   },
   menuDropdown: {
     position: 'absolute',

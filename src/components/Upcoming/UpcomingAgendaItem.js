@@ -7,20 +7,31 @@ import {
 	Alert,
 } from 'react-native';
 import isEmpty from 'lodash/isEmpty';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, spacing, typography } from '@/constants/Colors';
 import { getPriorityColor } from '@/utils/gnFunc';
 
 /**
- * Ultra-clean agenda item component with refined aesthetics
+ * Ultra-clean agenda item component with refined aesthetics and selection support
  */
-const UpcomingAgendaItem = React.memo(({ item, onToggleCompletion }) => {
+const UpcomingAgendaItem = React.memo(({ 
+	item, 
+	onToggleCompletion, 
+	isSelectionMode = false, 
+	isSelected = false 
+}) => {
 	/**
-	 * Handle item press to show details
+	 * Handle item press to show details or toggle selection
 	 */
 	const itemPressed = useCallback(() => {
-		Alert.alert(item.title);
-	}, [item]);
+		if (isSelectionMode) {
+			if (onToggleCompletion) {
+				onToggleCompletion(item.id);
+			}
+		} else {
+			Alert.alert(item.title);
+		}
+	}, [item, isSelectionMode, onToggleCompletion]);
 
 	/**
 	 * Handle task completion toggle
@@ -55,33 +66,57 @@ const UpcomingAgendaItem = React.memo(({ item, onToggleCompletion }) => {
 
 	return (
 		<TouchableOpacity 
-			style={styles.taskItem} 
+			style={[
+				styles.taskItem,
+				isSelected && styles.selectedTaskItem
+			]} 
 			activeOpacity={0.85}
 			onPress={itemPressed}
 		>
 			<View style={styles.taskContent}>
-				<TouchableOpacity
-					style={styles.checkboxContainer}
-					onPress={handleToggleCompletion}
-					activeOpacity={0.7}>
-					<View
-						style={[
-							styles.checkbox,
-							{ borderColor: priorityColor },
-							item.is_completed && {
-								backgroundColor: priorityColor,
-								borderColor: priorityColor,
-							},
-						]}>
-						{item.is_completed && (
-							<Ionicons
-								name="checkmark"
-								size={9}
-								color={colors.white}
-							/>
-						)}
-					</View>
-				</TouchableOpacity>
+				{isSelectionMode ? (
+					<TouchableOpacity
+						style={styles.selectionCheckbox}
+						onPress={handleToggleCompletion}
+						activeOpacity={0.7}>
+						<View
+							style={[
+								styles.selectionCheckboxInner,
+								isSelected && styles.selectedCheckbox,
+							]}>
+							{isSelected && (
+								<Ionicons
+									name="checkmark"
+									size={12}
+									color={colors.white}
+								/>
+							)}
+						</View>
+					</TouchableOpacity>
+				) : (
+					<TouchableOpacity
+						style={styles.checkboxContainer}
+						onPress={handleToggleCompletion}
+						activeOpacity={0.7}>
+						<View
+							style={[
+								styles.checkbox,
+								{ borderColor: priorityColor },
+								item.is_completed && {
+									backgroundColor: priorityColor,
+									borderColor: priorityColor,
+								},
+							]}>
+							{item.is_completed && (
+								<Ionicons
+									name="checkmark"
+									size={9}
+									color={colors.white}
+								/>
+							)}
+						</View>
+					</TouchableOpacity>
+				)}
 
 				<View style={styles.taskDetails}>
 					<View style={styles.taskTitleRow}>
@@ -129,6 +164,11 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.surface,
 		borderRadius: spacing.sm,
 	},
+	selectedTaskItem: {
+		backgroundColor: colors.primary + '10',
+		borderWidth: 1,
+		borderColor: colors.primary + '30',
+	},
 	taskContent: {
 		flexDirection: "row",
 		alignItems: "flex-start",
@@ -148,6 +188,25 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 		backgroundColor: 'transparent',
+	},
+	
+	// Selection Mode Checkbox
+	selectionCheckbox: {
+		paddingTop: 1,
+	},
+	selectionCheckboxInner: {
+		width: 20,
+		height: 20,
+		borderRadius: 10,
+		borderWidth: 2,
+		borderColor: colors.border,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: 'transparent',
+	},
+	selectedCheckbox: {
+		backgroundColor: colors.primary,
+		borderColor: colors.primary,
 	},
 	
 	// Clean Task Details

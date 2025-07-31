@@ -5,7 +5,8 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Animated,
-  Easing
+  Easing,
+  Dimensions
 } from 'react-native';
 import groupBy from 'lodash/groupBy';
 import {
@@ -17,15 +18,14 @@ import {
 import { colors } from '@/constants/Colors';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { Timeline } from "react-native-calendars";
 
 // Import Timeline components
 import { 
-  getDate, 
-  INITIAL_TIME, 
+  getDate,
   timelineEvents 
 } from '@/components/Timeline/TimelineConstants';
-import TimelineEvent from '@/components/Timeline/TimelineEvent';
 import TimelineCalendarHeader from '@/components/Timeline/TimelineCalendarHeader';
 import TimelineCalendarDay from '@/components/Timeline/TimelineCalendarDay';
 import { useTimelineEventHandlers } from '@/components/Timeline/TimelineEventHandlers';
@@ -40,6 +40,9 @@ import {
  * Displays tasks and events in a beautiful timeline view with enhanced design
  */
 const TimelineCalendarScreen = () => {
+  // Get screen dimensions for responsive design
+  const { height: screenHeight } = Dimensions.get('window');
+  
   // State management with hooks
   const [currentDate, setCurrentDate] = useState(getDate());
   const [events, setEvents] = useState(timelineEvents);
@@ -132,13 +135,6 @@ const TimelineCalendarScreen = () => {
   );
 
   /**
-   * Render custom timeline event
-   */
-  const renderEvent = useCallback((event) => {
-    return <TimelineEvent event={event} onEventPress={handleEventPress} />;
-  }, [handleEventPress]);
-
-  /**
    * Handle calendar toggle animation
    */
   const onCalendarToggled = useCallback((isOpen) => {
@@ -163,13 +159,45 @@ const TimelineCalendarScreen = () => {
       scrollToFirst: true,
       start: 0,
       end: 24,
-      renderEvent: renderEvent,
     }),
-    [createNewEvent, approveNewEvent, handleEventPress, renderEvent, timelineTheme]
+    [createNewEvent, approveNewEvent, handleEventPress, timelineTheme]
   );
+
+  /**
+   * Render timeline item with proper prop handling
+   * Extracts key from props to avoid React key spreading error
+   */
+  const renderItem = useCallback((timelineProps, info) => {
+    // Extract key from props to avoid spreading it into JSX
+    const { key, ...restProps } = timelineProps;
+    
+    return (
+      <Timeline
+        key={key || `timeline-${info?.date || 'default'}`}
+        {...restProps}
+        renderEvent={(event) => (
+          <View 
+            style={{ 
+              backgroundColor: event.color, 
+              height: "100%", 
+              width: "100%",
+              padding: 8,
+              borderRadius: 4
+            }} 
+            key={event.end}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>
+              {event.title}
+            </Text>
+          </View>
+        )}
+      />
+    );
+  }, []);
 
   return (
     <SafeAreaView style={timelineStyles.container}>
+      {/* Fixed Header */}
       <View style={timelineStyles.header}>
         <Text style={timelineStyles.headerTitle}>Timeline</Text>
         <View style={timelineStyles.headerActions}>
@@ -183,40 +211,45 @@ const TimelineCalendarScreen = () => {
         </View>
       </View>
 
-      <CalendarProvider
-        date={currentDate}
-        onDateChanged={handleDateChanged}
-        onMonthChange={handleMonthChange}
-        showTodayButton
-        disabledOpacity={0.6}
-        theme={calendarTheme}
-        todayButtonStyle={timelineStyles.todayButton}
-      >
-        <ExpandableCalendar
-          ref={calendarRef}
-          firstDay={1}
-          markedDates={markedDates}
+      {/* Calendar and Timeline Container with proper flex constraints */}
+      <View style={{ flex: 1 }}>
+        <CalendarProvider
+          date={currentDate}
+          onDateChanged={handleDateChanged}
+          onMonthChange={handleMonthChange}
+          showTodayButton
+          disabledOpacity={0.6}
           theme={calendarTheme}
-          hideKnob={false}
-          initialPosition="closed"
-          renderDay={renderDay}
-          leftArrowImageSource={leftArrowIcon}
-          rightArrowImageSource={rightArrowIcon}
-          renderHeader={renderHeader}
-          onCalendarToggled={onCalendarToggled}
-        />
-        <View style={timelineStyles.timelineContainer}>
-          <TimelineList
-            events={eventsByDate}
-            timelineProps={timelineProps}
-            showNowIndicator
-            scrollToFirst
-            initialTime={INITIAL_TIME}
-            theme={calendarTheme}
-            style={timelineStyles.timeline}
-          />
-        </View>
-      </CalendarProvider>
+          todayButtonStyle={timelineStyles.todayButton}
+        >
+          {/* Calendar with constrained height */}
+          <View style={{ maxHeight: screenHeight * 0.4 }}>
+            <ExpandableCalendar
+              ref={calendarRef}
+              firstDay={1}
+              markedDates={markedDates}
+              theme={calendarTheme}
+              hideKnob={false}
+              initialPosition="closed"
+              renderDay={renderDay}
+              leftArrowImageSource={leftArrowIcon}
+              rightArrowImageSource={rightArrowIcon}
+              renderHeader={renderHeader}
+              onCalendarToggled={onCalendarToggled}
+            />
+          </View>
+          
+          {/* Timeline Container with proper flex and overflow handling */}
+          <View style={[timelineStyles.timelineContainer, { flex: 1, minHeight: 0 }]}>
+            <TimelineList
+              events={eventsByDate}
+              timelineProps={timelineProps}
+              renderItem={renderItem}
+              showNowIndicator
+            />
+          </View>
+        </CalendarProvider>
+      </View>
     </SafeAreaView>
   );
 };

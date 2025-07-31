@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import CustomText from '@/components/UI/CustomText';
-import { colors, spacing, borderRadius, shadows } from '@/constants/Colors';
+import { colors, spacing, borderRadius, shadows, typography } from '@/constants/Colors';
 import { deleteTask, toggleTaskComplete, setTasks } from '@/store/Task/task';
 import { storeDataLocalStorage } from '@/utils/storage';
 
@@ -34,18 +34,27 @@ const CompletedTask = () => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [fadeAnim] = useState(new Animated.Value(0));
+    const [slideAnim] = useState(new Animated.Value(-50));
     const [recentlyDeleted, setRecentlyDeleted] = useState([]);
     const [undoTimeout, setUndoTimeout] = useState(null);
 
     /**
-     * Initialize component with fade-in animation
+     * Initialize component with enhanced animations
      */
     useEffect(() => {
-        Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                tension: 100,
+                friction: 8,
+                useNativeDriver: true,
+            }),
+        ]).start();
     }, []);
 
     /**
@@ -71,7 +80,7 @@ const CompletedTask = () => {
     };
 
     /**
-     * Toggle selection mode
+     * Toggle selection mode with animation
      */
     const toggleSelectionMode = () => {
         setIsSelectionMode(!isSelectionMode);
@@ -304,140 +313,161 @@ const CompletedTask = () => {
     };
 
     /**
-     * Render individual completed task item
+     * Render individual completed task item with enhanced design
      */
     const renderTaskItem = (task) => {
         const isSelected = selectedTasks.has(task.id);
         
         return (
-            <TouchableOpacity
+            <Animated.View
                 key={task.id}
                 style={[
-                    styles.taskItem,
-                    isSelected && styles.taskItemSelected,
+                    styles.taskItemWrapper,
+                    { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
                 ]}
-                onPress={() => {
-                    if (isSelectionMode) {
-                        toggleTaskSelection(task.id);
-                    }
-                }}
-                onLongPress={() => {
-                    if (!isSelectionMode) {
-                        setIsSelectionMode(true);
-                        toggleTaskSelection(task.id);
-                    }
-                }}
-                activeOpacity={0.7}
             >
-                {/* Selection checkbox */}
-                {isSelectionMode && (
-                    <TouchableOpacity
-                        style={styles.checkboxContainer}
-                        onPress={() => toggleTaskSelection(task.id)}
-                    >
-                        <View style={[
-                            styles.checkbox,
-                            isSelected && styles.checkboxSelected
-                        ]}>
-                            {isSelected && (
-                                <Ionicons name="checkmark" size={16} color={colors.white} />
-                            )}
-                        </View>
-                    </TouchableOpacity>
-                )}
-
-                {/* Task content */}
-                <View style={styles.taskContent}>
-                    {/* Task header */}
-                    <View style={styles.taskHeader}>
-                        <View style={styles.taskTitleContainer}>
-                            <TouchableOpacity
-                                style={styles.completedIconContainer}
-                                onPress={() => uncompleteTask(task.id)}
-                            >
-                                <Ionicons 
-                                    name="checkmark-circle" 
-                                    size={20} 
-                                    color={colors.success} 
-                                    style={styles.completedIcon}
-                                />
-                            </TouchableOpacity>
-                            <CustomText 
-                                variant="body" 
-                                weight="medium" 
-                                style={styles.taskTitle}
-                                numberOfLines={2}
-                            >
-                                {task.title}
-                            </CustomText>
-                        </View>
-                        
-                        {/* Priority indicator */}
-                        {task.priority && (
-                            <View style={[
-                                styles.priorityIndicator,
-                                { backgroundColor: getPriorityColor(task.priority) }
-                            ]} />
-                        )}
-                    </View>
-
-                    {/* Task description */}
-                    {task.description && (
-                        <CustomText 
-                            variant="caption" 
-                            style={styles.taskDescription}
-                            numberOfLines={2}
+                <TouchableOpacity
+                    style={[
+                        styles.taskItem,
+                        isSelected && styles.taskItemSelected,
+                    ]}
+                    onPress={() => {
+                        if (isSelectionMode) {
+                            toggleTaskSelection(task.id);
+                        }
+                    }}
+                    onLongPress={() => {
+                        if (!isSelectionMode) {
+                            setIsSelectionMode(true);
+                            toggleTaskSelection(task.id);
+                        }
+                    }}
+                    activeOpacity={0.8}
+                >
+                    {/* Selection checkbox */}
+                    {isSelectionMode && (
+                        <TouchableOpacity
+                            style={styles.checkboxContainer}
+                            onPress={() => toggleTaskSelection(task.id)}
                         >
-                            {task.description}
-                        </CustomText>
+                            <View style={[
+                                styles.checkbox,
+                                isSelected && styles.checkboxSelected
+                            ]}>
+                                {isSelected && (
+                                    <Ionicons name="checkmark" size={14} color={colors.white} />
+                                )}
+                            </View>
+                        </TouchableOpacity>
                     )}
 
-                    {/* Task metadata */}
-                    <View style={styles.taskMetadata}>
-                        {/* Category */}
-                        {task.category && (
-                            <View style={styles.categoryContainer}>
+                    {/* Task content */}
+                    <View style={styles.taskContent}>
+                        {/* Task header */}
+                        <View style={styles.taskHeader}>
+                            <View style={styles.taskTitleContainer}>
+                                <TouchableOpacity
+                                    style={styles.completedIconContainer}
+                                    onPress={() => uncompleteTask(task.id)}
+                                >
+                                    <View style={styles.completedIconBg}>
+                                        <Ionicons 
+                                            name="checkmark-circle" 
+                                            size={20} 
+                                            color={colors.success} 
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                                <CustomText 
+                                    variant="body" 
+                                    weight="medium" 
+                                    style={styles.taskTitle}
+                                    numberOfLines={2}
+                                >
+                                    {task.title}
+                                </CustomText>
+                            </View>
+                            
+                            {/* Priority indicator */}
+                            {task.priority && (
+                                <View style={styles.priorityContainer}>
+                                    <View style={[
+                                        styles.priorityIndicator,
+                                        { backgroundColor: getPriorityColor(task.priority) }
+                                    ]} />
+                                    <CustomText variant="overline" style={[
+                                        styles.priorityText,
+                                        { color: getPriorityColor(task.priority) }
+                                    ]}>
+                                        {task.priority.toUpperCase()}
+                                    </CustomText>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* Task description */}
+                        {task.description && (
+                            <CustomText 
+                                variant="caption" 
+                                style={styles.taskDescription}
+                                numberOfLines={2}
+                            >
+                                {task.description}
+                            </CustomText>
+                        )}
+
+                        {/* Task metadata */}
+                        <View style={styles.taskMetadata}>
+                            {/* Category */}
+                            {task.category && (
+                                <View style={styles.categoryContainer}>
+                                    <View style={styles.categoryDot} />
+                                    <CustomText variant="overline" style={styles.categoryText}>
+                                        {task.category}
+                                    </CustomText>
+                                </View>
+                            )}
+
+                            {/* Completion date */}
+                            <View style={styles.completionDateContainer}>
                                 <Ionicons 
-                                    name="pricetag" 
+                                    name="time-outline" 
                                     size={12} 
                                     color={colors.textTertiary} 
                                 />
-                                <CustomText variant="overline" style={styles.categoryText}>
-                                    {task.category}
+                                <CustomText variant="overline" style={styles.completionDate}>
+                                    {formatCompletionDate(task.completed_timestamp)}
                                 </CustomText>
                             </View>
-                        )}
-
-                        {/* Completion date */}
-                        <CustomText variant="overline" style={styles.completionDate}>
-                            {formatCompletionDate(task.completed_timestamp)}
-                        </CustomText>
+                        </View>
                     </View>
-                </View>
 
-                {/* Quick action button */}
-                {!isSelectionMode && (
-                    <TouchableOpacity
-                        style={styles.quickActionButton}
-                        onPress={() => uncompleteTask(task.id)}
-                    >
-                        <Ionicons name="refresh" size={18} color={colors.primary} />
-                    </TouchableOpacity>
-                )}
-            </TouchableOpacity>
+                    {/* Quick action button */}
+                    {!isSelectionMode && (
+                        <TouchableOpacity
+                            style={styles.quickActionButton}
+                            onPress={() => uncompleteTask(task.id)}
+                        >
+                            <Ionicons name="refresh-outline" size={18} color={colors.primary} />
+                        </TouchableOpacity>
+                    )}
+                </TouchableOpacity>
+            </Animated.View>
         );
     };
 
     /**
-     * Render undo notification bar
+     * Render enhanced undo notification bar
      */
     const renderUndoNotification = () => {
         if (recentlyDeleted.length === 0) return null;
 
         return (
-            <Animated.View style={styles.undoContainer}>
+            <Animated.View style={[styles.undoContainer, { opacity: fadeAnim }]}>
                 <View style={styles.undoContent}>
-                    <Ionicons name="trash" size={20} color={colors.textPrimary} />
+                    <View style={styles.undoIconContainer}>
+                        <Ionicons name="trash-outline" size={18} color={colors.error} />
+                    </View>
                     <CustomText variant="body" style={styles.undoText}>
                         {recentlyDeleted.length} task{recentlyDeleted.length > 1 ? 's' : ''} deleted
                     </CustomText>
@@ -446,7 +476,7 @@ const CompletedTask = () => {
                     style={styles.undoButton}
                     onPress={undoDelete}
                 >
-                    <CustomText variant="body" weight="semibold" color={colors.primary}>
+                    <CustomText variant="body" weight="semibold" style={styles.undoButtonText}>
                         UNDO
                     </CustomText>
                 </TouchableOpacity>
@@ -455,68 +485,94 @@ const CompletedTask = () => {
     };
 
     /**
-     * Render empty state
+     * Render enhanced empty state
      */
     const renderEmptyState = () => (
-        <View style={styles.emptyContainer}>
-            <Ionicons 
-                name="checkmark-circle-outline" 
-                size={80} 
-                color={colors.textTertiary} 
-            />
+        <Animated.View 
+            style={[styles.emptyContainer, { opacity: fadeAnim }]}
+        >
+            <View style={styles.emptyIconContainer}>
+                <Ionicons 
+                    name="checkmark-done-circle-outline" 
+                    size={80} 
+                    color={colors.textTertiary} 
+                />
+            </View>
             <CustomText variant="h4" weight="semibold" style={styles.emptyTitle}>
-                No Completed Tasks
+                All Caught Up!
             </CustomText>
             <CustomText variant="body" style={styles.emptyDescription}>
-                Complete some tasks to see them here. Your achievements will be displayed in this section.
+                No completed tasks yet. When you finish tasks, they'll appear here for you to review your accomplishments.
             </CustomText>
-        </View>
+            <View style={styles.emptyActionContainer}>
+                <TouchableOpacity 
+                    style={styles.emptyActionButton}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+                    <CustomText variant="body" weight="medium" style={styles.emptyActionText}>
+                        Add New Task
+                    </CustomText>
+                </TouchableOpacity>
+            </View>
+        </Animated.View>
     );
 
     return (
         <SafeAreaView style={styles.container}>            
-            {/* Header */}
-            <View style={styles.header}>
+            {/* Enhanced Header */}
+            <Animated.View 
+                style={[styles.header, { opacity: fadeAnim }]}
+            >
                 <View style={styles.headerLeft}>
                     <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => navigation.goBack()}
                     >
-                        <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+                        <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
                     </TouchableOpacity>
-                    <CustomText variant="h3" weight="semibold" style={styles.headerTitle}>
-                        Completed Tasks
-                    </CustomText>
+                    <View style={styles.headerTitleContainer}>
+                        <CustomText variant="h3" weight="bold" style={styles.headerTitle}>
+                            Completed
+                        </CustomText>
+                        {completedTasks.length > 0 && (
+                            <View style={styles.taskCountBadge}>
+                                <CustomText variant="caption" weight="semibold" style={styles.taskCountBadgeText}>
+                                    {completedTasks.length}
+                                </CustomText>
+                            </View>
+                        )}
+                    </View>
                 </View>
 
                 {completedTasks.length > 0 && (
                     <View style={styles.headerRight}>
                         <TouchableOpacity
-                            style={styles.headerButton}
+                            style={[styles.headerButton, isSelectionMode && styles.headerButtonActive]}
                             onPress={toggleSelectionMode}
                         >
                             <Ionicons 
-                                name={isSelectionMode ? "close" : "checkmark-done"} 
+                                name={isSelectionMode ? "close" : "checkmark-done-outline"} 
                                 size={20} 
-                                color={colors.textPrimary} 
+                                color={isSelectionMode ? colors.error : colors.textPrimary} 
                             />
                         </TouchableOpacity>
                     </View>
                 )}
-            </View>
+            </Animated.View>
 
-            {/* Selection toolbar */}
+            {/* Enhanced Selection toolbar */}
             {isSelectionMode && (
                 <Animated.View style={[styles.selectionToolbar, { opacity: fadeAnim }]}>
                     <View style={styles.selectionInfo}>
-                        <CustomText variant="body" weight="medium">
+                        <CustomText variant="body" weight="medium" style={styles.selectionText}>
                             {selectedTasks.size} of {completedTasks.length} selected
                         </CustomText>
                         <TouchableOpacity
                             style={styles.selectAllButton}
                             onPress={selectAllTasks}
                         >
-                            <CustomText variant="body" color={colors.primary}>
+                            <CustomText variant="body" weight="semibold" style={styles.selectAllText}>
                                 {selectedTasks.size === completedTasks.length ? 'Deselect All' : 'Select All'}
                             </CustomText>
                         </TouchableOpacity>
@@ -528,9 +584,9 @@ const CompletedTask = () => {
                                 style={styles.uncompleteButton}
                                 onPress={uncompleteSelectedTasks}
                             >
-                                <Ionicons name="refresh" size={18} color={colors.primary} />
-                                <CustomText variant="body" color={colors.primary} style={styles.actionButtonText}>
-                                    Uncomplete
+                                <Ionicons name="refresh-outline" size={18} color={colors.primary} />
+                                <CustomText variant="body" weight="medium" style={styles.uncompleteButtonText}>
+                                    Restore
                                 </CustomText>
                             </TouchableOpacity>
                             
@@ -538,8 +594,8 @@ const CompletedTask = () => {
                                 style={styles.deleteSelectedButton}
                                 onPress={deleteSelectedTasks}
                             >
-                                <Ionicons name="trash" size={18} color={colors.error} />
-                                <CustomText variant="body" color={colors.error} style={styles.actionButtonText}>
+                                <Ionicons name="trash-outline" size={18} color={colors.error} />
+                                <CustomText variant="body" weight="medium" style={styles.deleteButtonText}>
                                     Delete
                                 </CustomText>
                             </TouchableOpacity>
@@ -550,62 +606,31 @@ const CompletedTask = () => {
 
             {/* Task count and actions */}
             {completedTasks.length > 0 && !isSelectionMode && (
-                <View style={styles.taskCountContainer}>
-                    <CustomText variant="caption" style={styles.taskCount}>
-                        {completedTasks.length} completed task{completedTasks.length !== 1 ? 's' : ''}
-                    </CustomText>
+                <Animated.View style={[styles.taskCountContainer, { opacity: fadeAnim }]}>
+                    <View style={styles.taskCountInfo}>
+                        <CustomText variant="caption" style={styles.taskCount}>
+                            {completedTasks.length} completed task{completedTasks.length !== 1 ? 's' : ''}
+                        </CustomText>
+                    </View>
                     <View style={styles.taskActions}>
                         <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => {
-                                Alert.alert(
-                                    'Mark All as Incomplete',
-                                    `Mark all ${completedTasks.length} completed tasks as incomplete?`,
-                                    [
-                                        { text: 'Cancel', style: 'cancel' },
-                                        {
-                                            text: 'Mark Incomplete',
-                                            onPress: () => {
-                                                completedTasks.forEach(task => {
-                                                    dispatch(toggleTaskComplete(task.id));
-                                                });
-                                                
-                                                const updatedTasks = allTasks.map(task => 
-                                                    task.is_completed
-                                                        ? { ...task, is_completed: false, completed_timestamp: null }
-                                                        : task
-                                                );
-                                                storeDataLocalStorage('tasks', updatedTasks);
-                                            }
-                                        }
-                                    ]
-                                );
-                            }}
-                        >
-                            <Ionicons name="refresh-outline" size={16} color={colors.primary} />
-                            <CustomText variant="caption" color={colors.primary}>
-                                Uncomplete All
-                            </CustomText>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity
-                            style={styles.actionButton}
+                            style={styles.clearAllButton}
                             onPress={deleteAllCompletedTasks}
                         >
                             <Ionicons name="trash-outline" size={16} color={colors.error} />
-                            <CustomText variant="caption" color={colors.error}>
-                                Delete All
+                            <CustomText variant="caption" weight="medium" style={styles.clearAllText}>
+                                Clear All
                             </CustomText>
                         </TouchableOpacity>
                     </View>
-                </View>
+                </Animated.View>
             )}
 
             {/* Undo notification */}
             {renderUndoNotification()}
 
             {/* Task list */}
-            <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+            <View style={styles.content}>
                 {completedTasks.length === 0 ? (
                     renderEmptyState()
                 ) : (
@@ -627,7 +652,7 @@ const CompletedTask = () => {
                         <View style={styles.bottomSpacer} />
                     </ScrollView>
                 )}
-            </Animated.View>
+            </View>
         </SafeAreaView>
     );
 };
@@ -641,10 +666,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        ...shadows.sm,
     },
     headerLeft: {
         flexDirection: 'row',
@@ -652,25 +679,54 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backButton: {
-        padding: spacing.sm,
-        marginRight: spacing.sm,
-        borderRadius: borderRadius.md,
+        width: 40,
+        height: 40,
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.backgroundSecondary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.md,
+    },
+    headerTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     headerTitle: {
         color: colors.textPrimary,
+        marginRight: spacing.sm,
+    },
+    taskCountBadge: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
+        borderRadius: borderRadius.full,
+        minWidth: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    taskCountBadgeText: {
+        color: colors.white,
+        fontSize: 12,
     },
     headerRight: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     headerButton: {
-        padding: spacing.sm,
-        borderRadius: borderRadius.md,
+        width: 40,
+        height: 40,
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.backgroundSecondary,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerButtonActive: {
+        backgroundColor: colors.errorLight + '20',
     },
     selectionToolbar: {
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        backgroundColor: colors.surface,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        backgroundColor: colors.surfaceElevated,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
     },
@@ -678,47 +734,64 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: spacing.sm,
+        marginBottom: spacing.md,
+    },
+    selectionText: {
+        color: colors.textPrimary,
     },
     selectAllButton: {
-        padding: spacing.xs,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.md,
+        backgroundColor: colors.primary + '20',
+    },
+    selectAllText: {
+        color: colors.primary,
     },
     selectionActions: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        gap: spacing.md,
     },
     uncompleteButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.md,
-        backgroundColor: colors.primary + '20',
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.primary + '15',
         flex: 1,
-        marginRight: spacing.sm,
         justifyContent: 'center',
+        gap: spacing.xs,
+    },
+    uncompleteButtonText: {
+        color: colors.primary,
     },
     deleteSelectedButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.md,
-        backgroundColor: colors.errorLight + '20',
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.error + '15',
         flex: 1,
-        marginLeft: spacing.sm,
         justifyContent: 'center',
+        gap: spacing.xs,
     },
-    actionButtonText: {
-        marginLeft: spacing.xs,
+    deleteButtonText: {
+        color: colors.error,
     },
     taskCountContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
         backgroundColor: colors.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    taskCountInfo: {
+        flex: 1,
     },
     taskCount: {
         color: colors.textSecondary,
@@ -727,38 +800,54 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    actionButton: {
+    clearAllButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.sm,
-        marginLeft: spacing.sm,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.md,
+        backgroundColor: colors.error + '10',
+        gap: spacing.xs,
+    },
+    clearAllText: {
+        color: colors.error,
     },
     undoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: colors.surface,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
+        backgroundColor: colors.surfaceElevated,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        ...shadows.sm,
     },
     undoContent: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
     },
+    undoIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: borderRadius.md,
+        backgroundColor: colors.error + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.md,
+    },
     undoText: {
-        marginLeft: spacing.sm,
         color: colors.textPrimary,
     },
     undoButton: {
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.md,
-        backgroundColor: colors.primary + '20',
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.primary,
+    },
+    undoButtonText: {
+        color: colors.white,
     },
     content: {
         flex: 1,
@@ -767,27 +856,30 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     taskList: {
-        paddingHorizontal: spacing.md,
-        paddingTop: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.md,
+    },
+    taskItemWrapper: {
+        marginBottom: spacing.md,
     },
     taskItem: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: colors.surface,
-        borderRadius: borderRadius.lg,
-        padding: spacing.md,
-        marginBottom: spacing.sm,
+        borderRadius: borderRadius.xl,
+        padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.border,
-        ...shadows.sm,
+        ...shadows.md,
     },
     taskItemSelected: {
         borderColor: colors.primary,
-        backgroundColor: colors.primary + '10',
+        backgroundColor: colors.primary + '08',
+        ...shadows.colored,
     },
     checkboxContainer: {
-        marginRight: spacing.sm,
-        marginTop: spacing.xs,
+        marginRight: spacing.md,
+        marginTop: 2,
     },
     checkbox: {
         width: 20,
@@ -810,7 +902,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
-        marginBottom: spacing.xs,
+        marginBottom: spacing.sm,
     },
     taskTitleContainer: {
         flexDirection: 'row',
@@ -818,47 +910,82 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     completedIconContainer: {
-        padding: 2,
-        borderRadius: borderRadius.sm,
+        marginRight: spacing.md,
     },
-    completedIcon: {
-        marginRight: spacing.sm,
+    completedIconBg: {
+        width: 32,
+        height: 32,
+        borderRadius: borderRadius.md,
+        backgroundColor: colors.success + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     taskTitle: {
         flex: 1,
-        color: colors.textPrimary,
+        color: colors.textSecondary,
         textDecorationLine: 'line-through',
         opacity: 0.8,
+        lineHeight: 22,
+    },
+    priorityContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.backgroundSecondary,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.md,
+        gap: spacing.xs,
     },
     priorityIndicator: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginLeft: spacing.sm,
-        marginTop: 6,
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    priorityText: {
+        fontSize: 10,
+        fontWeight: '600',
     },
     taskDescription: {
-        color: colors.textSecondary,
-        marginLeft: 32,
-        marginBottom: spacing.sm,
-        opacity: 0.7,
+        color: colors.textTertiary,
+        marginLeft: 44,
+        marginBottom: spacing.md,
+        opacity: 0.8,
+        lineHeight: 18,
     },
     taskMetadata: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginLeft: 32,
+        marginLeft: 44,
     },
     categoryContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: colors.backgroundSecondary,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.md,
+        gap: spacing.xs,
+    },
+    categoryDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: colors.secondary,
     },
     categoryText: {
-        marginLeft: spacing.xs,
         color: colors.textTertiary,
+        fontSize: 11,
+        fontWeight: '500',
+    },
+    completionDateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
     },
     completionDate: {
         color: colors.textTertiary,
+        fontSize: 11,
     },
     emptyContainer: {
         flex: 1,
@@ -866,19 +993,56 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingHorizontal: spacing.xl,
     },
+    emptyIconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: borderRadius['2xl'],
+        backgroundColor: colors.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.xl,
+        ...shadows.lg,
+    },
     emptyTitle: {
         color: colors.textPrimary,
-        marginTop: spacing.lg,
-        marginBottom: spacing.sm,
+        marginBottom: spacing.md,
         textAlign: 'center',
     },
     emptyDescription: {
         color: colors.textSecondary,
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 24,
+        marginBottom: spacing.xl,
+    },
+    emptyActionContainer: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    emptyActionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.xl,
+        backgroundColor: colors.primary + '20',
+        borderWidth: 1,
+        borderColor: colors.primary + '40',
+        gap: spacing.sm,
+    },
+    emptyActionText: {
+        color: colors.primary,
     },
     bottomSpacer: {
         height: spacing.xl,
+    },
+    quickActionButton: {
+        width: 40,
+        height: 40,
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.primary + '15',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: spacing.md,
     },
 });
 
