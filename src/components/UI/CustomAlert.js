@@ -178,7 +178,7 @@ const CustomAlert = ({
         <Modal
             transparent
             visible={visible}
-            animationType="none"
+            animationType={animationType}
             onRequestClose={onDismiss}
             statusBarTranslucent
         >

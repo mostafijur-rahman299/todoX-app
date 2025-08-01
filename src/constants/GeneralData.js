@@ -62,45 +62,6 @@ export const inboxOptions = [
 	},
 ];
 
-export const dateTimeOptions = [
-	{
-		label: "Today",
-		value: "today",
-		icon: "today-outline",
-		color: colors.primary,
-		getDate: () => new Date(),
-	},
-	{
-		label: "Tomorrow",
-		value: "tomorrow",
-		icon: "calendar-outline",
-		color: colors.info,
-		getDate: () => {
-			const tomorrow = new Date();
-			tomorrow.setDate(tomorrow.getDate() + 1);
-			return tomorrow;
-		},
-	},
-	{
-		label: "Next Week",
-		value: "next_week",
-		icon: "calendar-outline",
-		color: colors.warning,
-		getDate: () => {
-			const nextWeek = new Date();
-			nextWeek.setDate(nextWeek.getDate() + 7);
-			return nextWeek;
-		},
-	},
-	{
-		label: "Custom Date",
-		value: "custom",
-		icon: "calendar",
-		color: colors.success,
-		getDate: () => new Date(),
-	},
-];
-
 // Add reminder options
 export const reminderOptions = [
 	{

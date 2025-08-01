@@ -1,18 +1,29 @@
 import isEmpty from "lodash/isEmpty";
-import { colors, spacing, typography } from "@/constants/Colors";
+import { colors } from "@/constants/Colors";
 
 export const generateId = (length = 16) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const timestamp = Date.now().toString(36);
-    const remainingLength = length - timestamp.length - 1;
+    const cryptoObj = typeof crypto !== 'undefined' && crypto.getRandomValues ? crypto : null;
+
+    const timestamp = Date.now().toString(36); // base36 timestamp
+    const extraTime = (typeof performance !== 'undefined' ? performance.now() : Math.random()).toFixed(4).replace('.', '');
     
-    for (let i = 0; i < remainingLength; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    const idLength = length - timestamp.length - extraTime.length - 2;
+    let randomPart = '';
+
+    if (cryptoObj) {
+        const bytes = new Uint8Array(idLength);
+        crypto.getRandomValues(bytes);
+        randomPart = Array.from(bytes).map(b => chars[b % chars.length]).join('');
+    } else {
+        for (let i = 0; i < idLength; i++) {
+            randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
     }
-    
-    return `${timestamp}-${result}`;
+
+    return `${timestamp}-${extraTime}-${randomPart}`;
 };
+
 
 export const randomColor = () => {
     return '#' + Math.floor(Math.random()*16777215).toString(16);

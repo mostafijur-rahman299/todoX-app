@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { 
     View, 
     Text,
@@ -28,6 +28,7 @@ import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
 import TaskForm from './TaskForm';
 import CompactSelectors from './CompactSelectors';
 import CompactDateSelector from './CompactDateSelector';
+import CustomAlert from '../UI/CustomAlert';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -39,16 +40,20 @@ const AddTaskModal = ({ visible, onClose }) => {
     const dispatch = useDispatch();
     const tasks = useSelector((state) => state.task.display_tasks);
     const categories = useSelector((state) => state.category.categories);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
     
     const [newTask, setNewTask] = useState({
+        id: "", // optional: for internal reference or React keys
         title: "",
-        description: "",
-        category: "other",
-        priority: "medium",
+        summary: "",
+        category: "personal", // or: "work", "personal", etc.
+        priority: "medium", // "low" | "medium" | "high"
         reminder: false,
-        tag: "Inbox",
-        startDate: null,
-        endDate: null,
+        date: null, // e.g., "2025-08-01"
+        start_time: null, // e.g., "14:00"
+        end_time: null     // e.g., "14:30"
     });
     
     // Enhanced animation refs
@@ -213,7 +218,9 @@ const AddTaskModal = ({ visible, onClose }) => {
      */
     const saveTask = async () => {
         if (!newTask.title.trim()) {
-            Alert.alert('Error', 'Please enter a task title');
+            setAlertVisible(true);
+            setAlertTitle('Error');
+            setAlertMessage('Please enter a task title');
             return;
         }
 
@@ -319,6 +326,13 @@ const AddTaskModal = ({ visible, onClose }) => {
                     </Animated.View>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onDismiss={() => setAlertVisible(false)}
+            />
         </Modal>
     );
 };

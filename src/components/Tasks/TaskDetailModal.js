@@ -16,7 +16,6 @@ import {
     Easing,
 } from 'react-native';
 import { colors } from '@/constants/Colors';
-import { priorityOptions, inboxOptions, dateTimeOptions } from '@/constants/GeneralData';
 
 // Import component modules
 import TaskDetailHeader from './TaskDetailModal/TaskDetailHeader';
@@ -58,7 +57,6 @@ const TaskDetailModal = ({
     // Modal states for compact selectors
     const [showPriorityModal, setShowPriorityModal] = useState(false);
     const [showInboxModal, setShowInboxModal] = useState(false);
-    const [showDateTimeOptions, setShowDateTimeOptions] = useState(false);
     const [showDateTimePicker, setShowDateTimePicker] = useState(false);
     const [datePickerMode, setDatePickerMode] = useState('date');
     const [tempDate, setTempDate] = useState(new Date());
@@ -132,7 +130,6 @@ const TaskDetailModal = ({
         // Close any open modals first
         setShowPriorityModal(false);
         setShowInboxModal(false);
-        setShowDateTimeOptions(false);
         setShowDateTimePicker(false);
         
         Animated.parallel([
@@ -305,7 +302,6 @@ const TaskDetailModal = ({
             updateTaskField('dueDate', selectedDate.toISOString().split('T')[0]);
             updateTaskField('dueTime', selectedDate.toTimeString().split(' ')[0].substring(0, 5));
         }
-        setShowDateTimeOptions(false);
     };
 
     /**
@@ -518,19 +514,7 @@ const TaskDetailModal = ({
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
 
-            {/* Remove these external modals since they're now handled inside CompactSelectors */}
-            {/* Priority Selection Modal - REMOVED */}
-            {/* Inbox Selection Modal - REMOVED */}
-
-            {/* Keep only the DateTime Selection Modal for backward compatibility if needed */}
-            <SelectionModal
-                visible={showDateTimeOptions}
-                title="Select Date & Time"
-                options={dateTimeOptions}
-                selectedValue={null}
-                onClose={() => setShowDateTimeOptions(false)}
-                onSelect={handleDateTimeSelect}
-            />
+            
 
             {/* Custom DateTime Picker */}
             <DateTimePicker
