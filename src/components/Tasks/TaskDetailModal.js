@@ -1,30 +1,38 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
     View,
-    Text,
     Modal,
     TouchableOpacity,
     StyleSheet,
     Animated,
     Dimensions,
-    TextInput,
     ScrollView,
     StatusBar,
     Alert,
-    TouchableWithoutFeedback,
     Platform,
     Vibration,
+    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
+    Easing,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import { priorityOptions, inboxOptions, dateTimeOptions } from '@/constants/GeneralData';
 
-const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+// Import component modules
+import TaskDetailHeader from './TaskDetailModal/TaskDetailHeader';
+import TaskForm from './TaskDetailModal/TaskForm';
+import CompactSelectors from './TaskDetailModal/CompactSelectors';
+import SubTasksSection from './TaskDetailModal/SubTasksSection';
+import SelectionModal from './TaskDetailModal/SelectionModal';
+import DateTimePicker from './TaskDetailModal/DateTimePicker';
+import DeleteButton from './TaskDetailModal/DeleteButton';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 /**
- * Enhanced TaskDetailModal component with full editing capabilities
- * Features: Modal selectors for date, priority, category, sub-tasks, and clean design
+ * Enhanced TaskDetailModal component with AddTaskModal design
+ * Features: Compact layout, modern styling, inline selectors, and smooth animations
+ * Updated to match AddTaskModal's design patterns and user experience
  */
 const TaskDetailModal = ({ 
     visible, 
@@ -34,15 +42,11 @@ const TaskDetailModal = ({
     onDeleteTask,
     onAddSubTask 
 }) => {
-    // Animation refs
+    // Enhanced animation refs to match AddTaskModal
     const slideAnim = useRef(new Animated.Value(screenHeight)).current;
     const overlayOpacity = useRef(new Animated.Value(0)).current;
-    const prioritySlideAnim = useRef(new Animated.Value(-100)).current;
-    const priorityOpacity = useRef(new Animated.Value(0)).current;
-    const inboxSlideAnim = useRef(new Animated.Value(-100)).current;
-    const inboxOpacity = useRef(new Animated.Value(0)).current;
-    const dateTimeSlideAnim = useRef(new Animated.Value(-100)).current;
-    const dateTimeOpacity = useRef(new Animated.Value(0)).current;
+    const modalScale = useRef(new Animated.Value(0.9)).current;
+    const inputFocusAnim = useRef(new Animated.Value(0)).current;
     
     // State management
     const [isEditing, setIsEditing] = useState(false);
@@ -50,11 +54,10 @@ const TaskDetailModal = ({
     const [subTasks, setSubTasks] = useState([]);
     const [showAddSubTask, setShowAddSubTask] = useState(false);
     const [newSubTaskTitle, setNewSubTaskTitle] = useState('');
-    const [commentText, setCommentText] = useState('');
     
-    // Modal states
-    const [showPriorityOptions, setShowPriorityOptions] = useState(false);
-    const [showInboxOptions, setShowInboxOptions] = useState(false);
+    // Modal states for compact selectors
+    const [showPriorityModal, setShowPriorityModal] = useState(false);
+    const [showInboxModal, setShowInboxModal] = useState(false);
     const [showDateTimeOptions, setShowDateTimeOptions] = useState(false);
     const [showDateTimePicker, setShowDateTimePicker] = useState(false);
     const [datePickerMode, setDatePickerMode] = useState('date');
@@ -77,31 +80,26 @@ const TaskDetailModal = ({
         }
     }, [task]);
 
-    // Animation effects
+    // Enhanced animation effects to match AddTaskModal
     useEffect(() => {
         if (visible) {
             Animated.parallel([
                 Animated.timing(overlayOpacity, {
                     toValue: 1,
                     duration: 300,
+                    easing: Easing.out(Easing.ease),
                     useNativeDriver: true,
                 }),
                 Animated.timing(slideAnim, {
                     toValue: 0,
                     duration: 400,
+                    easing: Easing.out(Easing.back(1.1)),
                     useNativeDriver: true,
                 }),
-            ]).start();
-        } else {
-            Animated.parallel([
-                Animated.timing(overlayOpacity, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(slideAnim, {
-                    toValue: screenHeight,
-                    duration: 300,
+                Animated.timing(modalScale, {
+                    toValue: 1,
+                    duration: 400,
+                    easing: Easing.out(Easing.back(1.1)),
                     useNativeDriver: true,
                 }),
             ]).start();
@@ -128,32 +126,43 @@ const TaskDetailModal = ({
     };
 
     /**
-     * Close modal with animation
+     * Enhanced modal close with smooth animations to match AddTaskModal
      */
     const closeModal = () => {
         // Close any open modals first
-        setShowPriorityOptions(false);
-        setShowInboxOptions(false);
+        setShowPriorityModal(false);
+        setShowInboxModal(false);
         setShowDateTimeOptions(false);
         setShowDateTimePicker(false);
         
         Animated.parallel([
             Animated.timing(overlayOpacity, {
                 toValue: 0,
-                duration: 200,
+                duration: 250,
+                easing: Easing.in(Easing.ease),
                 useNativeDriver: true,
             }),
             Animated.timing(slideAnim, {
                 toValue: screenHeight,
-                duration: 300,
+                duration: 350,
+                easing: Easing.in(Easing.back(1.1)),
+                useNativeDriver: true,
+            }),
+            Animated.timing(modalScale, {
+                toValue: 0.9,
+                duration: 350,
+                easing: Easing.in(Easing.ease),
                 useNativeDriver: true,
             }),
         ]).start(() => {
             setIsEditing(false);
             setShowAddSubTask(false);
             setNewSubTaskTitle('');
-            setCommentText('');
             onClose();
+            
+            // Reset animations
+            slideAnim.setValue(screenHeight);
+            modalScale.setValue(0.9);
         });
     };
 
@@ -169,7 +178,7 @@ const TaskDetailModal = ({
     };
 
     /**
-     * Save changes to the task
+     * Save changes to the task with haptic feedback
      */
     const handleSaveChanges = () => {
         if (onUpdateTask && editedTask.title.trim()) {
@@ -179,6 +188,11 @@ const TaskDetailModal = ({
             };
             onUpdateTask(updatedTask);
             setIsEditing(false);
+            
+            // Haptic feedback for success
+            if (Platform.OS === 'ios') {
+                Vibration.vibrate([10, 50, 10]);
+            }
         } else if (!editedTask.title.trim()) {
             Alert.alert("Error", "Task title cannot be empty");
         }
@@ -228,145 +242,49 @@ const TaskDetailModal = ({
     };
 
     /**
-     * Handle priority modal toggle with animation
+     * Handle input focus animation
      */
-    const handlePriorityToggle = () => {
-        if (Platform.OS === 'ios') {
-            Vibration.vibrate(10);
-        }
-        
-        if (showPriorityOptions) {
-            Animated.parallel([
-                Animated.timing(priorityOpacity, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(prioritySlideAnim, {
-                    toValue: 100,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-            ]).start(() => {
-                setShowPriorityOptions(false);
-            });
-        } else {
-            setShowPriorityOptions(true);
-            Animated.parallel([
-                Animated.timing(priorityOpacity, {
-                    toValue: 1,
-                    duration: 300,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(prioritySlideAnim, {
-                    toValue: 0,
-                    duration: 300,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
+    const handleInputFocus = () => {
+        Animated.timing(inputFocusAnim, {
+            toValue: 1,
+            duration: 200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+        }).start();
     };
 
     /**
-     * Handle priority selection
+     * Handle input blur animation
+     */
+    const handleInputBlur = () => {
+        Animated.timing(inputFocusAnim, {
+            toValue: 0,
+            duration: 200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+        }).start();
+    };
+
+    /**
+     * Handle priority selection with haptic feedback
      */
     const handlePrioritySelect = (priority) => {
         if (Platform.OS === 'ios') {
             Vibration.vibrate(10);
         }
         updateTaskField('priority', priority.value);
-        handlePriorityToggle();
+        setShowPriorityModal(false);
     };
 
     /**
-     * Handle inbox modal toggle with animation
-     */
-    const handleInboxToggle = () => {
-        if (Platform.OS === 'ios') {
-            Vibration.vibrate(10);
-        }
-        
-        if (showInboxOptions) {
-            Animated.parallel([
-                Animated.timing(inboxOpacity, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(inboxSlideAnim, {
-                    toValue: 100,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-            ]).start(() => {
-                setShowInboxOptions(false);
-            });
-        } else {
-            setShowInboxOptions(true);
-            Animated.parallel([
-                Animated.timing(inboxOpacity, {
-                    toValue: 1,
-                    duration: 300,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(inboxSlideAnim, {
-                    toValue: 0,
-                    duration: 300,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
-    };
-
-    /**
-     * Handle inbox selection
+     * Handle inbox selection with haptic feedback
      */
     const handleInboxSelect = (inbox) => {
         if (Platform.OS === 'ios') {
             Vibration.vibrate(10);
         }
         updateTaskField('tag', inbox.value);
-        handleInboxToggle();
-    };
-
-    /**
-     * Handle datetime modal toggle with animation
-     */
-    const handleDateTimeToggle = () => {
-        if (Platform.OS === 'ios') {
-            Vibration.vibrate(10);
-        }
-        
-        if (showDateTimeOptions) {
-            Animated.parallel([
-                Animated.timing(dateTimeOpacity, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(dateTimeSlideAnim, {
-                    toValue: 100,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-            ]).start(() => {
-                setShowDateTimeOptions(false);
-            });
-        } else {
-            setShowDateTimeOptions(true);
-            Animated.parallel([
-                Animated.timing(dateTimeOpacity, {
-                    toValue: 1,
-                    duration: 300,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(dateTimeSlideAnim, {
-                    toValue: 0,
-                    duration: 300,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
+        setShowInboxModal(false);
     };
 
     /**
@@ -387,7 +305,7 @@ const TaskDetailModal = ({
             updateTaskField('dueDate', selectedDate.toISOString().split('T')[0]);
             updateTaskField('dueTime', selectedDate.toTimeString().split(' ')[0].substring(0, 5));
         }
-        handleDateTimeToggle();
+        setShowDateTimeOptions(false);
     };
 
     /**
@@ -435,40 +353,6 @@ const TaskDetailModal = ({
     const handleDatePickerCancel = () => {
         setShowDateTimePicker(false);
         setTempDate(selectedDate);
-    };
-
-    /**
-     * Get current priority option
-     */
-    const getCurrentPriority = () => {
-        return priorityOptions.find(p => p.value === editedTask.priority) || priorityOptions[1];
-    };
-
-    /**
-     * Get current inbox option
-     */
-    const getCurrentInbox = () => {
-        return inboxOptions.find(i => i.value === editedTask.tag) || inboxOptions[0];
-    };
-
-    /**
-     * Get formatted datetime display
-     */
-    const getDateTimeDisplay = () => {
-        if (!editedTask.dueDate) return "Set Date & Time";
-        
-        const date = new Date(editedTask.dueDate + 'T' + (editedTask.dueTime || '00:00'));
-        const today = new Date();
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        if (date.toDateString() === today.toDateString()) {
-            return `Today ${editedTask.dueTime || ''}`;
-        } else if (date.toDateString() === tomorrow.toDateString()) {
-            return `Tomorrow ${editedTask.dueTime || ''}`;
-        } else {
-            return `${date.toLocaleDateString()} ${editedTask.dueTime || ''}`;
-        }
     };
 
     /**
@@ -548,951 +432,135 @@ const TaskDetailModal = ({
             onRequestClose={handleClose}
             statusBarTranslucent={true}
         >
-            <StatusBar backgroundColor="rgba(0,0,0,0.8)" barStyle="light-content" />
-            <Animated.View 
-                style={[
-                    styles.overlay,
-                    { opacity: overlayOpacity }
-                ]}
+            <StatusBar backgroundColor="rgba(0,0,0,0.7)" barStyle="light-content" />
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <TouchableOpacity 
-                    style={styles.overlayTouch}
-                    activeOpacity={1}
-                    onPress={handleClose}
-                />
-                
-                <Animated.View 
-                    style={[
-                        styles.modalContainer,
-                        {
-                            transform: [{ translateY: slideAnim }]
-                        }
-                    ]}
-                >
-                    <View 
-                        style={styles.scrollView}
-                        showsVerticalScrollIndicator={false}
-                        bounces={false}
+                <TouchableWithoutFeedback onPress={handleClose}>
+                    <Animated.View 
+                        style={[
+                            styles.overlay,
+                            { opacity: overlayOpacity }
+                        ]}
                     >
-                        {/* Header */}
-                        <View style={styles.header}>
-                            <TouchableOpacity 
-                                onPress={handleClose}
-                                style={styles.backButton}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        <TouchableWithoutFeedback onPress={() => {}}>
+                            <Animated.View 
+                                style={[
+                                    styles.modalContainer,
+                                    {
+                                        transform: [
+                                            { translateY: slideAnim },
+                                            { scale: modalScale }
+                                        ]
+                                    }
+                                ]}
                             >
-                                <Ionicons name="chevron-back" size={24} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                            
-                            <View style={styles.headerCenter}>
-                                <Text style={styles.headerTitle}>Task Details</Text>
-                            </View>
-                            
-                            <View style={styles.headerRight}>
-                                {isEditing ? (
-                                    <>
-                                        <TouchableOpacity 
-                                            style={styles.headerIconButton}
-                                            onPress={handleCancelEdit}
-                                        >
-                                            <Ionicons name="close" size={22} color={colors.textSecondary} />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity 
-                                            style={styles.headerIconButton}
-                                            onPress={handleSaveChanges}
-                                        >
-                                            <Ionicons name="checkmark" size={22} color={colors.success} />
-                                        </TouchableOpacity>
-                                    </>
-                                ) : (
-                                    <TouchableOpacity 
-                                        style={styles.headerIconButton}
-                                        onPress={toggleEditMode}
-                                    >
-                                        <Ionicons name="create-outline" size={24} color={colors.textSecondary} />
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        </View>
+                                {/* Compact Modal Header */}
+                                <TaskDetailHeader
+                                    isEditing={isEditing}
+                                    onClose={handleClose}
+                                    onToggleEdit={toggleEditMode}
+                                    onSaveChanges={handleSaveChanges}
+                                    onCancelEdit={handleCancelEdit}
+                                />
 
-                        {/* Task Content */}
-                        <ScrollView style={styles.taskContent}>
-                            {/* Task Title */}
-                            <View style={styles.taskTitleContainer}>
-                                <TouchableOpacity 
-                                    style={styles.checkboxContainer}
-                                    onPress={toggleTaskCompletion}
+                                {/* Task Content */}
+                                <ScrollView 
+                                    style={styles.modalContent}
+                                    showsVerticalScrollIndicator={false}
+                                    keyboardShouldPersistTaps="handled"
                                 >
-                                    <View style={[
-                                        styles.checkbox,
-                                        editedTask.is_completed && styles.checkboxCompleted
-                                    ]}>
-                                        {editedTask.is_completed && (
-                                            <Ionicons name="checkmark" size={16} color={colors.white} />
-                                        )}
-                                    </View>
-                                </TouchableOpacity>
-                                
-                                {isEditing ? (
-                                    <TextInput
-                                        style={[
-                                            styles.taskTitle,
-                                            styles.taskTitleInput,
-                                            editedTask.is_completed && styles.taskTitleCompleted
-                                        ]}
-                                        value={editedTask.title}
-                                        onChangeText={(text) => updateTaskField('title', text)}
-                                        placeholder="Task title"
-                                        placeholderTextColor={colors.textTertiary}
-                                        multiline
+                                    {/* Compact Task Form */}
+                                    <TaskForm
+                                        task={editedTask}
+                                        isEditing={isEditing}
+                                        inputFocusAnim={inputFocusAnim}
+                                        onInputFocus={handleInputFocus}
+                                        onInputBlur={handleInputBlur}
+                                        onToggleCompletion={toggleTaskCompletion}
+                                        onUpdateTitle={(text) => updateTaskField('title', text)}
+                                        onUpdateDescription={(text) => updateTaskField('description', text)}
                                     />
-                                ) : (
-                                    <Text style={[
-                                        styles.taskTitle,
-                                        editedTask.is_completed && styles.taskTitleCompleted
-                                    ]}>
-                                        {editedTask.title}
-                                    </Text>
-                                )}
-                            </View>
 
-                            {/* Task Description */}
-                            {(isEditing || editedTask.description) && (
-                                <View style={styles.descriptionContainer}>
-                                    {isEditing ? (
-                                        <TextInput
-                                            style={[styles.taskDescription, styles.taskDescriptionInput]}
-                                            value={editedTask.description}
-                                            onChangeText={(text) => updateTaskField('description', text)}
-                                            placeholder="Add description..."
-                                            placeholderTextColor={colors.textTertiary}
-                                            multiline
-                                        />
-                                    ) : (
-                                        <Text style={styles.taskDescription}>
-                                            {editedTask.description}
-                                        </Text>
-                                    )}
-                                </View>
-                            )}
+                                    {/* Compact Selectors Row */}
+                                    <CompactSelectors
+                                        task={editedTask}
+                                        isEditing={isEditing}
+                                        onUpdateTask={setEditedTask}
+                                    />
 
-                            {/* Property Cards */}
-                            <View style={styles.propertyCards}>
-                                {/* Date Card */}
-                                <TouchableOpacity 
-                                    style={[
-                                        styles.propertyCard,
-                                        editedTask.dueDate && styles.propertyCardActive
-                                    ]}
-                                    onPress={isEditing ? handleDateTimeToggle : null}
-                                    disabled={!isEditing}
-                                >
-                                    <View style={styles.propertyCardLeft}>
-                                        <View style={[
-                                            styles.propertyIcon,
-                                            { backgroundColor: colors.info + '20' }
-                                        ]}>
-                                            <Ionicons 
-                                                name="calendar-outline" 
-                                                size={16} 
-                                                color={colors.info} 
-                                            />
-                                        </View>
-                                        <Text style={styles.propertyLabel}>
-                                            {getDateTimeDisplay()}
-                                        </Text>
-                                    </View>
-                                    {editedTask.dueDate && (
-                                        <TouchableOpacity
-                                            onPress={clearDateTime}
-                                            style={styles.clearButton}
-                                        >
-                                            <Ionicons
-                                                name="close-circle"
-                                                size={20}
-                                                color={colors.textTertiary}
-                                            />
-                                        </TouchableOpacity>
-                                    )}
-                                </TouchableOpacity>
+                                    {/* Sub-tasks Section */}
+                                    <SubTasksSection
+                                        subTasks={subTasks}
+                                        isEditing={isEditing}
+                                        showAddSubTask={showAddSubTask}
+                                        newSubTaskTitle={newSubTaskTitle}
+                                        onToggleSubTaskCompletion={toggleSubTaskCompletion}
+                                        onDeleteSubTask={deleteSubTask}
+                                        onShowAddSubTask={() => setShowAddSubTask(true)}
+                                        onHideAddSubTask={() => {
+                                            setShowAddSubTask(false);
+                                            setNewSubTaskTitle('');
+                                        }}
+                                        onUpdateNewSubTaskTitle={setNewSubTaskTitle}
+                                        onAddSubTask={handleAddSubTask}
+                                    />
 
-                                {/* Priority Card */}
-                                <TouchableOpacity 
-                                    style={styles.propertyCard}
-                                    onPress={isEditing ? handlePriorityToggle : null}
-                                    disabled={!isEditing}
-                                >
-                                    <View style={styles.propertyCardLeft}>
-                                        <View style={[
-                                            styles.propertyIcon,
-                                            { backgroundColor: getCurrentPriority().color + '20' }
-                                        ]}>
-                                            <Ionicons 
-                                                name={getCurrentPriority().icon} 
-                                                size={16} 
-                                                color={getCurrentPriority().color} 
-                                            />
-                                        </View>
-                                        <Text style={styles.propertyLabel}>
-                                            {getCurrentPriority().label}
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                {/* Category Card */}
-                                <TouchableOpacity 
-                                    style={styles.propertyCard}
-                                    onPress={isEditing ? handleInboxToggle : null}
-                                    disabled={!isEditing}
-                                >
-                                    <View style={styles.propertyCardLeft}>
-                                        <View style={[
-                                            styles.propertyIcon,
-                                            { backgroundColor: getCurrentInbox().color + '20' }
-                                        ]}>
-                                            <Ionicons 
-                                                name={getCurrentInbox().icon} 
-                                                size={16} 
-                                                color={getCurrentInbox().color} 
-                                            />
-                                        </View>
-                                        <Text style={styles.propertyLabel}>
-                                            {getCurrentInbox().label}
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Sub-tasks Section */}
-                            {(subTasks.length > 0 || isEditing) && (
-                                <View style={styles.subTasksSection}>
-                                    <Text style={styles.sectionTitle}>Sub-tasks</Text>
-                                    
-                                    {subTasks.map((subTask) => (
-                                        <View key={subTask.id} style={styles.subTaskItem}>
-                                            <TouchableOpacity 
-                                                style={styles.subTaskCheckbox}
-                                                onPress={() => toggleSubTaskCompletion(subTask.id)}
-                                            >
-                                                <View style={[
-                                                    styles.checkbox,
-                                                    styles.subTaskCheckboxStyle,
-                                                    subTask.is_completed && styles.checkboxCompleted
-                                                ]}>
-                                                    {subTask.is_completed && (
-                                                        <Ionicons name="checkmark" size={12} color={colors.white} />
-                                                    )}
-                                                </View>
-                                            </TouchableOpacity>
-                                            
-                                            <Text style={[
-                                                styles.subTaskTitle,
-                                                subTask.is_completed && styles.subTaskTitleCompleted
-                                            ]}>
-                                                {subTask.title}
-                                            </Text>
-                                            
-                                            {isEditing && (
-                                                <TouchableOpacity 
-                                                    style={styles.deleteSubTaskButton}
-                                                    onPress={() => deleteSubTask(subTask.id)}
-                                                >
-                                                    <Ionicons name="trash-outline" size={16} color={colors.error} />
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
-                                    ))}
-
-                                    {/* Add Sub-task */}
+                                    {/* Delete Button */}
                                     {isEditing && (
-                                        <View style={styles.addSubTaskContainer}>
-                                            {showAddSubTask ? (
-                                                <View style={styles.addSubTaskInput}>
-                                                    <TextInput
-                                                        style={styles.subTaskInput}
-                                                        value={newSubTaskTitle}
-                                                        onChangeText={setNewSubTaskTitle}
-                                                        placeholder="Sub-task title"
-                                                        placeholderTextColor={colors.textTertiary}
-                                                        autoFocus
-                                                        onSubmitEditing={handleAddSubTask}
-                                                    />
-                                                    <TouchableOpacity 
-                                                        style={styles.addSubTaskConfirm}
-                                                        onPress={handleAddSubTask}
-                                                    >
-                                                        <Ionicons name="checkmark" size={16} color={colors.success} />
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity 
-                                                        style={styles.addSubTaskCancel}
-                                                        onPress={() => {
-                                                            setShowAddSubTask(false);
-                                                            setNewSubTaskTitle('');
-                                                        }}
-                                                    >
-                                                        <Ionicons name="close" size={16} color={colors.error} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                            ) : (
-                                                <TouchableOpacity 
-                                                    style={styles.addSubTaskButton}
-                                                    onPress={() => setShowAddSubTask(true)}
-                                                >
-                                                    <Ionicons name="add" size={20} color={colors.primary} />
-                                                    <Text style={styles.addSubTaskText}>Add sub-task</Text>
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
+                                        <DeleteButton onDelete={handleDeleteTask} />
                                     )}
-                                </View>
-                            )}
-
-                            {/* Delete Button */}
-                            {isEditing && (
-                                <TouchableOpacity 
-                                    style={styles.deleteButton}
-                                    onPress={handleDeleteTask}
-                                >
-                                    <Ionicons name="trash-outline" size={20} color={colors.error} />
-                                    <Text style={styles.deleteButtonText}>Delete Task</Text>
-                                </TouchableOpacity>
-                            )}
-                        </ScrollView>
-                    </View>
-                </Animated.View>
-
-                {/* Priority Selection Modal */}
-                {showPriorityOptions && (
-                    <Modal
-                        transparent={true}
-                        visible={showPriorityOptions}
-                        animationType="fade"
-                        onRequestClose={handlePriorityToggle}
-                        statusBarTranslucent={true}
-                    >
-                        <TouchableWithoutFeedback onPress={handlePriorityToggle}>
-                            <View style={styles.selectionModalOverlay}>
-                                <TouchableWithoutFeedback>
-                                    <Animated.View
-                                        style={[
-                                            styles.selectionModal,
-                                            {
-                                                opacity: priorityOpacity,
-                                                transform: [{ translateY: prioritySlideAnim }],
-                                            },
-                                        ]}
-                                    >
-                                        <View style={styles.selectionModalHeader}>
-                                            <Text style={styles.selectionModalTitle}>Select Priority</Text>
-                                            <TouchableOpacity 
-                                                onPress={handlePriorityToggle}
-                                                style={styles.selectionModalCloseBtn}
-                                            >
-                                                <Ionicons name="close" size={22} color={colors.textSecondary} />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <ScrollView
-                                            style={styles.selectionScrollView}
-                                            showsVerticalScrollIndicator={false}
-                                        >
-                                            {priorityOptions.map((priority, index) => (
-                                                <TouchableOpacity
-                                                    key={index}
-                                                    style={[
-                                                        styles.selectionOption,
-                                                        editedTask.priority === priority.value && styles.selectionOptionSelected,
-                                                    ]}
-                                                    onPress={() => handlePrioritySelect(priority)}
-                                                >
-                                                    <View style={[
-                                                        styles.selectionIconContainer,
-                                                        { backgroundColor: priority.color + '20' }
-                                                    ]}>
-                                                        <Ionicons
-                                                            name={priority.icon}
-                                                            size={22}
-                                                            color={priority.color}
-                                                        />
-                                                    </View>
-                                                    <Text style={styles.selectionOptionText}>
-                                                        {priority.label}
-                                                    </Text>
-                                                    {editedTask.priority === priority.value && (
-                                                        <View style={styles.selectionCheckmark}>
-                                                            <Ionicons
-                                                                name="checkmark"
-                                                                size={16}
-                                                                color={colors.white}
-                                                            />
-                                                        </View>
-                                                    )}
-                                                </TouchableOpacity>
-                                            ))}
-                                        </ScrollView>
-                                    </Animated.View>
-                                </TouchableWithoutFeedback>
-                            </View>
+                                </ScrollView>
+                            </Animated.View>
                         </TouchableWithoutFeedback>
-                    </Modal>
-                )}
+                    </Animated.View>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
 
-                {/* Inbox Selection Modal */}
-                {showInboxOptions && (
-                    <Modal
-                        transparent={true}
-                        visible={showInboxOptions}
-                        animationType="fade"
-                        onRequestClose={handleInboxToggle}
-                        statusBarTranslucent={true}
-                    >
-                        <TouchableWithoutFeedback onPress={handleInboxToggle}>
-                            <View style={styles.selectionModalOverlay}>
-                                <TouchableWithoutFeedback>
-                                    <Animated.View
-                                        style={[
-                                            styles.selectionModal,
-                                            {
-                                                opacity: inboxOpacity,
-                                                transform: [{ translateY: inboxSlideAnim }],
-                                            },
-                                        ]}
-                                    >
-                                        <View style={styles.selectionModalHeader}>
-                                            <Text style={styles.selectionModalTitle}>Select Category</Text>
-                                            <TouchableOpacity 
-                                                onPress={handleInboxToggle}
-                                                style={styles.selectionModalCloseBtn}
-                                            >
-                                                <Ionicons name="close" size={22} color={colors.textSecondary} />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <ScrollView
-                                            style={styles.selectionScrollView}
-                                            showsVerticalScrollIndicator={false}
-                                        >
-                                            {inboxOptions.map((inbox, index) => (
-                                                <TouchableOpacity
-                                                    key={index}
-                                                    style={[
-                                                        styles.selectionOption,
-                                                        editedTask.tag === inbox.value && styles.selectionOptionSelected,
-                                                    ]}
-                                                    onPress={() => handleInboxSelect(inbox)}
-                                                >
-                                                    <View style={[
-                                                        styles.selectionIconContainer,
-                                                        { backgroundColor: inbox.color + '20' }
-                                                    ]}>
-                                                        <Ionicons
-                                                            name={inbox.icon}
-                                                            size={22}
-                                                            color={inbox.color}
-                                                        />
-                                                    </View>
-                                                    <Text style={styles.selectionOptionText}>
-                                                        {inbox.label}
-                                                    </Text>
-                                                    {editedTask.tag === inbox.value && (
-                                                        <View style={styles.selectionCheckmark}>
-                                                            <Ionicons
-                                                                name="checkmark"
-                                                                size={16}
-                                                                color={colors.white}
-                                                            />
-                                                        </View>
-                                                    )}
-                                                </TouchableOpacity>
-                                            ))}
-                                        </ScrollView>
-                                    </Animated.View>
-                                </TouchableWithoutFeedback>
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </Modal>
-                )}
+            {/* Remove these external modals since they're now handled inside CompactSelectors */}
+            {/* Priority Selection Modal - REMOVED */}
+            {/* Inbox Selection Modal - REMOVED */}
 
-                {/* DateTime Selection Modal */}
-                {showDateTimeOptions && (
-                    <Modal
-                        transparent={true}
-                        visible={showDateTimeOptions}
-                        animationType="fade"
-                        onRequestClose={handleDateTimeToggle}
-                        statusBarTranslucent={true}
-                    >
-                        <TouchableWithoutFeedback onPress={handleDateTimeToggle}>
-                            <View style={styles.selectionModalOverlay}>
-                                <TouchableWithoutFeedback>
-                                    <Animated.View
-                                        style={[
-                                            styles.selectionModal,
-                                            {
-                                                opacity: dateTimeOpacity,
-                                                transform: [{ translateY: dateTimeSlideAnim }],
-                                            },
-                                        ]}
-                                    >
-                                        <View style={styles.selectionModalHeader}>
-                                            <Text style={styles.selectionModalTitle}>Select Date & Time</Text>
-                                            <TouchableOpacity 
-                                                onPress={handleDateTimeToggle}
-                                                style={styles.selectionModalCloseBtn}
-                                            >
-                                                <Ionicons name="close" size={22} color={colors.textSecondary} />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <ScrollView
-                                            style={styles.selectionScrollView}
-                                            showsVerticalScrollIndicator={false}
-                                        >
-                                            {dateTimeOptions.map((dateTimeOption, index) => (
-                                                <TouchableOpacity
-                                                    key={index}
-                                                    style={styles.selectionOption}
-                                                    onPress={() => handleDateTimeSelect(dateTimeOption)}
-                                                >
-                                                    <View style={[
-                                                        styles.selectionIconContainer,
-                                                        { backgroundColor: dateTimeOption.color + '20' }
-                                                    ]}>
-                                                        <Ionicons
-                                                            name={dateTimeOption.icon}
-                                                            size={22}
-                                                            color={dateTimeOption.color}
-                                                        />
-                                                    </View>
-                                                    <Text style={styles.selectionOptionText}>
-                                                        {dateTimeOption.label}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </ScrollView>
-                                    </Animated.View>
-                                </TouchableWithoutFeedback>
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </Modal>
-                )}
+            {/* Keep only the DateTime Selection Modal for backward compatibility if needed */}
+            <SelectionModal
+                visible={showDateTimeOptions}
+                title="Select Date & Time"
+                options={dateTimeOptions}
+                selectedValue={null}
+                onClose={() => setShowDateTimeOptions(false)}
+                onSelect={handleDateTimeSelect}
+            />
 
-                {/* Custom DateTime Picker Modal */}
-                {showDateTimePicker && (
-                    <>
-                        {Platform.OS === 'ios' ? (
-                            <Modal
-                                animationType="slide"
-                                transparent={true}
-                                visible={showDateTimePicker}
-                                onRequestClose={handleDatePickerCancel}
-                            >
-                                <View style={styles.datePickerOverlay}>
-                                    <TouchableWithoutFeedback onPress={handleDatePickerCancel}>
-                                        <View style={styles.datePickerOverlayTouch} />
-                                    </TouchableWithoutFeedback>
-                                    <View style={styles.datePickerContainer}>
-                                        <View style={styles.datePickerHeader}>
-                                            <TouchableOpacity
-                                                onPress={handleDatePickerCancel}
-                                                style={styles.datePickerButton}
-                                            >
-                                                <Text style={styles.datePickerButtonText}>Cancel</Text>
-                                            </TouchableOpacity>
-                                            <Text style={styles.datePickerTitle}>Select Date & Time</Text>
-                                            <TouchableOpacity
-                                                onPress={handleDatePickerConfirm}
-                                                style={styles.datePickerButton}
-                                            >
-                                                <Text style={[styles.datePickerButtonText, { color: colors.primary }]}>Done</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                        <View style={styles.datePickerContent}>
-                                            <DateTimePicker
-                                                value={tempDate}
-                                                mode="datetime"
-                                                display="wheels"
-                                                onChange={handleDatePickerChange}
-                                                minimumDate={new Date()}
-                                                textColor={colors.textPrimary}
-                                                themeVariant="dark"
-                                            />
-                                        </View>
-                                    </View>
-                                </View>
-                            </Modal>
-                        ) : (
-                            <DateTimePicker
-                                value={datePickerMode === 'date' ? selectedDate : tempDate}
-                                mode={datePickerMode}
-                                display="default"
-                                onChange={handleDatePickerChange}
-                                minimumDate={new Date()}
-                            />
-                        )}
-                    </>
-                )}
-            </Animated.View>
+            {/* Custom DateTime Picker */}
+            <DateTimePicker
+                visible={showDateTimePicker}
+                mode={datePickerMode}
+                value={datePickerMode === 'date' ? selectedDate : tempDate}
+                onConfirm={handleDatePickerConfirm}
+                onCancel={handleDatePickerCancel}
+                onChange={handleDatePickerChange}
+            />
         </Modal>
     );
 };
+
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'flex-end',
-    },
-    overlayTouch: {
-        flex: 1,
     },
     modalContainer: {
         backgroundColor: colors.background,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        maxHeight: screenHeight * 0.9,
-        minHeight: screenHeight * 0.6,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: screenHeight * 0.75, // Compact height like AddTaskModal
+        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     },
-    scrollView: {
-        flex: 1,
-    },
-    
-    // Header Styles
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 5,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    backButton: {
-        padding: 3,
-    },
-    headerCenter: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.textPrimary,
-    },
-    headerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    headerIconButton: {
-        padding: 8,
-        borderRadius: 8,
-    },
-    
-    // Task Content Styles
-    taskContent: {
-        padding: 20,
-    },
-    taskTitleContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 16,
-    },
-    checkboxContainer: {
-        marginRight: 12,
-        marginTop: 2,
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderRadius: 12,
-        borderWidth: 2,
-        borderColor: colors.border,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    checkboxCompleted: {
-        backgroundColor: colors.success,
-        borderColor: colors.success,
-    },
-    taskTitle: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.textPrimary,
-        lineHeight: 20,
-    },
-    taskTitleInput: {
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        backgroundColor: colors.surface,
-    },
-    taskTitleCompleted: {
-        textDecorationLine: 'line-through',
-        color: colors.textTertiary,
-    },
-    descriptionContainer: {
-        marginLeft: 36,
-    },
-    taskDescription: {
-        fontSize: 16,
-        color: colors.textSecondary,
-        lineHeight: 22,
-    },
-    taskDescriptionInput: {
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        backgroundColor: colors.surface,
-        minHeight: 60,
-        textAlignVertical: 'top',
-    },
-    
-    // Property Cards Styles
-    propertyCards: {
-        gap: 12,
-        marginBottom: 32,
-        marginTop: 30
-    },
-    propertyCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 2,
+    modalContent: {
         paddingHorizontal: 16,
-        backgroundColor: colors.surface,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    propertyCardActive: {
-        borderColor: colors.primary,
-        backgroundColor: colors.primary + '10',
-    },
-    propertyCardLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    propertyIcon: {
-        width: 35,
-        height: 35,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-        marginVertical: 3
-    },
-    propertyLabel: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: colors.textPrimary,
-        flex: 1,
-    },
-    clearButton: {
-        padding: 4,
-    },
-    // Sub-tasks Styles
-    subTasksSection: {
-        marginBottom: 20,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.textPrimary,
-        marginBottom: 12,
-    },
-    subTaskItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        backgroundColor: colors.surface,
-        borderRadius: 8,
-        marginBottom: 8,
-    },
-    subTaskCheckbox: {
-        marginRight: 12,
-    },
-    subTaskCheckboxStyle: {
-        width: 18,
-        height: 18,
-        borderRadius: 10,
-    },
-    subTaskTitle: {
-        flex: 1,
-        fontSize: 16,
-        color: colors.textPrimary,
-    },
-    subTaskTitleCompleted: {
-        textDecorationLine: 'line-through',
-        color: colors.textTertiary,
-    },
-    deleteSubTaskButton: {
-        padding: 4,
-    },
-    addSubTaskContainer: {
-        marginTop: 8,
-    },
-    addSubTaskButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-    },
-    addSubTaskText: {
-        fontSize: 16,
-        color: colors.primary,
-        marginLeft: 8,
-        fontWeight: '500',
-    },
-    addSubTaskInput: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.surface,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-    },
-    subTaskInput: {
-        flex: 1,
-        fontSize: 16,
-        color: colors.textPrimary,
-        paddingVertical: 8,
-    },
-    addSubTaskConfirm: {
-        padding: 8,
-        marginLeft: 8,
-    },
-    addSubTaskCancel: {
-        padding: 8,
-    },
-
-    // Delete Button Styles
-    deleteButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 5,
-        marginTop: 16,
-        marginBottom: 40
-    },
-    deleteButtonText: {
-        fontSize: 14,
-        color: colors.error,
-        marginLeft: 8,
-        fontWeight: '500',
-    },
-    
-    // Selection Modal Styles
-    selectionModalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-    },
-    selectionModal: {
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        width: '100%',
-        maxHeight: screenHeight * 0.6,
-        overflow: 'hidden',
-    },
-    selectionModalHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    selectionModalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.textPrimary,
-    },
-    selectionModalCloseBtn: {
-        padding: 4,
-    },
-    selectionScrollView: {
-        maxHeight: screenHeight * 0.4,
-    },
-    selectionOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    selectionOptionSelected: {
-        backgroundColor: colors.primary + '10',
-    },
-    selectionIconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 16,
-    },
-    selectionOptionText: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '500',
-        color: colors.textPrimary,
-    },
-    selectionCheckmark: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: colors.success,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    
-    // Date Picker Styles
-    datePickerOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-end',
-    },
-    datePickerOverlayTouch: {
-        flex: 1,
-    },
-    datePickerContainer: {
-        backgroundColor: colors.surface,
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-    },
-    datePickerHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    datePickerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.textPrimary,
-    },
-    datePickerButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-    },
-    datePickerButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: colors.textSecondary,
-    },
-    datePickerContent: {
-        paddingVertical: 20,
+        paddingTop: 8,
     },
 });
 
