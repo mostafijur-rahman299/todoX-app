@@ -5,7 +5,7 @@ export const timelineStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F1F5F9',
-    paddingBottom: 0,
+    paddingBottom: 2,
   },
   headerWrapper: {
     position: 'relative',
@@ -47,8 +47,6 @@ export const timelineStyles = StyleSheet.create({
   todayButton: {
     backgroundColor: colors.primary,
     borderRadius: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
     textAlign: "center",
     color: 'white'
   },
@@ -153,8 +151,8 @@ export const getCalendarTheme = (colors) => ({
 			textDayFontWeight: '600',
 			textMonthFontWeight: '700',
 			textDayHeaderFontWeight: '600',
-			textDayFontSize: 16,
-			textMonthFontSize: 20,
+			textDayFontSize: 14,
+			textMonthFontSize: 14,
 			textDayHeaderFontSize: 13,
 			agendaDayTextColor: colors.textPrimary,
 			agendaDayNumColor: colors.textSecondary,
@@ -163,13 +161,13 @@ export const getCalendarTheme = (colors) => ({
 			// Modern calendar styling
 			'stylesheet.calendar.header': {
 				week: {
-					marginTop: 5,
+					marginTop: 3,
 					flexDirection: 'row',
 					justifyContent: 'space-around',
 					backgroundColor: colors.surface,
-					borderRadius: 12,
-					marginHorizontal: 16,
-					paddingVertical: 8,
+					borderRadius: 5,
+					marginHorizontal: 2,
+					paddingVertical:2,
 				},
 				
 			},

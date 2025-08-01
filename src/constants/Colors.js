@@ -17,9 +17,11 @@ export const colors = {
   backgroundSecondary: '#2A2A2A', // Secondary dark background
   surface: '#2D2D2D', // Card/surface background
   surfaceElevated: '#3A3A3A', // Elevated surface
+  cardBackground: '#2D2D2D', // Added: Card background for form elements
   overlay: 'rgba(0, 0, 0, 0.8)',
   
   // Dark theme text colors
+  text: '#FFFFFF', // Added: Primary text color (alias for textPrimary)
   textPrimary: '#FFFFFF', // Primary white text
   textSecondary: '#B0B0B0', // Secondary gray text
   textTertiary: '#808080', // Tertiary gray text

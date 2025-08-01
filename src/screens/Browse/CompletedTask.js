@@ -79,17 +79,11 @@ const CompletedTask = () => {
         }, 1000);
     };
 
-    /**
-     * Toggle selection mode with animation
-     */
     const toggleSelectionMode = () => {
         setIsSelectionMode(!isSelectionMode);
         setSelectedTasks(new Set());
     };
 
-    /**
-     * Handle task selection
-     */
     const toggleTaskSelection = (taskId) => {
         const newSelectedTasks = new Set(selectedTasks);
         if (newSelectedTasks.has(taskId)) {
@@ -100,9 +94,6 @@ const CompletedTask = () => {
         setSelectedTasks(newSelectedTasks);
     };
 
-    /**
-     * Select all tasks
-     */
     const selectAllTasks = () => {
         if (selectedTasks.size === completedTasks.length) {
             setSelectedTasks(new Set());
@@ -111,10 +102,7 @@ const CompletedTask = () => {
         }
     };
 
-    /**
-     * Uncomplete a single task (mark as incomplete)
-     */
-    const uncompleteTask = (taskId) => {
+    const clearAllTask = (taskId) => {
         dispatch(toggleTaskComplete(taskId));
         
         // Update local storage
@@ -126,10 +114,7 @@ const CompletedTask = () => {
         storeDataLocalStorage('tasks', updatedTasks);
     };
 
-    /**
-     * Uncomplete selected tasks
-     */
-    const uncompleteSelectedTasks = () => {
+    const clearSelectedTask = () => {
         if (selectedTasks.size === 0) return;
 
         Alert.alert(
@@ -164,9 +149,6 @@ const CompletedTask = () => {
         );
     };
 
-    /**
-     * Show undo notification with auto-dismiss
-     */
     const showUndoNotification = (deletedTasks) => {
         setRecentlyDeleted(deletedTasks);
         
@@ -183,9 +165,6 @@ const CompletedTask = () => {
         setUndoTimeout(timeout);
     };
 
-    /**
-     * Undo recent deletion
-     */
     const undoDelete = () => {
         if (recentlyDeleted.length === 0) return;
         
@@ -202,9 +181,6 @@ const CompletedTask = () => {
         }
     };
 
-    /**
-     * Delete selected tasks with undo option
-     */
     const deleteSelectedTasks = () => {
         if (selectedTasks.size === 0) return;
 
@@ -242,9 +218,6 @@ const CompletedTask = () => {
         );
     };
 
-    /**
-     * Delete all completed tasks with undo option
-     */
     const deleteAllCompletedTasks = () => {
         if (completedTasks.length === 0) return;
 
@@ -282,9 +255,6 @@ const CompletedTask = () => {
         );
     };
 
-    /**
-     * Format completion date
-     */
     const formatCompletionDate = (timestamp) => {
         if (!timestamp) return 'Recently completed';
         
@@ -300,9 +270,6 @@ const CompletedTask = () => {
         return date.toLocaleDateString();
     };
 
-    /**
-     * Get priority color
-     */
     const getPriorityColor = (priority) => {
         switch (priority) {
             case 'high': return colors.highPriority;
@@ -312,9 +279,6 @@ const CompletedTask = () => {
         }
     };
 
-    /**
-     * Render individual completed task item with enhanced design
-     */
     const renderTaskItem = (task) => {
         const isSelected = selectedTasks.has(task.id);
         
@@ -343,23 +307,7 @@ const CompletedTask = () => {
                         }
                     }}
                     activeOpacity={0.8}
-                >
-                    {/* Selection checkbox */}
-                    {isSelectionMode && (
-                        <TouchableOpacity
-                            style={styles.checkboxContainer}
-                            onPress={() => toggleTaskSelection(task.id)}
-                        >
-                            <View style={[
-                                styles.checkbox,
-                                isSelected && styles.checkboxSelected
-                            ]}>
-                                {isSelected && (
-                                    <Ionicons name="checkmark" size={14} color={colors.white} />
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                    )}
+                >                    
 
                     {/* Task content */}
                     <View style={styles.taskContent}>
@@ -368,7 +316,7 @@ const CompletedTask = () => {
                             <View style={styles.taskTitleContainer}>
                                 <TouchableOpacity
                                     style={styles.completedIconContainer}
-                                    onPress={() => uncompleteTask(task.id)}
+                                    onPress={() => clearAllTask(task.id)}
                                 >
                                     <View style={styles.completedIconBg}>
                                         <Ionicons 
@@ -446,7 +394,7 @@ const CompletedTask = () => {
                     {!isSelectionMode && (
                         <TouchableOpacity
                             style={styles.quickActionButton}
-                            onPress={() => uncompleteTask(task.id)}
+                            onPress={() => clearAllTask(task.id)}
                         >
                             <Ionicons name="refresh-outline" size={18} color={colors.primary} />
                         </TouchableOpacity>
@@ -582,7 +530,7 @@ const CompletedTask = () => {
                         <View style={styles.selectionActions}>
                             <TouchableOpacity
                                 style={styles.uncompleteButton}
-                                onPress={uncompleteSelectedTasks}
+                                onPress={clearSelectedTask}
                             >
                                 <Ionicons name="refresh-outline" size={18} color={colors.primary} />
                                 <CustomText variant="body" weight="medium" style={styles.uncompleteButtonText}>
@@ -902,7 +850,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
-        marginBottom: spacing.sm,
     },
     taskTitleContainer: {
         flexDirection: 'row',
@@ -942,7 +889,7 @@ const styles = StyleSheet.create({
         borderRadius: 3,
     },
     priorityText: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: '600',
     },
     taskDescription: {

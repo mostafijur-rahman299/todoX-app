@@ -46,41 +46,27 @@ const TimelineHelpText = () => {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    // Start slide-in animation
-    Animated.timing(slideAnim, {
-      toValue: 1,
-      duration: 500,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-
-    // Auto-hide after 4 seconds
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 800,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: -1,
-          duration: 800,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setIsVisible(false);
-      });
-    }, 4000);
-
-    return () => {
-      clearTimeout(timer);
-      fadeAnim.stopAnimation();
-      slideAnim.stopAnimation();
-    };
-  }, [fadeAnim, slideAnim]);
+  /**
+   * Handle closing the help text with smooth animation
+   */
+  const handleClose = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -1,
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
+      }),
+    ]).start(() => {
+      setIsVisible(false);
+    });
+  };
 
   if (!isVisible) return null;
 
@@ -101,19 +87,30 @@ const TimelineHelpText = () => {
         },
       ]}
     >
-      <View style={helpTextStyles.helpItem}>
-        <Ionicons name="hand-left-outline" size={16} color={colors.textSecondary} />
-        <Text style={helpTextStyles.helpText}>
-          Long press on timeline to add a task
-        </Text>
+      <View style={helpTextStyles.contentContainer}>
+        <View style={helpTextStyles.helpItem}>
+          <Ionicons name="hand-left-outline" size={16} color={colors.textSecondary} />
+          <Text style={helpTextStyles.helpText}>
+            Long press on timeline to add a task
+          </Text>
+        </View>
+        <View style={helpTextStyles.separator} />
+        <View style={helpTextStyles.helpItem}>
+          <Ionicons name="add-circle-outline" size={16} color={colors.textSecondary} />
+          <Text style={helpTextStyles.helpText}>
+            Or use the add button
+          </Text>
+        </View>
       </View>
-      <View style={helpTextStyles.separator} />
-      <View style={helpTextStyles.helpItem}>
-        <Ionicons name="add-circle-outline" size={16} color={colors.textSecondary} />
-        <Text style={helpTextStyles.helpText}>
-          Or use the add button
-        </Text>
-      </View>
+      
+      {/* Close Button */}
+      <TouchableOpacity 
+        style={helpTextStyles.closeButton}
+        onPress={handleClose}
+        hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
+      >
+        <Ionicons name="close" size={18} color={colors.textSecondary} />
+      </TouchableOpacity>
     </Animated.View>
   );
 };
@@ -419,14 +416,23 @@ const TimelineCalendarScreen = () => {
 // Styles for the help text component
 const helpTextStyles = {
   container: {
+    position: 'absolute',
+    top: 115,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   helpItem: {
     flexDirection: 'row',
@@ -442,7 +448,14 @@ const helpTextStyles = {
     width: 1,
     height: 12,
     backgroundColor: colors.border,
-    marginHorizontal: 12,
+    marginHorizontal: 5,
+  },
+  closeButton: {
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4
   },
 };
 

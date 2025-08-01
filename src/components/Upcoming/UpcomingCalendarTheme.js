@@ -36,13 +36,13 @@ export const useUpcomingCalendarTheme = () => {
 			// Modern calendar styling
 			'stylesheet.calendar.header': {
 				week: {
-					marginTop: 5,
+					marginTop: 3,
 					flexDirection: 'row',
 					justifyContent: 'space-around',
 					backgroundColor: colors.surface,
-					borderRadius: 12,
-					marginHorizontal: 16,
-					paddingVertical: 8,
+					borderRadius: 5,
+					marginHorizontal: 2,
+					paddingVertical:2,
 				},
 			},
 		}),

@@ -24,22 +24,22 @@ const BrowseMenu = () => {
     });
 
     const menuItems = [
-        {
-            id: 'projects',
-            title: 'Projects',
-            subtitle: 'Organize your workflow',
-            icon: 'folder-outline',
-            count: 3,
-            color: colors.info,
-        },
-        {
-            id: 'labels',
-            title: 'Labels',
-            subtitle: 'Tag and categorize',
-            icon: 'pricetag-outline',
-            count: 5,
-            color: colors.secondary,
-        },
+        // {
+        //     id: 'projects',
+        //     title: 'Projects',
+        //     subtitle: 'Organize your workflow',
+        //     icon: 'folder-outline',
+        //     count: 3,
+        //     color: colors.info,
+        // },
+        // {
+        //     id: 'labels',
+        //     title: 'Labels',
+        //     subtitle: 'Tag and categorize',
+        //     icon: 'pricetag-outline',
+        //     count: 5,
+        //     color: colors.secondary,
+        // },
         {
             id: 'completed',
             title: 'Completed',
