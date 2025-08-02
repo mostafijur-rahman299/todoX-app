@@ -96,6 +96,8 @@ const CompactDateSelector = ({
                     : newTask.endTime
             });
         }
+
+        console.log("called=====")
     };
 
     /**

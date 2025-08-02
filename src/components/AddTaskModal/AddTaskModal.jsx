@@ -38,7 +38,6 @@ const { height: screenHeight } = Dimensions.get('window');
  */
 const AddTaskModal = ({ visible, onClose }) => {
     const dispatch = useDispatch();
-    const tasks = useSelector((state) => state.task.display_tasks);
     const categories = useSelector((state) => state.category.categories);
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
@@ -52,8 +51,9 @@ const AddTaskModal = ({ visible, onClose }) => {
         priority: "medium", // "low" | "medium" | "high"
         reminder: false,
         date: null, // e.g., "2025-08-01"
-        start_time: null, // e.g., "14:00"
-        end_time: null     // e.g., "14:30"
+        startTime: null, // e.g., "14:00"
+        endTime: null,    // e.g., "14:30"
+        is_completed: false
     });
     
     // Enhanced animation refs
@@ -159,14 +159,15 @@ const AddTaskModal = ({ visible, onClose }) => {
         ]).start(() => {
             onClose();
             setNewTask({
+                id: "",
                 title: "",
-                description: "",
-                category: "other",
+                summary: "",
+                category: "personal",
                 priority: "medium",
                 reminder: false,
-                tag: "Inbox",
-                startDate: null,
-                endDate: null,
+                date: null,
+                start_time: null,
+                end_time: null
             });
             
             // Reset animations
@@ -228,15 +229,14 @@ const AddTaskModal = ({ visible, onClose }) => {
             const taskToSave = {
                 id: generateId(),
                 title: newTask.title.trim(),
-                description: newTask.description,
+                summary: newTask.summary,
                 category: newTask.category,
                 priority: newTask.priority,
                 reminder: newTask.reminder,
-                tag: newTask.tag,
-                startDate: newTask.startDate,
-                endDate: newTask.endDate,
                 is_completed: false,
-                timestamp: new Date().toISOString(),
+                date: newTask.date,
+                startTime: newTask.startTime,
+                endTime: newTask.endTime
             };
 
             dispatch(addTask(taskToSave));

@@ -115,12 +115,15 @@ const AppNavigator = () => {
     <SafeAreaView style={styles.container}>
       <Stack.Navigator 
         screenOptions={{ headerShown: false }}
+        // initialRouteName={isFirstLaunch ? "Start" : (isAuthenticated ? "Task" : "Auth")}
       >
-        {isFirstLaunch && (
-          <Stack.Screen name="Start" component={StartScreen}  />
-        )}
+        {/* {!isFirstLaunch && (
+          <Stack.Screen name="Start" component={StartScreen} />
+        )} */}
           <Stack.Screen name="Task" component={Task} />
+      
           <Stack.Screen name="Auth" component={AuthNavigation} />
+      
       </Stack.Navigator>
     </SafeAreaView>
   );

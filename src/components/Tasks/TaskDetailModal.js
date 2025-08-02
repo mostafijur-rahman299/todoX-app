@@ -418,6 +418,8 @@ const TaskDetailModal = ({
         );
     };
 
+    console.log(task)
+
     if (!task) return null;
 
     return (

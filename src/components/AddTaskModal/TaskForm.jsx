@@ -52,8 +52,8 @@ const TaskForm = ({
                         style={[styles.textInput, styles.descriptionInput]}
                         placeholder="Add description..."
                         placeholderTextColor={colors.textSecondary}
-                        value={newTask.description}
-                        onChangeText={(text) => setNewTask({ ...newTask, description: text })}
+                        value={newTask.summary}
+                        onChangeText={(text) => setNewTask({ ...newTask, summary: text })}
                         multiline={true}
                         numberOfLines={2}
                         maxLength={500}
