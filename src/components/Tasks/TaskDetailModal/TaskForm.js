@@ -23,7 +23,7 @@ const TaskForm = ({
     onInputBlur,
     onToggleCompletion,
     onUpdateTitle,
-    onUpdateDescription
+    onUpdateSummary
 }) => {
     // Animated input border color
     const inputBorderColor = inputFocusAnim.interpolate({
@@ -87,10 +87,10 @@ const TaskForm = ({
                         <View style={styles.inputContainer}>
                             <TextInput
                                 style={[styles.textInput, styles.descriptionInput]}
-                                placeholder="Add description..."
+                                placeholder="Add summary..."
                                 placeholderTextColor={colors.textSecondary}
-                                value={task.description}
-                                onChangeText={onUpdateDescription}
+                                value={task.summary}
+                                onChangeText={onUpdateSummary}
                                 multiline={true}
                                 numberOfLines={2}
                                 maxLength={500}
@@ -99,7 +99,7 @@ const TaskForm = ({
                         </View>
                     ) : (
                         <Text style={styles.taskDescription}>
-                            {task.description}
+                            {task.summary}
                         </Text>
                     )}
                 </View>

@@ -27,9 +27,7 @@ const { height: screenHeight } = Dimensions.get('window');
 const TaskDetailModal = ({ 
     visible, 
     onClose, 
-    task, 
-    onUpdateTask,
-    onDeleteTask
+    task,
 }) => {
     // Enhanced animation refs to match AddTaskModal
     const slideAnim = useRef(new Animated.Value(screenHeight)).current;
@@ -56,8 +54,9 @@ const TaskDetailModal = ({
                 date: task.date || null,
                 startTime: task.startTime || null,
                 endTime: task.endTime || null,
+                isCompleted: task.isCompleted || false,
+                subTasks: task.subTasks || [],
             });
-            setSubTasks(task.subTasks || []);
         }
     }, [task]);
 
@@ -87,9 +86,6 @@ const TaskDetailModal = ({
         }
     }, [visible]);
 
-    /**
-     * Handle closing the modal with unsaved changes check
-     */
     const handleClose = () => {
         if (isEditing) {
             Alert.alert(
@@ -141,9 +137,6 @@ const TaskDetailModal = ({
         });
     };
 
-    /**
-     * Toggle editing mode
-     */
     const toggleEditMode = () => {
         if (isEditing) {
             handleSaveChanges();
@@ -157,24 +150,22 @@ const TaskDetailModal = ({
      */
     const handleSaveChanges = () => {
         if (onUpdateTask && editedTask.title.trim()) {
-            const updatedTask = {
-                ...editedTask,
-                subTasks: subTasks
-            };
-            onUpdateTask(updatedTask);
-            setIsEditing(false);
+            // const updatedTask = {
+            //     ...editedTask,
+            //     subTasks: subTasks
+            // };
+            // onUpdateTask(updatedTask);
+            // setIsEditing(false);
             
-            // Haptic feedback for success
-            if (Platform.OS === 'ios') {
-                Vibration.vibrate([10, 50, 10]);
-            }
+            // // Haptic feedback for success
+            // if (Platform.OS === 'ios') {
+            //     Vibration.vibrate([10, 50, 10]);
+            // }
 
             console.log("editedTask===----===", editedTask)
         } else if (!editedTask.title.trim()) {
             Alert.alert("Error", "Task title cannot be empty");
         }
-
-        console.log("called=====")
     };
 
     /**
@@ -190,16 +181,14 @@ const TaskDetailModal = ({
             date: task.date || null,
             startTime: task.startTime || null,
             endTime: task.endTime || null,
+            isCompleted: task.isCompleted || false,
+            subTasks: task.subTasks || [],
         });
-        setSubTasks(task.subTasks || []);
         setIsEditing(false);
         setShowAddSubTask(false);
         setNewSubTaskTitle('');
     };
 
-    /**
-     * Update task field
-     */
     const updateTaskField = (field, value) => {
         setEditedTask(prev => ({
             ...prev,
@@ -207,42 +196,15 @@ const TaskDetailModal = ({
         }));
     };
 
-    /**
-     * Toggle task completion status
-     */
     const toggleTaskCompletion = () => {
         const updatedTask = {
             ...editedTask,
-            is_completed: !editedTask.is_completed
+            isCompleted: !editedTask.isCompleted
         };
         setEditedTask(updatedTask);
         if (onUpdateTask) {
             onUpdateTask(updatedTask);
         }
-    };
-
-    /**
-     * Handle input focus animation
-     */
-    const handleInputFocus = () => {
-        Animated.timing(inputFocusAnim, {
-            toValue: 1,
-            duration: 200,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: false,
-        }).start();
-    };
-
-    /**
-     * Handle input blur animation
-     */
-    const handleInputBlur = () => {
-        Animated.timing(inputFocusAnim, {
-            toValue: 0,
-            duration: 200,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: false,
-        }).start();
     };
 
     /**
@@ -253,9 +215,12 @@ const TaskDetailModal = ({
             const newSubTask = {
                 id: Date.now(),
                 title: newSubTaskTitle.trim(),
-                is_completed: false
+                isCompleted: false
             };
-            setSubTasks(prev => [...prev, newSubTask]);
+            setTasks(prev => ({
+                ...prev,
+                subTasks: [...prev.subTasks, newSubTask]
+            }));
             setNewSubTaskTitle('');
             setShowAddSubTask(false);
         }
@@ -265,20 +230,24 @@ const TaskDetailModal = ({
      * Toggle sub-task completion
      */
     const toggleSubTaskCompletion = (subTaskId) => {
-        setSubTasks(prev => 
-            prev.map(subTask => 
+        setTasks(prev => ({
+            ...prev,
+            subTasks: prev.subTasks.map(subTask => 
                 subTask.id === subTaskId 
-                    ? { ...subTask, is_completed: !subTask.is_completed }
+                    ? { ...subTask, isCompleted: !subTask.isCompleted }
                     : subTask
             )
-        );
+        }));
     };
 
     /**
      * Delete sub-task
      */
     const deleteSubTask = (subTaskId) => {
-        setSubTasks(prev => prev.filter(subTask => subTask.id !== subTaskId));
+        setTasks(prev => ({
+            ...prev,
+            subTasks: prev.subTasks.filter(subTask => subTask.id !== subTaskId)
+        }));
     };
 
     /**
@@ -358,11 +327,9 @@ const TaskDetailModal = ({
                                         task={editedTask}
                                         isEditing={isEditing}
                                         inputFocusAnim={inputFocusAnim}
-                                        onInputFocus={handleInputFocus}
-                                        onInputBlur={handleInputBlur}
                                         onToggleCompletion={toggleTaskCompletion}
                                         onUpdateTitle={(text) => updateTaskField('title', text)}
-                                        onUpdateDescription={(text) => updateTaskField('description', text)}
+                                        onUpdateSummary={(text) => updateTaskField('summary', text)}
                                     />
 
                                     {/* Compact Selectors Row */}

@@ -16,7 +16,7 @@ import { defaultCategories } from '@/constants/GeneralData';
 import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
-import AddTaskButton from '@/components/AddTaskButton';
+import AddTaskButton from '@/components/AddTaskButton/index';
 import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
 
 // Import new components
@@ -248,10 +248,6 @@ const Inbox = () => {
 
   const filteredTasks = getFilteredTasks();
 
-  const handleUpdateTask = () => {
-
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       {showMenu && (
@@ -303,10 +299,6 @@ const Inbox = () => {
         visible={showTaskModal}
         onClose={handleCloseTaskModal}
         task={selectedTask}
-        onUpdateTask={(updatedTask) => handleUpdateTask(updatedTask)}
-        onDeleteTask={(taskId) => {
-          console.log('Delete task:', taskId);
-        }}
       />
     </SafeAreaView>
   );
