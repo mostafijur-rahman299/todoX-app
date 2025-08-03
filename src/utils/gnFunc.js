@@ -83,3 +83,33 @@ export const getPriorityColor = (priority) => {
 	}
 };
 
+export function getNextFreeSlot(tasks, selectedDate, durationMinutes = 30) {
+    const now = new Date(selectedDate) || new Date();
+    const date = now.toISOString().split('T')[0];
+
+    // Filter today's tasks and sort by start time
+    const todaysTasks = tasks
+        .filter(task => task.date === date && task.startTime && task.endTime)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    let slotStart = now;
+    let slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
+
+    for (const task of todaysTasks) {
+        const taskStart = new Date(`${date}T${task.startTime}`);
+        const taskEnd = new Date(`${date}T${task.endTime}`);
+
+        // If the current slot overlaps, move it after this task
+        if (slotStart < taskEnd && slotEnd > taskStart) {
+            slotStart = taskEnd;
+            slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
+        }
+    }
+
+    return {
+        date: date,
+        startTime: slotStart.toTimeString().slice(0, 5),
+        endTime: slotEnd.toTimeString().slice(0, 5)
+    };
+}
+

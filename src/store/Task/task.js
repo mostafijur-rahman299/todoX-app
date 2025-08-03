@@ -5,6 +5,7 @@ const taskSlice = createSlice({
   initialState: {
     task_list: [],
     display_tasks: [],
+    completed_tasks: [],
     loading: false,
     error: null,
   },
@@ -41,22 +42,20 @@ const taskSlice = createSlice({
     // Consolidated toggle action
     toggleTaskComplete(state, action) {
       const taskId = action.payload;
-      const timestamp = new Date().toISOString();
       
-      const updateTask = (task) => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            is_completed: !task.is_completed,
-            completed_timestamp: !task.is_completed ? timestamp : null,
-            updated_at: timestamp
-          };
-        }
-        return task;
+      let task = state.task_list.find(task => task.id === taskId);
+      if (!task) return;
+
+      task = {
+        ...task,
+        is_completed: !task.is_completed,
+        completed_timestamp: !task.is_completed ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
       };
       
-      state.task_list = state.task_list.map(updateTask);
-      state.display_tasks = state.display_tasks.map(updateTask);
+      state.completed_tasks.push(task);
+      state.task_list = state.task_list.filter(task => task.id !== taskId);
+      state.display_tasks = state.display_tasks.filter(task => task.id !== taskId);
     },
 
     updateTask(state, action) {

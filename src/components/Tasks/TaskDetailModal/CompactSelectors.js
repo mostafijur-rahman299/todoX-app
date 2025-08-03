@@ -13,20 +13,11 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
-import { priorityOptions, inboxOptions } from '@/constants/GeneralData';
+import { priorityOptions, categoryOptions } from '@/constants/GeneralData';
 
-/**
- * CompactSelectors component - Compact selectors matching AddTaskModal design
- * First row: Priority, Category (Inbox), and Reminder in the same line
- * Second section: Date & Time range with date selector and start/end time selectors
- */
 const CompactSelectors = ({ 
     task,
     isEditing,
-    onPriorityToggle,
-    onInboxToggle,
-    onDateTimeToggle,
-    onClearDateTime,
     onUpdateTask
 }) => {
     const [showPriorityModal, setShowPriorityModal] = useState(false);
@@ -35,18 +26,14 @@ const CompactSelectors = ({
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-    /**
-     * Get current priority option
-     */
+    console.log(task)
+
     const getCurrentPriority = () => {
         return priorityOptions.find(p => p.value === task.priority) || priorityOptions[1];
     };
 
-    /**
-     * Get current inbox option
-     */
     const getCurrentInbox = () => {
-        return inboxOptions.find(i => i.value === task.tag) || inboxOptions[0];
+        return categoryOptions.find(i => i.value === task.category) || categoryOptions[0];
     };
 
     /**
@@ -77,7 +64,7 @@ const CompactSelectors = ({
         if (Platform.OS === 'ios') {
             Vibration.vibrate(10);
         }
-        onUpdateTask({ ...task, tag: inbox.value });
+        onUpdateTask({ ...task, category: inbox.value });
         setShowInboxModal(false);
     };
 
@@ -94,7 +81,7 @@ const CompactSelectors = ({
     /**
      * Format date for display
      */
-    const formatDate = (dateString) => {
+    const formatDate = (dateString) => {        
         if (!dateString) return 'Select Date';
         
         const date = new Date(dateString);
@@ -140,7 +127,7 @@ const CompactSelectors = ({
             const dateString = date.toISOString().split('T')[0];
             onUpdateTask({ 
                 ...task, 
-                dueDate: dateString
+                date: dateString
             });
         }
     };
@@ -193,7 +180,7 @@ const CompactSelectors = ({
     const clearDate = () => {
         onUpdateTask({ 
             ...task, 
-            dueDate: null,
+            date: null,
             startTime: null,
             endTime: null
         });
@@ -331,15 +318,15 @@ const CompactSelectors = ({
                         <Ionicons 
                             name="calendar-outline" 
                             size={16} 
-                            color={task.dueDate ? colors.primary : colors.textSecondary} 
+                            color={task.date ? colors.primary : colors.textSecondary} 
                         />
                         <Text style={[
                             styles.dateText,
-                            { color: task.dueDate ? colors.primary : colors.textSecondary }
+                            { color: task.date ? colors.primary : colors.textSecondary }
                         ]}>
-                            {formatDate(task.dueDate)}
+                            {formatDate(task.date)}
                         </Text>
-                        {task.dueDate && isEditing && (
+                        {task.date && isEditing && (
                             <TouchableOpacity
                                 onPress={clearDate}
                                 hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
@@ -355,7 +342,7 @@ const CompactSelectors = ({
                 </View>
 
                 {/* Time Range Selectors */}
-                {task.dueDate && (
+                {task.date && (
                     <View style={styles.timeRow}>
                         {/* Start Time Selector */}
                         <View style={styles.timeSelector}>
@@ -495,12 +482,12 @@ const CompactSelectors = ({
                             <View style={styles.modalContent}>
                                 <Text style={styles.modalTitle}>Select Category</Text>
                                 <ScrollView style={styles.optionsList}>
-                                    {inboxOptions.map((inbox) => (
+                                    {categoryOptions.map((inbox) => (
                                         <TouchableOpacity
                                             key={inbox.value}
                                             style={[
                                                 styles.optionItem,
-                                                task.tag === inbox.value && styles.selectedOption
+                                                task.category === inbox.value && styles.selectedOption
                                             ]}
                                             onPress={() => handleInboxSelect(inbox)}
                                             activeOpacity={0.7}
@@ -516,7 +503,7 @@ const CompactSelectors = ({
                                                         {inbox.label}
                                                     </Text>
                                                 </View>
-                                                {task.tag === inbox.value && (
+                                                {task.category === inbox.value && (
                                                     <Ionicons 
                                                         name="checkmark" 
                                                         size={20} 
@@ -536,11 +523,13 @@ const CompactSelectors = ({
             {/* Date Picker */}
             {showDatePicker && (
                 <DateTimePicker
-                    value={task.dueDate ? new Date(task.dueDate) : new Date()}
+                    value={task.date ? new Date(task.date) : new Date()}
                     mode="date"
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={handleDateChange}
                     minimumDate={new Date()}
+                    themeVariant="light"
+                    accentColor={colors.primary}
                 />
             )}
 
@@ -551,6 +540,8 @@ const CompactSelectors = ({
                     mode="time"
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={handleStartTimeChange}
+                    themeVariant="light"
+                    accentColor={colors.primary}
                 />
             )}
 
@@ -562,6 +553,8 @@ const CompactSelectors = ({
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={handleEndTimeChange}
                     minimumDate={task.startTime ? getMinimumEndTime() : new Date()}
+                    themeVariant="light"
+                    accentColor={colors.primary}
                 />
             )}
         </View>

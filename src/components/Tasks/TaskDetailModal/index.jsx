@@ -1,8 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import {
-    View,
     Modal,
-    TouchableOpacity,
     StyleSheet,
     Animated,
     Dimensions,
@@ -18,21 +16,14 @@ import {
 import { colors } from '@/constants/Colors';
 
 // Import component modules
-import TaskDetailHeader from './TaskDetailModal/TaskDetailHeader';
-import TaskForm from './TaskDetailModal/TaskForm';
-import CompactSelectors from './TaskDetailModal/CompactSelectors';
-import SubTasksSection from './TaskDetailModal/SubTasksSection';
-import SelectionModal from './TaskDetailModal/SelectionModal';
-import DateTimePicker from './TaskDetailModal/DateTimePicker';
-import DeleteButton from './TaskDetailModal/DeleteButton';
+import TaskDetailHeader from './TaskDetailHeader';
+import TaskForm from './TaskForm';
+import CompactSelectors from './CompactSelectors';
+import SubTasksSection from './SubTasksSection';
+import DeleteButton from './DeleteButton';
 
 const { height: screenHeight } = Dimensions.get('window');
 
-/**
- * Enhanced TaskDetailModal component with AddTaskModal design
- * Features: Compact layout, modern styling, inline selectors, and smooth animations
- * Updated to match AddTaskModal's design patterns and user experience
- */
 const TaskDetailModal = ({ 
     visible, 
     onClose, 
@@ -53,14 +44,6 @@ const TaskDetailModal = ({
     const [subTasks, setSubTasks] = useState([]);
     const [showAddSubTask, setShowAddSubTask] = useState(false);
     const [newSubTaskTitle, setNewSubTaskTitle] = useState('');
-    
-    // Modal states for compact selectors
-    const [showPriorityModal, setShowPriorityModal] = useState(false);
-    const [showInboxModal, setShowInboxModal] = useState(false);
-    const [showDateTimePicker, setShowDateTimePicker] = useState(false);
-    const [datePickerMode, setDatePickerMode] = useState('date');
-    const [tempDate, setTempDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
 
     // Initialize edited task when task changes
     useEffect(() => {
@@ -68,11 +51,12 @@ const TaskDetailModal = ({
             setEditedTask({
                 ...task,
                 title: task.title || '',
-                description: task.description || '',
+                summary: task.summary || '',
                 priority: task.priority || 'medium',
-                tag: task.tag || 'Inbox',
-                dueDate: task.dueDate || null,
-                dueTime: task.dueTime || null,
+                category: task.category || 'Personal',
+                date: task.date || null,
+                startTime: task.startTime || null,
+                endTime: task.endTime || null,
             });
             setSubTasks(task.subTasks || []);
         }
@@ -127,11 +111,6 @@ const TaskDetailModal = ({
      * Enhanced modal close with smooth animations to match AddTaskModal
      */
     const closeModal = () => {
-        // Close any open modals first
-        setShowPriorityModal(false);
-        setShowInboxModal(false);
-        setShowDateTimePicker(false);
-        
         Animated.parallel([
             Animated.timing(overlayOpacity, {
                 toValue: 0,
@@ -202,11 +181,12 @@ const TaskDetailModal = ({
         setEditedTask({
             ...task,
             title: task.title || '',
-            description: task.description || '',
+            summary: task.description || '',
             priority: task.priority || 'medium',
-            tag: task.tag || 'Inbox',
-            dueDate: task.dueDate || null,
-            dueTime: task.dueTime || null,
+            category: task.category || 'Personal',
+            date: task.date || null,
+            startTime: task.startTime || null,
+            endTime: task.endTime || null,
         });
         setSubTasks(task.subTasks || []);
         setIsEditing(false);
@@ -260,103 +240,6 @@ const TaskDetailModal = ({
             easing: Easing.out(Easing.ease),
             useNativeDriver: false,
         }).start();
-    };
-
-    /**
-     * Handle priority selection with haptic feedback
-     */
-    const handlePrioritySelect = (priority) => {
-        if (Platform.OS === 'ios') {
-            Vibration.vibrate(10);
-        }
-        updateTaskField('priority', priority.value);
-        setShowPriorityModal(false);
-    };
-
-    /**
-     * Handle inbox selection with haptic feedback
-     */
-    const handleInboxSelect = (inbox) => {
-        if (Platform.OS === 'ios') {
-            Vibration.vibrate(10);
-        }
-        updateTaskField('tag', inbox.value);
-        setShowInboxModal(false);
-    };
-
-    /**
-     * Handle datetime selection
-     */
-    const handleDateTimeSelect = (dateTimeOption) => {
-        if (Platform.OS === 'ios') {
-            Vibration.vibrate(10);
-        }
-        
-        if (dateTimeOption.value === 'custom') {
-            setSelectedDate(new Date());
-            setTempDate(new Date());
-            setDatePickerMode('date');
-            setShowDateTimePicker(true);
-        } else {
-            const selectedDate = dateTimeOption.getDate();
-            updateTaskField('dueDate', selectedDate.toISOString().split('T')[0]);
-            updateTaskField('dueTime', selectedDate.toTimeString().split(' ')[0].substring(0, 5));
-        }
-    };
-
-    /**
-     * Handle date picker change
-     */
-    const handleDatePickerChange = (event, date) => {
-        if (Platform.OS === 'android') {
-            setShowDateTimePicker(false);
-            if (event.type === 'set' && date) {
-                if (datePickerMode === 'date') {
-                    setSelectedDate(date);
-                    setTempDate(date);
-                    setTimeout(() => {
-                        setDatePickerMode('time');
-                        setShowDateTimePicker(true);
-                    }, 100);
-                } else {
-                    const finalDate = new Date(selectedDate);
-                    finalDate.setHours(date.getHours());
-                    finalDate.setMinutes(date.getMinutes());
-                    
-                    updateTaskField('dueDate', finalDate.toISOString().split('T')[0]);
-                    updateTaskField('dueTime', finalDate.toTimeString().split(' ')[0].substring(0, 5));
-                }
-            }
-        } else {
-            if (date) {
-                setTempDate(date);
-            }
-        }
-    };
-
-    /**
-     * Handle iOS date picker confirm
-     */
-    const handleDatePickerConfirm = () => {
-        updateTaskField('dueDate', tempDate.toISOString().split('T')[0]);
-        updateTaskField('dueTime', tempDate.toTimeString().split(' ')[0].substring(0, 5));
-        setShowDateTimePicker(false);
-    };
-
-    /**
-     * Handle iOS date picker cancel
-     */
-    const handleDatePickerCancel = () => {
-        setShowDateTimePicker(false);
-        setTempDate(selectedDate);
-    };
-
-    /**
-     * Clear datetime
-     */
-    const clearDateTime = () => {
-        updateTaskField('dueDate', null);
-        updateTaskField('dueTime', null);
     };
 
     /**
@@ -417,8 +300,6 @@ const TaskDetailModal = ({
             ]
         );
     };
-
-    console.log(task)
 
     if (!task) return null;
 
@@ -515,18 +396,6 @@ const TaskDetailModal = ({
                     </Animated.View>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
-
-            
-
-            {/* Custom DateTime Picker */}
-            <DateTimePicker
-                visible={showDateTimePicker}
-                mode={datePickerMode}
-                value={datePickerMode === 'date' ? selectedDate : tempDate}
-                onConfirm={handleDatePickerConfirm}
-                onCancel={handleDatePickerCancel}
-                onChange={handleDatePickerChange}
-            />
         </Modal>
     );
 };

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
-import { priorityOptions, inboxOptions } from '@/constants/GeneralData';
+import { priorityOptions, categoryOptions } from '@/constants/GeneralData';
 
 /**
  * CompactSelectors component - Compact one-line selectors for priority, inbox, and reminder
@@ -37,7 +37,7 @@ const CompactSelectors = ({
      * Get current inbox option
      */
     const getCurrentInbox = () => {
-        return inboxOptions.find(i => i.value === newTask.tag) || inboxOptions[0];
+        return categoryOptions.find(i => i.value === newTask.category) || categoryOptions[0];
     };
 
     /**
@@ -58,7 +58,7 @@ const CompactSelectors = ({
         if (Platform.OS === 'ios') {
             Vibration.vibrate(10);
         }
-        setNewTask({ ...newTask, tag: inbox.value });
+        setNewTask({ ...newTask, category: inbox.value });
         setShowInboxModal(false);
     };
 
@@ -189,14 +189,14 @@ const CompactSelectors = ({
                     <View style={styles.modalOverlay}>
                         <TouchableWithoutFeedback onPress={() => {}}>
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Select Inbox</Text>
+                                <Text style={styles.modalTitle}>Select Category</Text>
                                 <ScrollView style={styles.optionsList}>
-                                    {inboxOptions.map((inbox) => (
+                                    {categoryOptions.map((inbox) => (
                                         <TouchableOpacity
                                             key={inbox.value}
                                             style={[
                                                 styles.optionItem,
-                                                newTask.tag === inbox.value && styles.selectedOption
+                                                newTask.category === inbox.value && styles.selectedOption
                                             ]}
                                             onPress={() => handleInboxSelect(inbox)}
                                             activeOpacity={0.7}
@@ -212,7 +212,7 @@ const CompactSelectors = ({
                                                         {inbox.label}
                                                     </Text>
                                                 </View>
-                                                {newTask.tag === inbox.value && (
+                                                {newTask.category === inbox.value && (
                                                     <Ionicons 
                                                         name="checkmark" 
                                                         size={20} 

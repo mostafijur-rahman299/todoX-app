@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
-import AddTaskModal from './AddTaskModal/AddTaskModal'; // Fixed: Changed from named import to default import
+import AddTaskModal from './Tasks/AddTaskModal'; // Fixed: Changed from named import to default import
 
 /**
  * AddTaskButton component - Floating action button for adding new tasks

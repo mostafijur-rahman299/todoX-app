@@ -24,7 +24,7 @@ export const priorityOptions = [
 	},
 ];
 
-export const inboxOptions = [
+export const categoryOptions = [
 	{
 		label: "Inbox",
 		value: "Inbox",
