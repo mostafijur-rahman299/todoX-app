@@ -29,8 +29,7 @@ const TaskDetailModal = ({
     onClose, 
     task, 
     onUpdateTask,
-    onDeleteTask,
-    onAddSubTask 
+    onDeleteTask
 }) => {
     // Enhanced animation refs to match AddTaskModal
     const slideAnim = useRef(new Animated.Value(screenHeight)).current;
@@ -169,9 +168,13 @@ const TaskDetailModal = ({
             if (Platform.OS === 'ios') {
                 Vibration.vibrate([10, 50, 10]);
             }
+
+            console.log("editedTask===----===", editedTask)
         } else if (!editedTask.title.trim()) {
             Alert.alert("Error", "Task title cannot be empty");
         }
+
+        console.log("called=====")
     };
 
     /**

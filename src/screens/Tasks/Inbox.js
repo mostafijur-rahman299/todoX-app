@@ -248,6 +248,10 @@ const Inbox = () => {
 
   const filteredTasks = getFilteredTasks();
 
+  const handleUpdateTask = () => {
+
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {showMenu && (
@@ -299,9 +303,7 @@ const Inbox = () => {
         visible={showTaskModal}
         onClose={handleCloseTaskModal}
         task={selectedTask}
-        onUpdateTask={(updatedTask) => {
-          console.log('Update task:', updatedTask);
-        }}
+        onUpdateTask={(updatedTask) => handleUpdateTask(updatedTask)}
         onDeleteTask={(taskId) => {
           console.log('Delete task:', taskId);
         }}

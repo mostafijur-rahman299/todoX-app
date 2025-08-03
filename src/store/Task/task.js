@@ -5,7 +5,6 @@ const taskSlice = createSlice({
   initialState: {
     task_list: [],
     display_tasks: [],
-    completed_tasks: [],
     loading: false,
     error: null,
   },

@@ -11,8 +11,7 @@ const TaskDetailHeader = ({
     isEditing, 
     onClose, 
     onToggleEdit, 
-    onSaveChanges, 
-    onCancelEdit 
+    onSaveChanges
 }) => {
     return (
         <View style={styles.modalHeader}>
