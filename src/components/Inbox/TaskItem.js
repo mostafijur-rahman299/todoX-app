@@ -75,7 +75,7 @@ const TaskItem = React.memo(({
   };
 
   const getTaskTag = () => {
-    if (item.category && item.category !== 'inbox') {
+    if (item.category && item.category !== 'Inbox') {
       return item.category;
     }
     if (item.priority) {
@@ -156,15 +156,15 @@ const TaskItem = React.memo(({
               </Text>
               <View style={styles.taskMeta}>
                 <Text style={styles.taskDate}>
-                  {new Date(item.timestamp).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year:
-                      new Date(item.timestamp).getFullYear() !== new Date().getFullYear()
-                        ? 'numeric'
-                        : undefined,
-                  })}
-                </Text>
+                {item.date ? new Date(item.date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year:
+                    new Date(item.date).getFullYear() !== new Date().getFullYear()
+                      ? 'numeric'
+                      : undefined,
+                }) : 'No date'}
+              </Text>
                 <View style={styles.taskTag}>
                   <Text style={styles.taskTagText}>{getTaskTag()}</Text>
                 </View>

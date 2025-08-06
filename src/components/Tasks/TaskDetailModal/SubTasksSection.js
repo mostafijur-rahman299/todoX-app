@@ -33,9 +33,9 @@ const SubTasksSection = ({
                     >
                         <View style={[
                             styles.checkbox,
-                            subTask.is_completed && styles.checkboxCompleted
+                            subTask.isCompleted && styles.checkboxCompleted
                         ]}>
-                            {subTask.is_completed && (
+                            {subTask.isCompleted && (
                                 <Ionicons name="checkmark" size={12} color={colors.white} />
                             )}
                         </View>
@@ -43,7 +43,7 @@ const SubTasksSection = ({
                     
                     <Text style={[
                         styles.subTaskTitle,
-                        subTask.is_completed && styles.subTaskTitleCompleted
+                        subTask.isCompleted && styles.subTaskTitleCompleted
                     ]}>
                         {subTask.title}
                     </Text>

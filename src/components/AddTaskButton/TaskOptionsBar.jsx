@@ -31,9 +31,9 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
      * Format date for display
      */
     const formatDate = () => {
-        if (!task.dueDate) return 'Today';
+        if (!task.date) return 'Today';
         
-        const date = new Date(task.dueDate);
+        const date = new Date(task.date);
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -74,7 +74,7 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                 <TouchableOpacity
                     style={[
                         styles.optionButton,
-                        task.priority !== "medium" && styles.optionButtonActive,
+                        task.priority !== "" && styles.optionButtonActive,
                     ]}
                     onPress={onPriorityPress}
                     activeOpacity={0.8}
@@ -83,7 +83,7 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                         name={getCurrentPriority().icon}
                         size={16}
                         color={
-                            task.priority !== "medium"
+                            task.priority !== ""
                                 ? getCurrentPriority().color
                                 : colors.textSecondary
                         }
@@ -91,9 +91,9 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                     <Text
                         style={[
                             styles.optionText,
-                            task.priority !== "medium" && styles.optionTextActive,
+                            task.priority !== "" && styles.optionTextActive,
                         ]}>
-                        Priority
+                        {task.priority !== "" ? task.priority[0].toUpperCase() + task.priority.slice(1) : 'Priority'}
                     </Text>
                 </TouchableOpacity>
 
@@ -124,7 +124,7 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                 <TouchableOpacity
                     style={[
                         styles.optionButton,
-                        task.category !== "Inbox" && styles.optionButtonActive,
+                        task.category !== "" && styles.optionButtonActive,
                     ]}
                     onPress={onCategoryPress}
                     activeOpacity={0.8}
@@ -133,7 +133,7 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                         name={getCurrentCategory().icon}
                         size={16}
                         color={
-                            task.category !== "Inbox"
+                            task.category !== ""
                                 ? getCurrentCategory().color
                                 : colors.textSecondary
                         }
@@ -141,9 +141,9 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                     <Text
                         style={[
                             styles.optionText,
-                            task.category !== "Inbox" && styles.optionTextActive,
+                            task.category !== "" && styles.optionTextActive,
                         ]}>
-                        Category
+                        {task.category !== "" ? task.category[0].toUpperCase() + task.category.slice(1) : 'Category'}
                     </Text>
                 </TouchableOpacity>
 

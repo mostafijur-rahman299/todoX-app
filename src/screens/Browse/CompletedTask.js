@@ -353,14 +353,14 @@ const CompletedTask = () => {
                             )}
                         </View>
 
-                        {/* Task description */}
-                        {task.description && (
+                        {/* Task summary */}
+                        {task.summary && (
                             <CustomText 
                                 variant="caption" 
                                 style={styles.taskDescription}
                                 numberOfLines={2}
                             >
-                                {task.description}
+                                {task.summary}
                             </CustomText>
                         )}
 

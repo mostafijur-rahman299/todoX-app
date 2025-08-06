@@ -60,6 +60,15 @@ const taskSlice = createSlice({
     updateTask(state, action) {
       const updatedTask = {
         ...action.payload,
+        title: action.payload.title || "",
+        summary: action.payload.summary || "",
+        category: action.payload.category || "Inbox",
+        priority: action.payload.priority || "medium",
+        reminder: action.payload.reminder || false,
+        date: action.payload.date || new Date().toISOString().split('T')[0],
+        startTime: action.payload.startTime || null,
+        endTime: action.payload.endTime || null,
+        subTask: action.payload.subTask || [],
         updated_at: new Date().toISOString()
       };
       

@@ -131,15 +131,17 @@ const UpcomingAgendaItem = React.memo(({
 						<View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
 					</View>
 					
-					{(item.time || item.category) && (
+					{((item.startTime || item.endTime) || item.category) && (
 						<View style={styles.taskMeta}>
-							{item.time && (
+							{(item.startTime || item.endTime) && (
 								<Text style={styles.timeText}>
-									{item.time}
+									{item.startTime && item.endTime 
+										? `${item.startTime} - ${item.endTime}`
+										: item.startTime || item.endTime}
 								</Text>
 							)}
 							
-							{item.time && item.category && (
+							{(item.startTime || item.endTime) && item.category && (
 								<View style={styles.separator} />
 							)}
 							

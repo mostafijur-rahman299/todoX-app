@@ -28,6 +28,8 @@ const TaskDetailModal = ({
     visible, 
     onClose, 
     task,
+    onUpdateTask,
+    onDeleteTask,
 }) => {
     // Enhanced animation refs to match AddTaskModal
     const slideAnim = useRef(new Animated.Value(screenHeight)).current;
@@ -38,7 +40,6 @@ const TaskDetailModal = ({
     // State management
     const [isEditing, setIsEditing] = useState(false);
     const [editedTask, setEditedTask] = useState({});
-    const [subTasks, setSubTasks] = useState([]);
     const [showAddSubTask, setShowAddSubTask] = useState(false);
     const [newSubTaskTitle, setNewSubTaskTitle] = useState('');
 
@@ -50,12 +51,13 @@ const TaskDetailModal = ({
                 title: task.title || '',
                 summary: task.summary || '',
                 priority: task.priority || 'medium',
-                category: task.category || 'Personal',
-                date: task.date || null,
+                category: task.category || 'Inbox',
+                date: task.date || new Date().toISOString().split('T')[0],
                 startTime: task.startTime || null,
                 endTime: task.endTime || null,
-                isCompleted: task.isCompleted || false,
-                subTasks: task.subTasks || [],
+                isCompleted: task.isCompleted || task.is_completed || false,
+                subTask: task.subTask || [],
+                reminder: task.reminder || false,
             });
         }
     }, [task]);
@@ -150,19 +152,17 @@ const TaskDetailModal = ({
      */
     const handleSaveChanges = () => {
         if (onUpdateTask && editedTask.title.trim()) {
-            // const updatedTask = {
-            //     ...editedTask,
-            //     subTasks: subTasks
-            // };
-            // onUpdateTask(updatedTask);
-            // setIsEditing(false);
+            const updatedTask = {
+                ...editedTask,
+                updated_at: new Date().toISOString(),
+            };
+            onUpdateTask(updatedTask);
+            setIsEditing(false);
             
-            // // Haptic feedback for success
-            // if (Platform.OS === 'ios') {
-            //     Vibration.vibrate([10, 50, 10]);
-            // }
-
-            console.log("editedTask===----===", editedTask)
+            // Haptic feedback for success
+            if (Platform.OS === 'ios') {
+                Vibration.vibrate([10, 50, 10]);
+            }
         } else if (!editedTask.title.trim()) {
             Alert.alert("Error", "Task title cannot be empty");
         }
@@ -175,14 +175,15 @@ const TaskDetailModal = ({
         setEditedTask({
             ...task,
             title: task.title || '',
-            summary: task.description || '',
+            summary: task.summary || '',
             priority: task.priority || 'medium',
-            category: task.category || 'Personal',
-            date: task.date || null,
+            category: task.category || 'Inbox',
+            date: task.date || new Date().toISOString().split('T')[0],
             startTime: task.startTime || null,
             endTime: task.endTime || null,
-            isCompleted: task.isCompleted || false,
-            subTasks: task.subTasks || [],
+            isCompleted: task.isCompleted || task.is_completed || false,
+            subTask: task.subTask || [],
+            reminder: task.reminder || false,
         });
         setIsEditing(false);
         setShowAddSubTask(false);
@@ -217,9 +218,9 @@ const TaskDetailModal = ({
                 title: newSubTaskTitle.trim(),
                 isCompleted: false
             };
-            setTasks(prev => ({
+            setEditedTask(prev => ({
                 ...prev,
-                subTasks: [...prev.subTasks, newSubTask]
+                subTask: [...(prev.subTask || []), newSubTask]
             }));
             setNewSubTaskTitle('');
             setShowAddSubTask(false);
@@ -230,9 +231,9 @@ const TaskDetailModal = ({
      * Toggle sub-task completion
      */
     const toggleSubTaskCompletion = (subTaskId) => {
-        setTasks(prev => ({
+        setEditedTask(prev => ({
             ...prev,
-            subTasks: prev.subTasks.map(subTask => 
+            subTask: (prev.subTask || []).map(subTask => 
                 subTask.id === subTaskId 
                     ? { ...subTask, isCompleted: !subTask.isCompleted }
                     : subTask
@@ -244,9 +245,9 @@ const TaskDetailModal = ({
      * Delete sub-task
      */
     const deleteSubTask = (subTaskId) => {
-        setTasks(prev => ({
+        setEditedTask(prev => ({
             ...prev,
-            subTasks: prev.subTasks.filter(subTask => subTask.id !== subTaskId)
+            subTask: (prev.subTask || []).filter(subTask => subTask.id !== subTaskId)
         }));
     };
 
@@ -341,7 +342,7 @@ const TaskDetailModal = ({
 
                                     {/* Sub-tasks Section */}
                                     <SubTasksSection
-                                        subTasks={subTasks}
+                                        subTasks={editedTask.subTask || []}
                                         isEditing={isEditing}
                                         showAddSubTask={showAddSubTask}
                                         newSubTaskTitle={newSubTaskTitle}

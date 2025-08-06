@@ -79,9 +79,20 @@ const useTasks = () => {
     try {
       dispatch(setLoading(true));
       
-      // Generate unique ID if not provided
+      // Create new task with proper data structure
       const newTask = {
-        ...taskData,
+        id: taskData.id || Date.now().toString(),
+        title: taskData.title || "",
+        summary: taskData.summary || "",
+        category: taskData.category || "Inbox",
+        priority: taskData.priority || "medium",
+        reminder: taskData.reminder || false,
+        date: taskData.date || new Date().toISOString().split('T')[0],
+        startTime: taskData.startTime || null,
+        endTime: taskData.endTime || null,
+        subTask: taskData.subTask || [],
+        is_completed: false,
+        completed_timestamp: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -113,9 +124,25 @@ const useTasks = () => {
     try {
       dispatch(setLoading(true));
       
+      // Find the existing task to preserve all fields
+      const existingTask = task_list.find(task => task.id === taskId);
+      if (!existingTask) {
+        throw new Error('Task not found');
+      }
+      
       const updatedTask = {
+        ...existingTask,
         ...updates,
         id: taskId,
+        title: updates.title !== undefined ? updates.title : existingTask.title,
+        summary: updates.summary !== undefined ? updates.summary : existingTask.summary,
+        category: updates.category !== undefined ? updates.category : existingTask.category,
+        priority: updates.priority !== undefined ? updates.priority : existingTask.priority,
+        reminder: updates.reminder !== undefined ? updates.reminder : existingTask.reminder,
+        date: updates.date !== undefined ? updates.date : existingTask.date,
+        startTime: updates.startTime !== undefined ? updates.startTime : existingTask.startTime,
+        endTime: updates.endTime !== undefined ? updates.endTime : existingTask.endTime,
+        subTask: updates.subTask !== undefined ? updates.subTask : existingTask.subTask,
         updated_at: new Date().toISOString(),
       };
 
@@ -124,7 +151,7 @@ const useTasks = () => {
       
       // Get updated task list
       const updatedTasks = task_list.map(task => 
-        task.id === taskId ? { ...task, ...updatedTask } : task
+        task.id === taskId ? updatedTask : task
       );
       
       // Save to AsyncStorage

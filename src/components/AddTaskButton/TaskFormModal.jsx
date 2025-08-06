@@ -8,22 +8,19 @@ import {
     TouchableWithoutFeedback,
     TouchableOpacity,
     Alert,
-    Platform,
-    Vibration,
     Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
-import { addTask } from '@/store/Task/task';
 import { generateId } from '@/utils/gnFunc';
-import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
+import useTasks from '../../hooks/useTasks';
 
 import TaskInputField from './TaskInputField';
 import TaskOptionsBar from './TaskOptionsBar';
 import CategorySelector from './CategorySelector';
 import PrioritySelector from './PrioritySelector';
 import DateTimeSelector from './DateTimeSelector';
-import CustomDateTimePicker from './CustomDateTimePicker';
+import { useSelector } from 'react-redux';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -42,10 +39,7 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
     const [showPriorityOptions, setShowPriorityOptions] = React.useState(false);
     const [showInboxOptions, setShowInboxOptions] = React.useState(false);
     const [showDateTimeOptions, setShowDateTimeOptions] = React.useState(false);
-    const [showDateTimePicker, setShowDateTimePicker] = React.useState(false);
-    const [datePickerMode, setDatePickerMode] = React.useState('date');
-    const [tempDate, setTempDate] = React.useState(new Date());
-    const [selectedDate, setSelectedDate] = React.useState(new Date());
+    const { addTask } = useTasks();
 
     /**
      * Handle modal entrance animation
@@ -141,43 +135,33 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
      * Save task with validation
      */
     const saveTask = async () => {
-        if (!task.title.trim()) {
-            Alert.alert('Error', 'Please enter a task title');
-            return;
-        }
+    if (!task.title.trim()) {
+        Alert.alert('Error', 'Please enter a task title');
+        return;
+    }
 
-        try {
-            const taskToSave = {
-                id: generateId(),
-                title: task.title.trim(),
-                description: task.description,
-                category: task.category,
-                priority: task.priority,
-                reminder: task.reminder,
-                tag: task.tag,
-                dueDate: task.dueDate,
-                dueTime: task.dueTime,
-                is_completed: false,
-                timestamp: new Date().toISOString(),
-            };
+    try {
 
-            dispatch(addTask(taskToSave));
-            
-            const existingTasks = await getDataLocalStorage('task_list') || [];
-            const updatedTasks = [...existingTasks, taskToSave];
-            await storeDataLocalStorage('task_list', updatedTasks);
+        const taskToSave = {
+            id: generateId(),
+            title: task.title.trim(),
+            summary: task.summary || "",
+            category: task.category || "Inbox",
+            priority: task.priority || "medium",
+            reminder: task.reminder || false,
+            date: task.date,
+            startTime: task.startTime,
+            endTime: task.endTime,
+            subTask: task.subTask || [],
+        };
 
-            // Haptic feedback for success
-            if (Platform.OS === 'ios') {
-                Vibration.vibrate([10, 50, 10]);
-            }
+        await addTask(taskToSave);
+        handleClose();
+    } catch (error) {
+        Alert.alert('Error', 'Failed to save task. Please try again.');
+    }
+};
 
-            handleClose();
-        } catch (error) {
-            console.error('Error saving task:', error);
-            Alert.alert('Error', 'Failed to save task. Please try again.');
-        }
-    };
 
     // Animated input border color
     const inputBorderColor = inputFocusAnim.interpolate({
@@ -252,21 +236,6 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
                         onClose={() => setShowDateTimeOptions(false)}
                         task={task}
                         onUpdateTask={onUpdateTask}
-                        onOpenDatePicker={() => {
-                            setSelectedDate(new Date());
-                            setTempDate(new Date());
-                            setDatePickerMode('date');
-                            setShowDateTimePicker(true);
-                        }}
-                    />
-
-                    <CustomDateTimePicker
-                        visible={showDateTimePicker}
-                        onClose={() => setShowDateTimePicker(false)}
-                        task={task}
-                        onUpdateTask={onUpdateTask}
-                        mode={datePickerMode}
-                        minimumDate={new Date()}
                     />
 
                     {/* Send Button */}

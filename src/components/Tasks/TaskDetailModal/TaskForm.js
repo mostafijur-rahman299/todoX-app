@@ -41,9 +41,9 @@ const TaskForm = ({
                 >
                     <View style={[
                         styles.checkbox,
-                        task.is_completed && styles.checkboxCompleted
+                        task.isCompleted && styles.checkboxCompleted
                     ]}>
-                        {task.is_completed && (
+                        {task.isCompleted && (
                             <Ionicons name="checkmark" size={16} color={colors.white} />
                         )}
                     </View>
@@ -56,7 +56,7 @@ const TaskForm = ({
                             <TextInput
                                 style={[
                                     styles.textInput,
-                                    task.is_completed && styles.textCompleted
+                                    task.isCompleted && styles.textCompleted
                                 ]}
                                 placeholder="Enter task title..."
                                 placeholderTextColor={colors.textSecondary}
@@ -71,7 +71,7 @@ const TaskForm = ({
                     ) : (
                         <Text style={[
                             styles.taskTitle,
-                            task.is_completed && styles.textCompleted
+                            task.isCompleted && styles.textCompleted
                         ]}>
                             {task.title}
                         </Text>
@@ -80,9 +80,9 @@ const TaskForm = ({
             </View>
 
             {/* Task Description Input - Made more compact */}
-            {(isEditing || task.description) && (
+            {(isEditing || task.summary) && (
                 <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Description (Optional)</Text>
+                    <Text style={styles.inputLabel}>Summary (Optional)</Text>
                     {isEditing ? (
                         <View style={styles.inputContainer}>
                             <TextInput

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
-import { setTasks, toggleTaskComplete } from '@/store/Task/task';
+import { setTasks, toggleTaskComplete, updateTask, deleteTask } from '@/store/Task/task';
 import { defaultCategories } from '@/constants/GeneralData';
 import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -216,6 +216,73 @@ const Inbox = () => {
   };
 
   /**
+   * Handle updating a task from TaskDetailModal
+   */
+  const handleUpdateTask = async (updatedTask) => {
+    try {
+      // Update Redux store
+      dispatch(updateTask(updatedTask));
+      
+      // Update local storage
+      const existingTasks = await getDataLocalStorage('task_list') || [];
+      const updatedTasks = existingTasks.map((task) =>
+        task.id === updatedTask.id ? updatedTask : task
+      );
+      await storeDataLocalStorage('task_list', updatedTasks);
+      
+      // Update selected task if it's the same one being edited
+      if (selectedTask && selectedTask.id === updatedTask.id) {
+        setSelectedTask(updatedTask);
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      Alert.alert('Error', 'Failed to update task. Please try again.');
+    }
+  };
+
+  /**
+   * Handle deleting a task from TaskDetailModal
+   */
+  const handleDeleteTask = async (taskId) => {
+    try {
+      // Show confirmation dialog
+      Alert.alert(
+        'Delete Task',
+        'Are you sure you want to delete this task? This action cannot be undone.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              // Update Redux store
+              dispatch(deleteTask(taskId));
+              
+              // Update local storage
+              const existingTasks = await getDataLocalStorage('task_list') || [];
+              const updatedTasks = existingTasks.filter((task) => task.id !== taskId);
+              await storeDataLocalStorage('task_list', updatedTasks);
+              
+              // Close modal if the deleted task was selected
+              if (selectedTask && selectedTask.id === taskId) {
+                handleCloseTaskModal();
+              }
+              
+              Alert.alert('Success', 'Task deleted successfully');
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      Alert.alert('Error', 'Failed to delete task. Please try again.');
+    }
+  };
+
+  /**
    * Filter tasks based on current filter
    */
   const getFilteredTasks = useCallback(() => {
@@ -299,6 +366,8 @@ const Inbox = () => {
         visible={showTaskModal}
         onClose={handleCloseTaskModal}
         task={selectedTask}
+        onUpdateTask={handleUpdateTask}
+        onDeleteTask={handleDeleteTask}
       />
     </SafeAreaView>
   );

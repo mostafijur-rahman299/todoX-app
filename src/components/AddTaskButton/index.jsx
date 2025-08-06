@@ -1,25 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { 
     View, 
     StyleSheet,
     Animated,
     Easing,
     Platform,
-    Vibration,
-    Dimensions
+    Vibration
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
-import { addTask, setTasks } from '@/store/Task/task';
+import { setTasks } from '@/store/Task/task';
 import { defaultCategories } from '@/constants/GeneralData';
-import { colors } from '@/constants/Colors';
+import { getFirstFreeSlot } from '@/utils/gnFunc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
+import { getDataLocalStorage } from '@/utils/storage';
 
 import FloatingActionButton from './FloatingActionButton';
 import TaskFormModal from './TaskFormModal';
-
-const { height: screenHeight } = Dimensions.get('window');
 
 /**
  * Main AddTaskButton component that manages task creation
@@ -27,7 +24,6 @@ const { height: screenHeight } = Dimensions.get('window');
  */
 const AddTaskButton = () => {
     const dispatch = useDispatch();
-    const tasks = useSelector((state) => state.task.display_tasks);
     const categories = useSelector((state) => state.category.categories);
     
     // Modal state
@@ -36,18 +32,20 @@ const AddTaskButton = () => {
     // Task state with today's date as default
     const [newTask, setNewTask] = useState({
         title: "",
-        description: "",
+        summary: "",
         category: "Inbox",
         priority: "medium",
         reminder: false,
-        tag: "Inbox",
-        dueDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-        dueTime: null,
+        date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+        startTime: null,
+        endTime: null,
+        subTask: [],
     });
     
     // Animation refs
     const addButtonScale = useRef(new Animated.Value(1)).current;
     const addButtonRotation = useRef(new Animated.Value(0)).current;
+    const tasks = useSelector((state) => state.task.task_list);
 
     /**
      * Initialize categories and load tasks on component mount
@@ -127,6 +125,20 @@ const AddTaskButton = () => {
             useNativeDriver: true,
         }).start();
 
+        try{
+            const taskDate = newTask.date || new Date().toISOString().split('T')[0];
+            const task_list = tasks.filter((item) => item.date === taskDate);
+            const firstFreeSlot = getFirstFreeSlot(task_list);
+
+            if (firstFreeSlot) {
+                setNewTask({
+                    ...newTask,
+                    startTime: firstFreeSlot.startTime,
+                    endTime: firstFreeSlot.endTime,
+                });
+            }
+        }catch(error){}
+
         setModalVisible(true);
     };
 
@@ -147,13 +159,14 @@ const AddTaskButton = () => {
         // Reset task state with today's date as default
         setNewTask({
             title: "",
-            description: "",
+            summary: "",
             category: "Inbox",
             priority: "medium",
             reminder: false,
-            tag: "Inbox",
-            dueDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-            dueTime: null,
+            date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+            startTime: null,
+            endTime: null,
+            subTask: [],
         });
     };
 

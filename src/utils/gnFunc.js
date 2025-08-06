@@ -2,31 +2,40 @@ import isEmpty from "lodash/isEmpty";
 import { colors } from "@/constants/Colors";
 
 export const generateId = (length = 16) => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const cryptoObj = typeof crypto !== 'undefined' && crypto.getRandomValues ? crypto : null;
+	const chars =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	const cryptoObj =
+		typeof crypto !== "undefined" && crypto.getRandomValues ? crypto : null;
 
-    const timestamp = Date.now().toString(36); // base36 timestamp
-    const extraTime = (typeof performance !== 'undefined' ? performance.now() : Math.random()).toFixed(4).replace('.', '');
-    
-    const idLength = length - timestamp.length - extraTime.length - 2;
-    let randomPart = '';
+	const timestamp = Date.now().toString(36); // base36 timestamp
+	const extraTime = (
+		typeof performance !== "undefined" ? performance.now() : Math.random()
+	)
+		.toFixed(4)
+		.replace(".", "");
 
-    if (cryptoObj) {
-        const bytes = new Uint8Array(idLength);
-        crypto.getRandomValues(bytes);
-        randomPart = Array.from(bytes).map(b => chars[b % chars.length]).join('');
-    } else {
-        for (let i = 0; i < idLength; i++) {
-            randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-    }
+	const idLength = length - timestamp.length - extraTime.length - 2;
+	let randomPart = "";
 
-    return `${timestamp}-${extraTime}-${randomPart}`;
+	if (cryptoObj) {
+		const bytes = new Uint8Array(idLength);
+		crypto.getRandomValues(bytes);
+		randomPart = Array.from(bytes)
+			.map((b) => chars[b % chars.length])
+			.join("");
+	} else {
+		for (let i = 0; i < idLength; i++) {
+			randomPart += chars.charAt(
+				Math.floor(Math.random() * chars.length),
+			);
+		}
+	}
+
+	return `${timestamp}-${extraTime}-${randomPart}`;
 };
 
-
 export const randomColor = () => {
-    return '#' + Math.floor(Math.random()*16777215).toString(16);
+	return "#" + Math.floor(Math.random() * 16777215).toString(16);
 };
 
 export const getPastDate = (numberOfDays) => {
@@ -83,33 +92,52 @@ export const getPriorityColor = (priority) => {
 	}
 };
 
-export function getNextFreeSlot(tasks, selectedDate, durationMinutes = 30) {
-    const now = new Date(selectedDate) || new Date();
-    const date = now.toISOString().split('T')[0];
+const timeToMinutes = (timeStr) => {
+	const [hours, minutes] = timeStr.split(":").map(Number);
+	return hours * 60 + minutes;
+};
 
-    // Filter today's tasks and sort by start time
-    const todaysTasks = tasks
-        .filter(task => task.date === date && task.startTime && task.endTime)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+const minutesToTime = (mins) => {
+	const hours = String(Math.floor(mins / 60)).padStart(2, "0");
+	const minutes = String(mins % 60).padStart(2, "0");
+	return `${hours}:${minutes}`;
+};
 
-    let slotStart = now;
-    let slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
+export const getFirstFreeSlot = (task_list) => {
+	const DAY_START = 8 * 60; // 8:00 AM
+	const DAY_END = 20 * 60; // 8:00 PM
+	const DURATION = 30;
 
-    for (const task of todaysTasks) {
-        const taskStart = new Date(`${date}T${task.startTime}`);
-        const taskEnd = new Date(`${date}T${task.endTime}`);
+	const sortedTasks = task_list
+		.filter((t) => t.startTime && t.endTime)
+		.map((t) => ({
+			start: timeToMinutes(t.startTime),
+			end: timeToMinutes(t.endTime),
+		}))
+		.sort((a, b) => a.start - b.start);
 
-        // If the current slot overlaps, move it after this task
-        if (slotStart < taskEnd && slotEnd > taskStart) {
-            slotStart = taskEnd;
-            slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
-        }
-    }
+	let currentTime = DAY_START;
 
-    return {
-        date: date,
-        startTime: slotStart.toTimeString().slice(0, 5),
-        endTime: slotEnd.toTimeString().slice(0, 5)
-    };
-}
+	for (let i = 0; i <= sortedTasks.length; i++) {
+		const nextStart = sortedTasks[i]?.start ?? DAY_END;
+
+		if (nextStart - currentTime >= DURATION) {
+			return {
+				startTime: minutesToTime(currentTime),
+				endTime: minutesToTime(currentTime + DURATION),
+			};
+		}
+
+		currentTime = Math.max(currentTime, sortedTasks[i]?.end || currentTime);
+	}
+
+	// No available slot, fallback to last 30 mins of the day
+	const fallbackStart = DAY_END - DURATION;
+	const fallbackEnd = DAY_END;
+
+	return {
+		startTime: minutesToTime(fallbackStart),
+		endTime: minutesToTime(fallbackEnd),
+	};
+};
 
