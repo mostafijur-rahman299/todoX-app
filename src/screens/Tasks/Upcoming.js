@@ -15,8 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
 import { getMarkedDates } from "@/utils/gnFunc";
-import { getDataLocalStorage } from "@/utils/storage";
-import { setTasks } from "@/store/Task/task";
+
 import {
 	UpcomingHeader,
 	UpcomingAgendaItem,
@@ -100,18 +99,18 @@ const Upcoming = ({ weekView }) => {
 	 * Handle refresh tasks from storage
 	 */
 	const handleRefreshTasks = async () => {
-		setIsRefreshing(true);
-		try {
-			const storedTasks = await getDataLocalStorage('task_list') || [];
-			dispatch(setTasks(storedTasks));
-			Alert.alert('Success', 'Tasks refreshed successfully');
-		} catch (error) {
-			console.error('Error refreshing tasks:', error);
-			Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
-		} finally {
-			setIsRefreshing(false);
-			setShowMenu(false);
-		}
+		// setIsRefreshing(true);
+		// try {
+		// 	const storedTasks = await getDataLocalStorage('task_list') || [];
+		// 	dispatch(setTasks(storedTasks));
+		// 	Alert.alert('Success', 'Tasks refreshed successfully');
+		// } catch (error) {
+		// 	console.error('Error refreshing tasks:', error);
+		// 	Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
+		// } finally {
+		// 	setIsRefreshing(false);
+		// 	setShowMenu(false);
+		// }
 	};
 
 	/**

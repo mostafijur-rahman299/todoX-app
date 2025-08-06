@@ -26,8 +26,6 @@ const CompactSelectors = ({
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-    console.log(task)
-
     const getCurrentPriority = () => {
         return priorityOptions.find(p => p.value === task.priority) || priorityOptions[1];
     };

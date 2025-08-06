@@ -156,14 +156,13 @@ const TaskItem = React.memo(({
               </Text>
               <View style={styles.taskMeta}>
                 <Text style={styles.taskDate}>
+                
                 {item.date ? new Date(item.date).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
-                  year:
-                    new Date(item.date).getFullYear() !== new Date().getFullYear()
-                      ? 'numeric'
-                      : undefined,
                 }) : 'No date'}
+
+                {item.startTime && item.endTime && ", " + item.startTime + " - " + item.endTime}
               </Text>
                 <View style={styles.taskTag}>
                   <Text style={styles.taskTagText}>{getTaskTag()}</Text>

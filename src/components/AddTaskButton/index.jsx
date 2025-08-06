@@ -9,11 +9,9 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
-import { setTasks } from '@/store/Task/task';
 import { defaultCategories } from '@/constants/GeneralData';
 import { getFirstFreeSlot } from '@/utils/gnFunc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDataLocalStorage } from '@/utils/storage';
 
 import FloatingActionButton from './FloatingActionButton';
 import TaskFormModal from './TaskFormModal';
@@ -79,19 +77,7 @@ const AddTaskButton = () => {
             }
         };
 
-        const loadTasks = async () => {
-            try {
-                const storedTasks = await getDataLocalStorage('task_list') || [];
-                if (storedTasks && storedTasks.length > 0) {
-                    dispatch(setTasks(storedTasks));
-                }
-            } catch (error) {
-                console.error('Error loading tasks:', error);
-            }
-        };
-
         initializeCategories();
-        loadTasks();
     }, [dispatch]);
 
     /**

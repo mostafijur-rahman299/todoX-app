@@ -25,9 +25,6 @@ class StorageManager {
             
             return true;
         } catch (error) {
-            if (__DEV__) {
-                console.error(`Error storing data for key ${key}:`, error);
-            }
             return false;
         }
     }

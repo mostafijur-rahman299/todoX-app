@@ -4,7 +4,6 @@ const taskSlice = createSlice({
   name: 'task',
   initialState: {
     task_list: [],
-    display_tasks: [],
     loading: false,
     error: null,
   },
@@ -18,14 +17,9 @@ const taskSlice = createSlice({
     },
 
     setTasks(state, action) {
-      state.display_tasks = action.payload;
       state.task_list = action.payload;
       state.loading = false;
       state.error = null;
-    },
-    
-    setDisplayTasks(state, action) {
-      state.display_tasks = action.payload;
     },
 
     addTask(state, action) {
@@ -35,7 +29,6 @@ const taskSlice = createSlice({
         updated_at: new Date().toISOString(),
       };
       state.task_list.unshift(newTask);
-      state.display_tasks.unshift(newTask);
     },
 
     // Consolidated toggle action
@@ -52,9 +45,7 @@ const taskSlice = createSlice({
         updated_at: new Date().toISOString(),
       };
       
-      state.completed_tasks.push(task);
       state.task_list = state.task_list.filter(task => task.id !== taskId);
-      state.display_tasks = state.display_tasks.filter(task => task.id !== taskId);
     },
 
     updateTask(state, action) {
@@ -75,13 +66,11 @@ const taskSlice = createSlice({
       const updateTaskInArray = (task) => task.id === updatedTask.id ? updatedTask : task;
       
       state.task_list = state.task_list.map(updateTaskInArray);
-      state.display_tasks = state.display_tasks.map(updateTaskInArray);
     },
 
     deleteTask(state, action) {
       const taskId = action.payload;
       state.task_list = state.task_list.filter(task => task.id !== taskId);
-      state.display_tasks = state.display_tasks.filter(task => task.id !== taskId);
     },
 
     // Bulk operations for better performance
@@ -96,7 +85,6 @@ const taskSlice = createSlice({
       );
       
       state.task_list = updateTasks(state.task_list);
-      state.display_tasks = updateTasks(state.display_tasks);
     },
   },
 });
@@ -108,7 +96,6 @@ export const {
   toggleTaskComplete, 
   addTask, 
   setTasks, 
-  setDisplayTasks, 
   updateTask, 
   deleteTask,
   bulkUpdateTasks

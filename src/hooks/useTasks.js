@@ -10,7 +10,7 @@ import {
   setError,
   bulkUpdateTasks
 } from '../store/Task/task';
-import StorageManager from '../utils/storage';
+import { storeDataLocalStorage, getDataLocalStorage } from '../utils/storage';
 
 // Storage keys for AsyncStorage
 const STORAGE_KEYS = {
@@ -27,9 +27,7 @@ const useTasks = () => {
   
   // Get task state from Redux store
   const { 
-    task_list, 
-    display_tasks, 
-    completed_tasks, 
+    task_list,
     loading, 
     error 
   } = useSelector(state => state.task);
@@ -37,15 +35,8 @@ const useTasks = () => {
   const loadTasksFromStorage = useCallback(async () => {
     try {
       dispatch(setLoading(true));
-      
-      const storedTasks = await Promise.all(
-        StorageManager.getData(STORAGE_KEYS.TASKS)
-      );
-
-      if (storedTasks) {
-        dispatch(setTasks(storedTasks));
-      }
-      
+      const tasks = await getDataLocalStorage(STORAGE_KEYS.TASKS);
+      dispatch(setTasks(tasks));
       dispatch(setError(null));
     } catch (error) {
       dispatch(setError('Failed to load tasks from storage'));
@@ -54,19 +45,14 @@ const useTasks = () => {
     }
   }, [dispatch]);
 
-  const saveTasksToStorage = useCallback(async (tasks, completedTasks = null) => {
+  const saveTasksToStorage = useCallback(async (tasks, isCompletedTask = false) => {
     try {
-      const savePromises = [
-        StorageManager.storeData(STORAGE_KEYS.TASKS, tasks)
-      ];
       
-      if (completedTasks) {
-        savePromises.push(
-          StorageManager.storeData(STORAGE_KEYS.COMPLETED_TASKS, completedTasks)
-        );
+      if (isCompletedTask) {
+        await storeDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS, tasks);
+      } else{
+        await storeDataLocalStorage(STORAGE_KEYS.TASKS, tasks);
       }
-      
-      await Promise.all(savePromises);
       return true;
     } catch (error) {
       console.error('Error saving tasks to storage:', error);
@@ -201,6 +187,7 @@ const useTasks = () => {
 
   const toggleTaskComplete = useCallback(async (taskId) => {
     try {
+      const completedTasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS) ?? [];
       dispatch(setLoading(true));
       
       // Update Redux store
@@ -211,36 +198,38 @@ const useTasks = () => {
       if (!task) {
         throw new Error('Task not found');
       }
-      
+
       // Update task lists based on completion status
       const updatedTasks = task_list.filter(t => t.id !== taskId);
+      console.log(updatedTasks?.length)
+
       const updatedCompletedTasks = [
-        ...completed_tasks,
+        ...completedTasks,
         {
           ...task,
-          is_completed: !task.is_completed,
-          completed_timestamp: !task.is_completed ? new Date().toISOString() : null,
+          is_completed: false,
+          completed_timestamp: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }
       ];
       
       // Save to AsyncStorage
-      const success = await saveTasksToStorage(updatedTasks, updatedCompletedTasks);
-      
-      if (success) {
+      const success = await saveTasksToStorage(updatedCompletedTasks, true);
+      const success1 = await saveTasksToStorage(updatedTasks, false);
+
+      if (success && success1) {
         dispatch(setError(null));
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('Error toggling task completion:', error);
       dispatch(setError('Failed to toggle task completion'));
       return false;
     } finally {
       dispatch(setLoading(false));
     }
-  }, [dispatch, task_list, completed_tasks, saveTasksToStorage]);
+  }, [dispatch, task_list, saveTasksToStorage]);
 
   const bulkUpdateTasksHook = useCallback(async (taskIds, updates) => {
     try {
@@ -303,8 +292,6 @@ const useTasks = () => {
   return {
     // State
     tasks: task_list,
-    displayTasks: display_tasks,
-    completedTasks: completed_tasks,
     loading,
     error,
     

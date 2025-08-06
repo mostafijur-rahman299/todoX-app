@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
-import { setTasks, toggleTaskComplete, updateTask, deleteTask } from '@/store/Task/task';
+import { updateTask, deleteTask } from '@/store/Task/task';
 import { defaultCategories } from '@/constants/GeneralData';
 import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,13 +24,14 @@ import EmptyState from '@/components/Inbox/EmptyState';
 import InboxHeader from '@/components/Inbox/InboxHeader';
 import MenuDropdown from '@/components/Inbox/MenuDropdown';
 import TaskItem from '@/components/Inbox/TaskItem';
+import useTasks from '@/hooks/useTasks';
 
 /**
  * Main Inbox component for displaying and managing tasks
  */
 const Inbox = () => {
   const dispatch = useDispatch();
-  const tasks = useSelector((state) => state.task.display_tasks);
+  const task_list = useSelector((state) => state.task.task_list);
   const categories = useSelector((state) => state.category.categories);
   const [showMenu, setShowMenu] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -40,7 +41,13 @@ const Inbox = () => {
   const [filterBy, setFilterBy] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const headerOpacity = useRef(new Animated.Value(0)).current;
-  const menuOpacity = useRef(new Animated.Value(0)).current;
+  const {toggleTaskComplete, loadTasksFromStorage} = useTasks();
+  const [displayTasks, setDisplayTasks] = useState([]);
+
+
+  useEffect(() => {
+    setDisplayTasks(task_list);
+  }, [task_list]);
 
   /**
    * Get priority color based on priority level
@@ -87,23 +94,8 @@ const Inbox = () => {
       }
     };
 
-    /**
-     * Load tasks from local storage
-     */
-    const loadTasks = async () => {
-      try {
-        const storedTasks = await getDataLocalStorage('task_list') || [];
-        if (storedTasks.length > 0) {
-          dispatch(setTasks(storedTasks));
-        }
-      } catch (error) {
-        console.error('Error loading tasks:', error);
-      }
-    };
-
     initializeCategories();
-    loadTasks();
-
+    loadTasksFromStorage();
     return () => {
       headerOpacity.stopAnimation();
     };
@@ -129,35 +121,25 @@ const Inbox = () => {
    * Toggle task completion status
    */
   const handleToggleComplete = async (taskId) => {
-    try {
-      dispatch(toggleTaskComplete(taskId));
-      const existingTasks = await getDataLocalStorage('task_list') || [];
-      const updatedTasks = existingTasks.map((task) =>
-        task.id === taskId ? { ...task, is_completed: !task.is_completed } : task
-      );
-      await storeDataLocalStorage('task_list', updatedTasks);
-    } catch (error) {
-      console.error('Error toggling task completion:', error);
-      Alert.alert('Error', 'Failed to update task. Please try again.');
-    }
+    toggleTaskComplete(taskId);
   };
 
   /**
    * Handle refresh tasks from storage
    */
   const handleRefreshTasks = async () => {
-    setIsRefreshing(true);
-    try {
-      const storedTasks = await getDataLocalStorage('task_list') || [];
-      dispatch(setTasks(storedTasks));
-      Alert.alert('Success', 'Tasks refreshed successfully');
-    } catch (error) {
-      console.error('Error refreshing tasks:', error);
-      Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
-    } finally {
-      setIsRefreshing(false);
-      setShowMenu(false);
-    }
+    // setIsRefreshing(true);
+    // try {
+    //   const storedTasks = await getDataLocalStorage('task_list') || [];
+    //   dispatch(setTasks(storedTasks));
+    //   Alert.alert('Success', 'Tasks refreshed successfully');
+    // } catch (error) {
+    //   console.error('Error refreshing tasks:', error);
+    //   Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
+    // } finally {
+    //   setIsRefreshing(false);
+    //   setShowMenu(false);
+    // }
   };
 
   /**
@@ -192,19 +174,19 @@ const Inbox = () => {
    * Handle bulk actions on selected tasks
    */
   const handleBulkComplete = async () => {
-    try {
-      const existingTasks = await getDataLocalStorage('task_list') || [];
-      const updatedTasks = existingTasks.map((task) =>
-        selectedTaskIds.includes(task.id) ? { ...task, is_completed: true } : task
-      );
-      await storeDataLocalStorage('task_list', updatedTasks);
-      dispatch(setTasks(updatedTasks));
-      handleExitSelectionMode();
-      Alert.alert('Success', `${selectedTaskIds.length} tasks marked as complete`);
-    } catch (error) {
-      console.error('Error completing tasks:', error);
-      Alert.alert('Error', 'Failed to complete tasks. Please try again.');
-    }
+    // try {
+    //   const existingTasks = await getDataLocalStorage('task_list') || [];
+    //   const updatedTasks = existingTasks.map((task) =>
+    //     selectedTaskIds.includes(task.id) ? { ...task, is_completed: true } : task
+    //   );
+    //   await storeDataLocalStorage('task_list', updatedTasks);
+    //   dispatch(setTasks(updatedTasks));
+    //   handleExitSelectionMode();
+    //   Alert.alert('Success', `${selectedTaskIds.length} tasks marked as complete`);
+    // } catch (error) {
+    //   console.error('Error completing tasks:', error);
+    //   Alert.alert('Error', 'Failed to complete tasks. Please try again.');
+    // }
   };
 
   /**
@@ -286,14 +268,14 @@ const Inbox = () => {
    * Filter tasks based on current filter
    */
   const getFilteredTasks = useCallback(() => {
-    let filtered = tasks?.filter((task) => !task.is_completed) || [];
+    let filtered = displayTasks?.filter((task) => !task.is_completed) || [];
     
     if (filterBy !== 'all') {
       filtered = filtered.filter((task) => task.priority === filterBy);
     }
     
     return filtered;
-  }, [tasks, filterBy]);
+  }, [displayTasks, filterBy]);
 
   /**
    * Render individual task item
