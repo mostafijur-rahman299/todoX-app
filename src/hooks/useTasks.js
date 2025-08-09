@@ -4,7 +4,7 @@ import {
   addTask as addTaskAction, 
   updateTask as updateTaskAction, 
   deleteTask as deleteTaskAction,
-  toggleTaskComplete as toggleTaskCompleteAction,
+  completeTask as completeTaskAction,
   setTasks,
   setLoading,
   setError,
@@ -13,7 +13,7 @@ import {
 import { storeDataLocalStorage, getDataLocalStorage } from '../utils/storage';
 
 // Storage keys for AsyncStorage
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   TASKS: 'tasks',
   COMPLETED_TASKS: 'completed_tasks',
 };
@@ -105,7 +105,7 @@ const useTasks = () => {
       dispatch(setLoading(false));
     }
   }, [dispatch, task_list, saveTasksToStorage]);
-
+  
   const updateTask = useCallback(async (taskId, updates) => {
     try {
       dispatch(setLoading(true));
@@ -185,51 +185,71 @@ const useTasks = () => {
     }
   }, [dispatch, task_list, saveTasksToStorage]);
 
-  const toggleTaskComplete = useCallback(async (taskId) => {
+  const clearAllCompletedTasks = async () => {
+      await storeDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS, []);
+  }
+
+  const bulkDeleteCompletedTasks = async (taskIds) => {
     try {
+      const completedTasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS) ?? [];
+      const updatedCompletedTasks = completedTasks.filter(task => !taskIds.includes(task.id));
+      await storeDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS, updatedCompletedTasks);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  const restoreTask = async (task) => {
+
+    let updatedTask = {
+      ...task,
+      is_completed: false,
+      completed_timestamp: null,
+      updated_at: new Date().toISOString(),
+    }
+
+      // Update Redux store
+      dispatch(addTaskAction(updatedTask));
+      
+      // Get updated task list (including the new task)
+      const updatedTasks = [updatedTask, ...task_list];
+      
+      // Save to AsyncStorage
+      await saveTasksToStorage(updatedTasks);
+      await bulkDeleteCompletedTasks([task.id]);
+  }
+
+  const bulkCompleteTask = async (taskIds) => {
       const completedTasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS) ?? [];
       dispatch(setLoading(true));
       
       // Update Redux store
-      dispatch(toggleTaskCompleteAction(taskId));
+      dispatch(completeTaskAction(taskIds));
       
       // Get the task that was toggled
-      const task = task_list.find(t => t.id === taskId);
+      const task = task_list.find(t => taskIds.includes(t.id));
       if (!task) {
-        throw new Error('Task not found');
+        return false;
       }
 
       // Update task lists based on completion status
-      const updatedTasks = task_list.filter(t => t.id !== taskId);
-      console.log(updatedTasks?.length)
+      const updatedTasks = task_list.filter(t => !taskIds.includes(t.id));
 
-      const updatedCompletedTasks = [
-        ...completedTasks,
-        {
-          ...task,
-          is_completed: false,
-          completed_timestamp: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-      ];
+      const updatedCompletedTasks = taskIds.map(taskId => ({
+        ...task_list.find(t => t.id === taskId),
+        is_completed: true,
+        completed_timestamp: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
       
       // Save to AsyncStorage
-      const success = await saveTasksToStorage(updatedCompletedTasks, true);
-      const success1 = await saveTasksToStorage(updatedTasks, false);
-
-      if (success && success1) {
-        dispatch(setError(null));
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      dispatch(setError('Failed to toggle task completion'));
-      return false;
-    } finally {
-      dispatch(setLoading(false));
-    }
-  }, [dispatch, task_list, saveTasksToStorage]);
+      await saveTasksToStorage([
+        ...updatedCompletedTasks,
+        ...completedTasks,
+      ], true);
+      await saveTasksToStorage(updatedTasks, false);
+  };
 
   const bulkUpdateTasksHook = useCallback(async (taskIds, updates) => {
     try {
@@ -299,10 +319,13 @@ const useTasks = () => {
     addTask,
     updateTask,
     deleteTask,
-    toggleTaskComplete,
+    bulkCompleteTask,
     bulkUpdateTasks: bulkUpdateTasksHook,
     clearAllTasks,
     loadTasksFromStorage,
+    clearAllCompletedTasks,
+    bulkDeleteCompletedTasks,
+    restoreTask,
     
     // Utility
     refreshTasks: loadTasksFromStorage,

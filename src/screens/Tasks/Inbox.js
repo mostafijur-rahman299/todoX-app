@@ -41,7 +41,7 @@ const Inbox = () => {
   const [filterBy, setFilterBy] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const headerOpacity = useRef(new Animated.Value(0)).current;
-  const {toggleTaskComplete, loadTasksFromStorage} = useTasks();
+  const {bulkCompleteTask, loadTasksFromStorage} = useTasks();
   const [displayTasks, setDisplayTasks] = useState([]);
 
 
@@ -121,25 +121,18 @@ const Inbox = () => {
    * Toggle task completion status
    */
   const handleToggleComplete = async (taskId) => {
-    toggleTaskComplete(taskId);
+    bulkCompleteTask([taskId]);
   };
 
   /**
    * Handle refresh tasks from storage
    */
   const handleRefreshTasks = async () => {
-    // setIsRefreshing(true);
-    // try {
-    //   const storedTasks = await getDataLocalStorage('task_list') || [];
-    //   dispatch(setTasks(storedTasks));
-    //   Alert.alert('Success', 'Tasks refreshed successfully');
-    // } catch (error) {
-    //   console.error('Error refreshing tasks:', error);
-    //   Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
-    // } finally {
-    //   setIsRefreshing(false);
-    //   setShowMenu(false);
-    // }
+    setIsRefreshing(true);
+    await loadTasksFromStorage();
+    setIsRefreshing(false);
+    setDisplayTasks(task_list);
+    setShowMenu(false);
   };
 
   /**
@@ -174,19 +167,7 @@ const Inbox = () => {
    * Handle bulk actions on selected tasks
    */
   const handleBulkComplete = async () => {
-    // try {
-    //   const existingTasks = await getDataLocalStorage('task_list') || [];
-    //   const updatedTasks = existingTasks.map((task) =>
-    //     selectedTaskIds.includes(task.id) ? { ...task, is_completed: true } : task
-    //   );
-    //   await storeDataLocalStorage('task_list', updatedTasks);
-    //   dispatch(setTasks(updatedTasks));
-    //   handleExitSelectionMode();
-    //   Alert.alert('Success', `${selectedTaskIds.length} tasks marked as complete`);
-    // } catch (error) {
-    //   console.error('Error completing tasks:', error);
-    //   Alert.alert('Error', 'Failed to complete tasks. Please try again.');
-    // }
+    bulkCompleteTask(selectedTaskIds);
   };
 
   /**
