@@ -48,6 +48,9 @@ const taskSlice = createSlice({
         startTime: action.payload.startTime || null,
         endTime: action.payload.endTime || null,
         subTask: action.payload.subTask || [],
+        // Normalize completion status
+        is_completed: action.payload.isCompleted || action.payload.is_completed || false,
+        isCompleted: action.payload.isCompleted || action.payload.is_completed || false,
         updated_at: new Date().toISOString()
       };
       

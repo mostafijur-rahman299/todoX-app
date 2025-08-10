@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { 
     Modal, 
     View, 
@@ -7,8 +7,6 @@ import {
     TouchableWithoutFeedback,
     ScrollView,
     StyleSheet,
-    Animated,
-    Easing,
     Platform,
     Vibration,
     Dimensions
@@ -24,9 +22,6 @@ const { height: screenHeight } = Dimensions.get('window');
  * Allows users to select task categories with smooth animations
  */
 const CategorySelector = ({ visible, onClose, task, onUpdateTask }) => {
-    const inboxSlideAnim = useRef(new Animated.Value(-100)).current;
-    const inboxOpacity = useRef(new Animated.Value(0)).current;
-
     /**
      * Handle category selection with haptic feedback
      */
@@ -40,133 +35,76 @@ const CategorySelector = ({ visible, onClose, task, onUpdateTask }) => {
             categoryColor: category.color,
             categoryIcon: category.icon 
         });
-        handleClose();
+        onClose();
     };
-
-    /**
-     * Handle modal close with animation
-     */
-    const handleClose = () => {
-        Animated.parallel([
-            Animated.timing(inboxOpacity, {
-                toValue: 0,
-                duration: 200,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
-            }),
-            Animated.timing(inboxSlideAnim, {
-                toValue: 100,
-                duration: 200,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            onClose();
-        });
-    };
-
-    /**
-     * Handle modal open animation
-     */
-    useEffect(() => {
-        if (visible) {
-            Animated.parallel([
-                Animated.timing(inboxOpacity, {
-                    toValue: 1,
-                    duration: 300,
-                    easing: Easing.out(Easing.ease),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(inboxSlideAnim, {
-                    toValue: 0,
-                    duration: 300,
-                    easing: Easing.out(Easing.back(1.1)),
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        } else {
-            // Reset animation values when not visible
-            inboxSlideAnim.setValue(-100);
-            inboxOpacity.setValue(0);
-        }
-    }, [visible]);
 
     return (
         <Modal
             transparent={true}
             visible={visible}
-            animationType="fade"
-            onRequestClose={handleClose}
+            animationType="none"
+            onRequestClose={onClose}
             statusBarTranslucent={true}
         >
-            <TouchableWithoutFeedback onPress={handleClose}>
-                <View style={styles.selectionModalOverlay}>
-                    <TouchableWithoutFeedback>
-                        <Animated.View
-                            style={[
-                                styles.selectionModal,
-                                {
-                                    opacity: inboxOpacity,
-                                    transform: [
-                                        { translateY: inboxSlideAnim },
-                                    ],
-                                },
-                            ]}>
-                            <View style={styles.selectionModalHeader}>
-                                <Text style={styles.selectionModalTitle}>Select Category</Text>
-                                <TouchableOpacity 
-                                    onPress={handleClose}
-                                    style={styles.selectionModalCloseBtn}
-                                    activeOpacity={0.7}
-                                >
-                                    <Ionicons name="close" size={22} color={colors.textSecondary} />
-                                </TouchableOpacity>
-                            </View>
-                            <ScrollView
-                                style={styles.selectionScrollView}
-                                showsVerticalScrollIndicator={false}
-                                nestedScrollEnabled={true}
-                                contentContainerStyle={{ paddingBottom: 12 }}
+            <TouchableWithoutFeedback onPress={onClose}>
+                <View style={styles.modalOverlay} />
+            </TouchableWithoutFeedback>
+            
+            <TouchableWithoutFeedback>
+                <View style={styles.selectionModal}>
+                    <View style={styles.selectionModalHeader}>
+                        <Text style={styles.selectionModalTitle}>Select Category</Text>
+                        <TouchableOpacity 
+                            onPress={onClose}
+                            style={styles.selectionModalCloseBtn}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="close" size={22} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                    </View>
+                    <ScrollView
+                        style={styles.selectionScrollView}
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled={true}
+                        contentContainerStyle={{ paddingBottom: 12 }}
+                    >
+                        {categoryOptions.map((category, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={[
+                                    styles.selectionOption,
+                                    task.category === category.value && styles.selectionOptionSelected,
+                                ]}
+                                onPress={() => handleInboxSelect(category)}
+                                activeOpacity={0.7}
                             >
-                                {categoryOptions.map((category, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={[
-                                            styles.selectionOption,
-                                            task.category === category.value && styles.selectionOptionSelected,
-                                        ]}
-                                        onPress={() => handleInboxSelect(category)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <View style={[
-                                            styles.selectionIconContainer,
-                                            { backgroundColor: category.color + '20' }
-                                        ]}>
-                                            <Ionicons
-                                                name={category.icon}
-                                                size={22}
-                                                color={category.color}
-                                            />
-                                        </View>
-                                        <View style={styles.selectionTextContainer}>
-                                            <Text style={styles.selectionOptionText}>
-                                                {category.label}
-                                            </Text>
-                                        </View>
-                                        {task.category === category.value && (
-                                            <View style={styles.selectionCheckmark}>
-                                                <Ionicons
-                                                    name="checkmark"
-                                                    size={16}
-                                                    color={colors.white}
-                                                />
-                                            </View>
-                                        )}
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </Animated.View>
-                    </TouchableWithoutFeedback>
+                                <View style={[
+                                    styles.selectionIconContainer,
+                                    { backgroundColor: category.color + '20' }
+                                ]}>
+                                    <Ionicons
+                                        name={category.icon}
+                                        size={22}
+                                        color={category.color}
+                                    />
+                                </View>
+                                <View style={styles.selectionTextContainer}>
+                                    <Text style={styles.selectionOptionText}>
+                                        {category.label}
+                                    </Text>
+                                </View>
+                                {task.category === category.value && (
+                                    <View style={styles.selectionCheckmark}>
+                                        <Ionicons
+                                            name="checkmark"
+                                            size={16}
+                                            color={colors.white}
+                                        />
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                 </View>
             </TouchableWithoutFeedback>
         </Modal>
@@ -174,7 +112,7 @@ const CategorySelector = ({ visible, onClose, task, onUpdateTask }) => {
 };
 
 const styles = StyleSheet.create({
-    selectionModalOverlay: {
+    modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',

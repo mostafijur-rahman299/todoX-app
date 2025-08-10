@@ -18,18 +18,15 @@ import { colors } from '@/constants/Colors';
 const TaskForm = ({ 
     task,
     isEditing,
-    inputFocusAnim, 
     onInputFocus, 
     onInputBlur,
     onToggleCompletion,
     onUpdateTitle,
     onUpdateSummary
 }) => {
-    // Animated input border color
-    const inputBorderColor = inputFocusAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [colors.border, colors.primary],
-    });
+
+    // Normalize completion status for display
+    const isCompleted = task.isCompleted || task.is_completed || false;
 
     return (
         <View style={styles.container}>
@@ -41,9 +38,9 @@ const TaskForm = ({
                 >
                     <View style={[
                         styles.checkbox,
-                        task.isCompleted && styles.checkboxCompleted
+                        isCompleted && styles.checkboxCompleted
                     ]}>
-                        {task.isCompleted && (
+                        {isCompleted && (
                             <Ionicons name="checkmark" size={16} color={colors.white} />
                         )}
                     </View>
@@ -52,26 +49,27 @@ const TaskForm = ({
                 <View style={styles.titleInputGroup}>
                     <Text style={styles.inputLabel}>Task Title</Text>
                     {isEditing ? (
-                        <Animated.View style={[styles.inputContainer, { borderColor: inputBorderColor }]}>
+                        <Animated.View style={[
+                            styles.inputContainer,
+                            // { borderColor: inputBorderColor }
+                        ]}>
                             <TextInput
-                                style={[
-                                    styles.textInput,
-                                    task.isCompleted && styles.textCompleted
-                                ]}
+                                style={styles.textInput}
                                 placeholder="Enter task title..."
                                 placeholderTextColor={colors.textSecondary}
                                 value={task.title}
                                 onChangeText={onUpdateTitle}
                                 onFocus={onInputFocus}
                                 onBlur={onInputBlur}
-                                multiline={false}
-                                maxLength={100}
+                                multiline={true}
+                                numberOfLines={2}
+                                maxLength={200}
                             />
                         </Animated.View>
                     ) : (
                         <Text style={[
                             styles.taskTitle,
-                            task.isCompleted && styles.textCompleted
+                            isCompleted && styles.taskTitleCompleted
                         ]}>
                             {task.title}
                         </Text>
@@ -79,10 +77,10 @@ const TaskForm = ({
                 </View>
             </View>
 
-            {/* Task Description Input - Made more compact */}
-            {(isEditing || task.summary) && (
-                <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Summary (Optional)</Text>
+            {/* Task Summary */}
+            {(task.summary || isEditing) && (
+                <View style={styles.summaryContainer}>
+                    <Text style={styles.inputLabel}>Summary</Text>
                     {isEditing ? (
                         <View style={styles.inputContainer}>
                             <TextInput
@@ -164,11 +162,15 @@ const styles = StyleSheet.create({
         maxHeight: 80,
     },
     taskTitle: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 16,
+        fontWeight: '700',
         color: colors.text,
-        lineHeight: 18,
+        lineHeight: 20,
         paddingVertical: 8,
+    },
+    taskTitleCompleted: {
+        textDecorationLine: 'line-through',
+        color: colors.textSecondary,
     },
     taskDescription: {
         fontSize: 14,

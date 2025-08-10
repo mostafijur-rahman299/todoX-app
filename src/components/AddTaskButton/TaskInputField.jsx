@@ -1,19 +1,14 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, Animated } from 'react-native';
+import { View, TextInput, StyleSheet } from 'react-native';
 import { colors } from '@/constants/Colors';
 
 /**
- * Task input field component with animated border
- * Handles task title input with focus animations
+ * Task input field component
+ * Handles task title input
  */
-const TaskInputField = ({ task, onUpdateTask, onFocus, onBlur, borderColor }) => {
+const TaskInputField = ({ task, onUpdateTask, onFocus, onBlur }) => {
     return (
-        <Animated.View 
-            style={[
-                styles.inputContainer,
-                { borderColor: borderColor || colors.border }
-            ]}
-        >
+        <View style={styles.inputContainer}>
             <View
                 style={[
                     styles.checkboxInner,
@@ -33,7 +28,7 @@ const TaskInputField = ({ task, onUpdateTask, onFocus, onBlur, borderColor }) =>
                 multiline={false}
                 returnKeyType="done"
             />
-        </Animated.View>
+        </View>
     );
 };
 

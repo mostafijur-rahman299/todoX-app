@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useState } from "react";
 import {
 	Modal,
 	View,
@@ -7,8 +7,6 @@ import {
 	TouchableWithoutFeedback,
 	ScrollView,
 	StyleSheet,
-	Animated,
-	Easing,
 	Platform,
 	Vibration,
 	Dimensions,
@@ -30,8 +28,7 @@ const DateTimeSelector = ({
 	task,
 	onUpdateTask
 }) => {
-	const dateTimeSlideAnim = useRef(new Animated.Value(-100)).current;
-	const dateTimeOpacity = useRef(new Animated.Value(0)).current;
+
 
 	// State for custom date/time selection flow
 	const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
@@ -221,7 +218,7 @@ const DateTimeSelector = ({
 	};
 
 	/**
-	 * Handle modal close with animation
+	 * Handle modal close
 	 */
 	const handleClose = () => {
 		// First close any open sub-modals
@@ -229,64 +226,11 @@ const DateTimeSelector = ({
 		setShowTimePicker(false);
 		setShowDateRangeSelector(false);
 
-		// Then animate the main modal close
-		Animated.parallel([
-			Animated.timing(dateTimeOpacity, {
-				toValue: 0,
-				duration: 200,
-				easing: Easing.in(Easing.ease),
-				useNativeDriver: true,
-			}),
-			Animated.timing(dateTimeSlideAnim, {
-				toValue: 100,
-				duration: 200,
-				easing: Easing.in(Easing.ease),
-				useNativeDriver: true,
-			}),
-		]).start(() => {
-			onClose();
-		});
+		// Close the main modal
+		onClose();
 	};
 
-	/**
-	 * Handle modal open animation
-	 */
-	useEffect(() => {
-		if (visible) {
-			Animated.parallel([
-				Animated.timing(dateTimeOpacity, {
-					toValue: 1,
-					duration: 300,
-					easing: Easing.out(Easing.ease),
-					useNativeDriver: true,
-				}),
-				Animated.timing(dateTimeSlideAnim, {
-					toValue: 0,
-					duration: 300,
-					easing: Easing.out(Easing.back(1.1)),
-					useNativeDriver: true,
-				}),
-			]).start();
-		} else {
-			// Reset animation values when not visible
-			dateTimeSlideAnim.setValue(-100);
-			dateTimeOpacity.setValue(0);
-		}
-	}, [visible]);
 
-	/**
-	 * Reset state when modal is closed
-	 */
-	useEffect(() => {
-		if (!visible) {
-			// Reset all states when modal is completely closed
-			setTimePickerMode("start");
-			setDuration(30);
-			setShowCustomDatePicker(false);
-			setShowTimePicker(false);
-			setShowDateRangeSelector(false);
-		}
-	}, [visible]);
 
 	/**
 	 * Get formatted date/time display
@@ -373,22 +317,13 @@ const DateTimeSelector = ({
 		<Modal
 			transparent={true}
 			visible={visible}
-			animationType="fade"
+			animationType="none"
 			onRequestClose={handleClose}
 			statusBarTranslucent={true}>
 			<TouchableWithoutFeedback onPress={handleClose}>
 				<View style={styles.selectionModalOverlay}>
 					<TouchableWithoutFeedback>
-						<Animated.View
-							style={[
-								styles.selectionModal,
-								{
-									opacity: dateTimeOpacity,
-									transform: [
-										{ translateY: dateTimeSlideAnim },
-									],
-								},
-							]}>
+						<View style={styles.selectionModal}>
 							<View style={styles.selectionModalHeader}>
 								<Text style={styles.selectionModalTitle}>
 									Select Date & Time
@@ -486,7 +421,7 @@ const DateTimeSelector = ({
 									</TouchableOpacity>
 								))}
 							</ScrollView>
-						</Animated.View>
+						</View>
 					</TouchableWithoutFeedback>
 				</View>
 			</TouchableWithoutFeedback>

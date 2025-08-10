@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { 
     Modal, 
     View, 
@@ -7,8 +7,6 @@ import {
     TouchableWithoutFeedback,
     ScrollView,
     StyleSheet,
-    Animated,
-    Easing,
     Platform,
     Vibration,
     Dimensions
@@ -24,9 +22,6 @@ const { height: screenHeight } = Dimensions.get('window');
  * Allows users to select task priority with smooth animations
  */
 const PrioritySelector = ({ visible, onClose, task, onUpdateTask }) => {
-    const prioritySlideAnim = useRef(new Animated.Value(-100)).current;
-    const priorityOpacity = useRef(new Animated.Value(0)).current;
-
     /**
      * Handle priority selection with haptic feedback
      */
@@ -35,83 +30,30 @@ const PrioritySelector = ({ visible, onClose, task, onUpdateTask }) => {
             Vibration.vibrate(10);
         }
         
-        onUpdateTask({ priority: priority.value });
-        handleClose();
-    };
-
-    /**
-     * Handle modal close with animation
-     */
-    const handleClose = () => {
-        Animated.parallel([
-            Animated.timing(priorityOpacity, {
-                toValue: 0,
-                duration: 200,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
-            }),
-            Animated.timing(prioritySlideAnim, {
-                toValue: 100,
-                duration: 200,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            onClose();
+        onUpdateTask({ 
+            priority: priority.value,
+            priorityColor: priority.color,
+            priorityIcon: priority.icon 
         });
+        onClose();
     };
-
-    /**
-     * Handle modal open animation
-     */
-    useEffect(() => {
-        if (visible) {
-            Animated.parallel([
-                Animated.timing(priorityOpacity, {
-                    toValue: 1,
-                    duration: 300,
-                    easing: Easing.out(Easing.ease),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(prioritySlideAnim, {
-                    toValue: 0,
-                    duration: 300,
-                    easing: Easing.out(Easing.back(1.1)),
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        } else {
-            // Reset animation values when not visible
-            prioritySlideAnim.setValue(-100);
-            priorityOpacity.setValue(0);
-        }
-    }, [visible]);
 
     return (
         <Modal
             transparent={true}
             visible={visible}
-            animationType="fade"
-            onRequestClose={handleClose}
+            animationType="none"
+            onRequestClose={onClose}
             statusBarTranslucent={true}
         >
-            <TouchableWithoutFeedback onPress={handleClose}>
+            <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.selectionModalOverlay}>
                     <TouchableWithoutFeedback>
-                        <Animated.View
-                            style={[
-                                styles.selectionModal,
-                                {
-                                    opacity: priorityOpacity,
-                                    transform: [
-                                        { translateY: prioritySlideAnim },
-                                    ],
-                                },
-                            ]}>
+                        <View style={styles.selectionModal}>
                             <View style={styles.selectionModalHeader}>
                                 <Text style={styles.selectionModalTitle}>Select Priority</Text>
                                 <TouchableOpacity 
-                                    onPress={handleClose}
+                                    onPress={onClose}
                                     style={styles.selectionModalCloseBtn}
                                     activeOpacity={0.7}
                                 >
@@ -159,7 +101,7 @@ const PrioritySelector = ({ visible, onClose, task, onUpdateTask }) => {
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
-                        </Animated.View>
+                        </View>
                     </TouchableWithoutFeedback>
                 </View>
             </TouchableWithoutFeedback>

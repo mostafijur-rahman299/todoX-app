@@ -1,14 +1,14 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { 
     View, 
     Modal,
     StyleSheet,
-    Animated,
-    Easing,
     TouchableWithoutFeedback,
     TouchableOpacity,
     Alert,
-    Dimensions
+    Dimensions,
+    Animated,
+    Easing
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
@@ -25,15 +25,15 @@ import { useSelector } from 'react-redux';
 const { height: screenHeight } = Dimensions.get('window');
 
 /**
- * Main task form modal component
- * Contains all form elements and handles task creation
+ * Main task form modal component with smooth animations
+ * Contains all form elements and handles task creation with slide-up and fade animations
  */
 const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
-    // Animation refs
-    const slideAnim = useRef(new Animated.Value(screenHeight)).current;
-    const overlayOpacity = useRef(new Animated.Value(0)).current;
-    const modalScale = useRef(new Animated.Value(0.9)).current;
-    const inputFocusAnim = useRef(new Animated.Value(0)).current;
+    // Animation refs for smooth modal transitions
+    const slideAnim = useRef(new Animated.Value(400)).current; // Start below screen
+    const fadeAnim = useRef(new Animated.Value(0)).current; // Start transparent
+    const scaleAnim = useRef(new Animated.Value(0.95)).current; // Start slightly smaller
+    const contentOpacity = useRef(new Animated.Value(0)).current; // Content fade-in
 
     // Selector states
     const [showPriorityOptions, setShowPriorityOptions] = React.useState(false);
@@ -42,35 +42,53 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
     const { addTask } = useTasks();
 
     /**
-     * Handle modal entrance animation
+     * Animate modal entrance when visible changes
      */
     useEffect(() => {
         if (visible) {
+            // Reset animations to initial state - modal starts below screen
+            slideAnim.setValue(400);
+            fadeAnim.setValue(0);
+            scaleAnim.setValue(0.95);
+            contentOpacity.setValue(0);
+
+            // Animate modal entrance with fast slide from bottom
             Animated.parallel([
-                Animated.timing(overlayOpacity, {
-                toValue: 1,
-                duration: 250,
-                easing: Easing.out(Easing.cubic),
-                useNativeDriver: true,
-            }),
-                Animated.spring(slideAnim, {
-                toValue: 0,
-                tension: 120,
-                friction: 9,
-                useNativeDriver: true,
-            }),
-            Animated.spring(modalScale, {
-                toValue: 1,
-                tension: 120,
-                friction: 9,
-                useNativeDriver: true,
-            }),
-            ]).start();
+                // Fade in overlay quickly
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 200,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                // Slide up modal quickly from bottom
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 250,
+                    easing: Easing.out(Easing.bezier(0.25, 0.46, 0.45, 0.94)), // Smooth cubic-bezier
+                    useNativeDriver: true,
+                }),
+                // Subtle scale up modal quickly
+                Animated.timing(scaleAnim, {
+                    toValue: 1,
+                    duration: 250,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]).start(() => {
+                // Fade in content quickly after modal is positioned
+                Animated.timing(contentOpacity, {
+                    toValue: 1,
+                    duration: 150,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }).start();
+            });
         }
     }, [visible]);
 
     /**
-     * Handle modal close with animations
+     * Handle modal close with smooth exit animations
      */
     const handleClose = () => {
         // Close all dropdowns first
@@ -78,57 +96,53 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
         setShowInboxOptions(false);
         setShowDateTimeOptions(false);
 
-        // Enhanced modal exit animation
+        // Animate modal exit with fast slide to bottom
         Animated.parallel([
-            Animated.timing(overlayOpacity, {
+            // Fade out overlay quickly
+            Animated.timing(fadeAnim, {
                 toValue: 0,
-                duration: 200,
-                easing: Easing.in(Easing.cubic),
+                duration: 150,
+                easing: Easing.in(Easing.ease),
                 useNativeDriver: true,
             }),
+            // Slide down modal quickly to bottom
             Animated.timing(slideAnim, {
-                toValue: screenHeight,
-                duration: 280,
-                easing: Easing.in(Easing.cubic),
+                toValue: 400,
+                duration: 200,
+                easing: Easing.in(Easing.bezier(0.55, 0.06, 0.68, 0.19)), // Smooth cubic-bezier for exit
                 useNativeDriver: true,
             }),
-            Animated.timing(modalScale, {
+            // Scale down modal subtly and quickly
+            Animated.timing(scaleAnim, {
                 toValue: 0.95,
-                duration: 280,
-                easing: Easing.in(Easing.cubic),
+                duration: 200,
+                easing: Easing.in(Easing.ease),
+                useNativeDriver: true,
+            }),
+            // Fade out content very quickly
+            Animated.timing(contentOpacity, {
+                toValue: 0,
+                duration: 100,
+                easing: Easing.in(Easing.ease),
                 useNativeDriver: true,
             }),
         ]).start(() => {
             onClose();
-            // Reset animations
-            slideAnim.setValue(screenHeight);
-            modalScale.setValue(0.95);
-            inputFocusAnim.setValue(0);
         });
     };
 
     /**
-     * Handle input focus animation
+     * Handle input focus - no animation to avoid interference
      */
     const handleInputFocus = () => {
-        Animated.timing(inputFocusAnim, {
-            toValue: 1,
-            duration: 150,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
-        }).start();
+        // No animation to keep slide animation smooth
     };
 
     /**
-     * Handle input blur animation
+     * Handle input blur - no animation to avoid interference
      */
     const handleInputBlur = () => {
-        Animated.timing(inputFocusAnim, {
-            toValue: 0,
-            duration: 150,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
-        }).start();
+        // No animation to keep slide animation smooth
     };
 
     /**
@@ -163,12 +177,6 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
 };
 
 
-    // Animated input border color
-    const inputBorderColor = inputFocusAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [colors.border, colors.primary],
-    });
-
     return (
         <Modal
             animationType="none"
@@ -180,76 +188,104 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
             <Animated.View 
                 style={[
                     styles.modalOverlay,
-                    { opacity: overlayOpacity }
+                    {
+                        opacity: fadeAnim,
+                    }
                 ]}
             >
                 <TouchableWithoutFeedback onPress={handleClose}>
                     <View style={styles.modalOverlayTouch} />
                 </TouchableWithoutFeedback>
                 
-                <Animated.View
+                <Animated.View 
                     style={[
                         styles.modalView,
                         {
                             transform: [
                                 { translateY: slideAnim },
-                                { scale: modalScale },
+                                { scale: scaleAnim }
                             ],
-                        },
-                    ]}>
+                        }
+                    ]}
+                >
                     <View style={styles.modalHeader}>
                         <View style={styles.modalHandle} />
                     </View>
 
-                    <TaskInputField
-                        task={task}
-                        onUpdateTask={onUpdateTask}
-                        onFocus={handleInputFocus}
-                        onBlur={handleInputBlur}
-                        borderColor={inputBorderColor}
-                    />
-
-                    <TaskOptionsBar
-                        task={task}
-                        onUpdateTask={onUpdateTask}
-                        onPriorityPress={() => setShowPriorityOptions(true)}
-                        onDateTimePress={() => setShowDateTimeOptions(true)}
-                        onCategoryPress={() => setShowInboxOptions(true)}
-                    />
-
-                    <CategorySelector
-                        visible={showInboxOptions}
-                        onClose={() => setShowInboxOptions(false)}
-                        task={task}
-                        onUpdateTask={onUpdateTask}
-                    />
-
-                    <PrioritySelector
-                        visible={showPriorityOptions}
-                        onClose={() => setShowPriorityOptions(false)}
-                        task={task}
-                        onUpdateTask={onUpdateTask}
-                    />
-
-                    <DateTimeSelector
-                        visible={showDateTimeOptions}
-                        onClose={() => setShowDateTimeOptions(false)}
-                        task={task}
-                        onUpdateTask={onUpdateTask}
-                    />
-
-                    {/* Send Button */}
-                    <TouchableOpacity
-                        style={styles.sendButton}
-                        onPress={saveTask}
-                        activeOpacity={0.8}
+                    <Animated.View 
+                        style={[
+                            styles.modalContent,
+                            {
+                                opacity: contentOpacity,
+                            }
+                        ]}
                     >
-                        <Ionicons
-                            name="send"
-                            size={12}
-                            color={colors.white}
+                        <TaskInputField
+                            task={task}
+                            onUpdateTask={onUpdateTask}
+                            onFocus={handleInputFocus}
+                            onBlur={handleInputBlur}
                         />
-                    </TouchableOpacity>
+
+                        <TaskOptionsBar
+                            task={task}
+                            onUpdateTask={onUpdateTask}
+                            onPriorityPress={() => setShowPriorityOptions(true)}
+                            onDateTimePress={() => setShowDateTimeOptions(true)}
+                            onCategoryPress={() => setShowInboxOptions(true)}
+                        />
+
+                        <CategorySelector
+                            visible={showInboxOptions}
+                            onClose={() => setShowInboxOptions(false)}
+                            task={task}
+                            onUpdateTask={onUpdateTask}
+                        />
+
+                        <PrioritySelector
+                            visible={showPriorityOptions}
+                            onClose={() => setShowPriorityOptions(false)}
+                            task={task}
+                            onUpdateTask={onUpdateTask}
+                        />
+
+                        <DateTimeSelector
+                            visible={showDateTimeOptions}
+                            onClose={() => setShowDateTimeOptions(false)}
+                            task={task}
+                            onUpdateTask={onUpdateTask}
+                        />
+                    </Animated.View>
+
+                    {/* Send Button with bounce animation */}
+                    <Animated.View
+                        style={[
+                            styles.sendButtonContainer,
+                            {
+                                opacity: contentOpacity,
+                                transform: [
+                                    {
+                                        scale: contentOpacity.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: [0.5, 1],
+                                        })
+                                    }
+                                ]
+                            }
+                        ]}
+                    >
+                        <TouchableOpacity
+                            style={styles.sendButton}
+                            onPress={saveTask}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons
+                                name="send"
+                                size={12}
+                                color={colors.white}
+                            />
+                        </TouchableOpacity>
+                    </Animated.View>
                 </Animated.View>
             </Animated.View>
         </Modal>
@@ -289,10 +325,15 @@ const styles = StyleSheet.create({
         borderRadius: 2,
         opacity: 0.6,
     },
-    sendButton: {
+    modalContent: {
+        flex: 1,
+    },
+    sendButtonContainer: {
         position: 'absolute',
         bottom: 14,
         right: 12,
+    },
+    sendButton: {
         width: 40,
         height: 40,
         borderRadius: 20,

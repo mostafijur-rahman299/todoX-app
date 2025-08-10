@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        backgroundColor: colors.background,
+        zIndex: 10,
     },
     closeButton: {
         padding: 4,

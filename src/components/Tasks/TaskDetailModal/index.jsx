@@ -108,35 +108,10 @@ const TaskDetailModal = ({
      * Enhanced modal close with smooth animations to match AddTaskModal
      */
     const closeModal = () => {
-        Animated.parallel([
-            Animated.timing(overlayOpacity, {
-                toValue: 0,
-                duration: 250,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
-            }),
-            Animated.timing(slideAnim, {
-                toValue: screenHeight,
-                duration: 350,
-                easing: Easing.in(Easing.back(1.1)),
-                useNativeDriver: true,
-            }),
-            Animated.timing(modalScale, {
-                toValue: 0.9,
-                duration: 350,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
             setIsEditing(false);
             setShowAddSubTask(false);
             setNewSubTaskTitle('');
             onClose();
-            
-            // Reset animations
-            slideAnim.setValue(screenHeight);
-            modalScale.setValue(0.9);
-        });
     };
 
     const toggleEditMode = () => {
@@ -282,90 +257,84 @@ const TaskDetailModal = ({
             transparent={true}
             animationType="none"
             onRequestClose={handleClose}
-            statusBarTranslucent={true}
         >
-            <StatusBar backgroundColor="rgba(0,0,0,0.7)" barStyle="light-content" />
             <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
             >
-                <TouchableWithoutFeedback onPress={handleClose}>
+                <Animated.View 
+                    style={[
+                        styles.overlay,
+                        { opacity: overlayOpacity }
+                    ]}
+                >
                     <Animated.View 
                         style={[
-                            styles.overlay,
-                            { opacity: overlayOpacity }
+                            styles.modalContainer,
+                            {
+                                transform: [
+                                    { translateY: slideAnim },
+                                    { scale: modalScale }
+                                ]
+                            }
                         ]}
                     >
-                        <TouchableWithoutFeedback onPress={() => {}}>
-                            <Animated.View 
-                                style={[
-                                    styles.modalContainer,
-                                    {
-                                        transform: [
-                                            { translateY: slideAnim },
-                                            { scale: modalScale }
-                                        ]
-                                    }
-                                ]}
-                            >
-                                {/* Compact Modal Header */}
-                                <TaskDetailHeader
-                                    isEditing={isEditing}
-                                    onClose={handleClose}
-                                    onToggleEdit={toggleEditMode}
-                                    onSaveChanges={handleSaveChanges}
-                                    onCancelEdit={handleCancelEdit}
-                                />
+                        {/* Compact Modal Header */}
+                        <TaskDetailHeader
+                            isEditing={isEditing}
+                            onClose={handleClose}
+                            onToggleEdit={toggleEditMode}
+                            onSaveChanges={handleSaveChanges}
+                            onCancelEdit={handleCancelEdit}
+                        />
 
-                                {/* Task Content */}
-                                <ScrollView 
-                                    style={styles.modalContent}
-                                    showsVerticalScrollIndicator={false}
-                                    keyboardShouldPersistTaps="handled"
-                                >
-                                    {/* Compact Task Form */}
-                                    <TaskForm
-                                        task={editedTask}
-                                        isEditing={isEditing}
-                                        inputFocusAnim={inputFocusAnim}
-                                        onToggleCompletion={toggleTaskCompletion}
-                                        onUpdateTitle={(text) => updateTaskField('title', text)}
-                                        onUpdateSummary={(text) => updateTaskField('summary', text)}
-                                    />
+                        {/* Task Content */}
+                        <ScrollView 
+                            style={styles.modalContent}
+                            contentContainerStyle={{ paddingBottom: 20 }}
+                            showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
+                        >
+                            {/* Compact Task Form */}
+                            <TaskForm
+                                task={editedTask}
+                                isEditing={isEditing}
+                                inputFocusAnim={inputFocusAnim}
+                                onToggleCompletion={toggleTaskCompletion}
+                                onUpdateTitle={(text) => updateTaskField('title', text)}
+                                onUpdateSummary={(text) => updateTaskField('summary', text)}
+                            />
 
-                                    {/* Compact Selectors Row */}
-                                    <CompactSelectors
-                                        task={editedTask}
-                                        isEditing={isEditing}
-                                        onUpdateTask={setEditedTask}
-                                    />
+                            {/* Compact Selectors Row */}
+                            <CompactSelectors
+                                task={editedTask}
+                                isEditing={isEditing}
+                                onUpdateTask={setEditedTask}
+                            />
 
-                                    {/* Sub-tasks Section */}
-                                    <SubTasksSection
-                                        subTasks={editedTask.subTask || []}
-                                        isEditing={isEditing}
-                                        showAddSubTask={showAddSubTask}
-                                        newSubTaskTitle={newSubTaskTitle}
-                                        onToggleSubTaskCompletion={toggleSubTaskCompletion}
-                                        onDeleteSubTask={deleteSubTask}
-                                        onShowAddSubTask={() => setShowAddSubTask(true)}
-                                        onHideAddSubTask={() => {
-                                            setShowAddSubTask(false);
-                                            setNewSubTaskTitle('');
-                                        }}
-                                        onUpdateNewSubTaskTitle={setNewSubTaskTitle}
-                                        onAddSubTask={handleAddSubTask}
-                                    />
+                            {/* Sub-tasks Section */}
+                            <SubTasksSection
+                                subTasks={editedTask.subTask || []}
+                                isEditing={isEditing}
+                                showAddSubTask={showAddSubTask}
+                                newSubTaskTitle={newSubTaskTitle}
+                                onToggleSubTaskCompletion={toggleSubTaskCompletion}
+                                onDeleteSubTask={deleteSubTask}
+                                onShowAddSubTask={() => setShowAddSubTask(true)}
+                                onHideAddSubTask={() => {
+                                    setShowAddSubTask(false);
+                                    setNewSubTaskTitle('');
+                                }}
+                                onUpdateNewSubTaskTitle={setNewSubTaskTitle}
+                                onAddSubTask={handleAddSubTask}
+                            />
 
-                                    {/* Delete Button */}
-                                    {isEditing && (
-                                        <DeleteButton onDelete={handleDeleteTask} />
-                                    )}
-                                </ScrollView>
-                            </Animated.View>
-                        </TouchableWithoutFeedback>
+                            {/* Delete Button */}
+                            {isEditing && (
+                                <DeleteButton onDelete={handleDeleteTask} />
+                            )}
+                        </ScrollView>
                     </Animated.View>
-                </TouchableWithoutFeedback>
+                </Animated.View>
             </KeyboardAvoidingView>
         </Modal>
     );
@@ -382,7 +351,6 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         maxHeight: screenHeight * 0.75, // Compact height like AddTaskModal
-        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     },
     modalContent: {
         paddingHorizontal: 16,

@@ -41,7 +41,7 @@ const Inbox = () => {
   const [filterBy, setFilterBy] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const headerOpacity = useRef(new Animated.Value(0)).current;
-  const {bulkCompleteTask, loadTasksFromStorage} = useTasks();
+  const { bulkCompleteTask, loadTasksFromStorage, updateTask, deleteTask } = useTasks();
   const [displayTasks, setDisplayTasks] = useState([]);
 
 
@@ -183,19 +183,16 @@ const Inbox = () => {
    */
   const handleUpdateTask = async (updatedTask) => {
     try {
-      // Update Redux store
-      dispatch(updateTask(updatedTask));
+      // Use the useTasks hook for proper state management
+      const success = await updateTask(updatedTask.id, updatedTask);
       
-      // Update local storage
-      const existingTasks = await getDataLocalStorage('task_list') || [];
-      const updatedTasks = existingTasks.map((task) =>
-        task.id === updatedTask.id ? updatedTask : task
-      );
-      await storeDataLocalStorage('task_list', updatedTasks);
-      
-      // Update selected task if it's the same one being edited
-      if (selectedTask && selectedTask.id === updatedTask.id) {
-        setSelectedTask(updatedTask);
+      if (success) {
+        // Update selected task if it's the same one being edited
+        if (selectedTask && selectedTask.id === updatedTask.id) {
+          setSelectedTask(updatedTask);
+        }
+      } else {
+        Alert.alert('Error', 'Failed to update task. Please try again.');
       }
     } catch (error) {
       console.error('Error updating task:', error);
@@ -208,37 +205,17 @@ const Inbox = () => {
    */
   const handleDeleteTask = async (taskId) => {
     try {
-      // Show confirmation dialog
-      Alert.alert(
-        'Delete Task',
-        'Are you sure you want to delete this task? This action cannot be undone.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              // Update Redux store
-              dispatch(deleteTask(taskId));
-              
-              // Update local storage
-              const existingTasks = await getDataLocalStorage('task_list') || [];
-              const updatedTasks = existingTasks.filter((task) => task.id !== taskId);
-              await storeDataLocalStorage('task_list', updatedTasks);
-              
-              // Close modal if the deleted task was selected
-              if (selectedTask && selectedTask.id === taskId) {
-                handleCloseTaskModal();
-              }
-              
-              Alert.alert('Success', 'Task deleted successfully');
-            },
-          },
-        ]
-      );
+      // Use the useTasks hook for proper state management
+      const success = await deleteTask(taskId);
+      
+      if (success) {
+        // Close modal if the deleted task was selected
+        if (selectedTask && selectedTask.id === taskId) {
+          handleCloseTaskModal();
+        }
+      } else {
+        Alert.alert('Error', 'Failed to delete task. Please try again.');
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
       Alert.alert('Error', 'Failed to delete task. Please try again.');

@@ -280,7 +280,7 @@ const CompactSelectors = ({
                 </TouchableOpacity>
 
                 {/* Reminder Toggle */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={styles.reminderSelector}
                     onPress={isEditing ? handleReminderToggle : null}
                     disabled={!isEditing}
@@ -297,7 +297,7 @@ const CompactSelectors = ({
                     ]}>
                         Reminder
                     </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             {/* Date & Time Section */}

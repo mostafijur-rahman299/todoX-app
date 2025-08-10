@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -6,85 +6,27 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     StyleSheet,
-    Animated,
-    Easing,
-    Dimensions,
     Platform,
     Vibration,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 
-const { height: screenHeight } = Dimensions.get('window');
 
 /**
  * Premium modal component
  * Shows when user tries to access premium features like reminders
  */
 const PremiumModal = ({ visible, onClose }) => {
-    const slideAnim = useRef(new Animated.Value(screenHeight)).current;
-    const overlayOpacity = useRef(new Animated.Value(0)).current;
-    const modalScale = useRef(new Animated.Value(0.95)).current;
 
     /**
-     * Handle modal entrance animation
-     */
-    useEffect(() => {
-        if (visible) {
-            // Enhanced modal entrance animation
-            Animated.parallel([
-                Animated.timing(overlayOpacity, {
-                    toValue: 1,
-                    duration: 250,
-                    easing: Easing.out(Easing.cubic),
-                    useNativeDriver: true,
-                }),
-                Animated.spring(slideAnim, {
-                    toValue: 0,
-                    tension: 120,
-                    friction: 9,
-                    useNativeDriver: true,
-                }),
-                Animated.spring(modalScale, {
-                    toValue: 1,
-                    tension: 120,
-                    friction: 9,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
-    }, [visible]);
-
-    /**
-     * Handle modal close with animation
+     * Handle close button press with haptic feedback
      */
     const handleClose = () => {
-        // Enhanced modal exit animation
-        Animated.parallel([
-            Animated.timing(overlayOpacity, {
-                toValue: 0,
-                duration: 200,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-            }),
-            Animated.timing(slideAnim, {
-                toValue: screenHeight,
-                duration: 280,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-            }),
-            Animated.timing(modalScale, {
-                toValue: 0.95,
-                duration: 280,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            onClose();
-            // Reset animations
-            slideAnim.setValue(screenHeight);
-            modalScale.setValue(0.95);
-        });
+        if (Platform.OS === 'ios') {
+            Vibration.vibrate([10, 50, 10]);
+        }
+        onClose();
     };
 
     /**
@@ -105,29 +47,15 @@ const PremiumModal = ({ visible, onClose }) => {
             animationType="none"
             transparent={true}
             visible={visible}
-            onRequestClose={handleClose}
+            onRequestClose={onClose}
             statusBarTranslucent={true}
         >
-            <Animated.View 
-                style={[
-                    styles.modalOverlay,
-                    { opacity: overlayOpacity }
-                ]}
-            >
-                <TouchableWithoutFeedback onPress={handleClose}>
+            <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback onPress={onClose}>
                     <View style={styles.modalOverlayTouch} />
                 </TouchableWithoutFeedback>
                 
-                <Animated.View
-                    style={[
-                        styles.modalView,
-                        {
-                            transform: [
-                                { translateY: slideAnim },
-                                { scale: modalScale },
-                            ],
-                        },
-                    ]}>
+                <View style={styles.modalView}>
                     
                     {/* Header */}
                     <View style={styles.modalHeader}>
@@ -219,7 +147,7 @@ const PremiumModal = ({ visible, onClose }) => {
                         
                         <TouchableOpacity
                             style={styles.laterButton}
-                            onPress={handleClose}
+                            onPress={onClose}
                             activeOpacity={0.8}
                         >
                             <Text style={styles.laterButtonText}>
@@ -227,8 +155,8 @@ const PremiumModal = ({ visible, onClose }) => {
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </Animated.View>
-            </Animated.View>
+                </View>
+            </View>
         </Modal>
     );
 };
