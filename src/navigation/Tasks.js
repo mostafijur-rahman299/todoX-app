@@ -54,7 +54,7 @@ export default function Tasks() {
                 }}
             />
             <Tab.Screen
-                name="Upcoming"
+                name="Agenda"
                 component={Upcoming}
                 options={{
                     tabBarIcon: ({ focused, color, size }) => (

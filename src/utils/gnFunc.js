@@ -176,39 +176,25 @@ export function convertTaskListToAgendaList(tasks) {
 		}));
 }
 
-export function addSingleTaskToAgendaList(agendaList, task) {
-	const date = task.date;
-	const isExist = agendaList.find((t) => t.title === date);
-	if (isExist){
-		return agendaList.map((t) => {
-			if (t.title === date) {
-				t.data.push(taskAgendaFormat(task));
-			}
-			return t;
+export function convertTaskListToTimelineList(tasks) {
+	return tasks
+		.filter(task => task.date && task.startTime && task.endTime) // Only include tasks with complete date/time info
+		.map((task) => {
+			// Combine date with start and end times to create proper datetime strings
+			const startDateTime = `${task.date} ${task.startTime}:00`;
+			const endDateTime = `${task.date} ${task.endTime}:00`;
+
+			console.log(task)
+			
+			return {
+				id: task.id, // Add unique ID for timeline events
+				start: startDateTime,
+				end: endDateTime,
+				title: task.title || 'Untitled Task',
+				summary: task.summary,
+				color: getPriorityColor(task.priority),
+				priority: task.priority,
+				textColor: '#000000', // Black text for readability
+			};
 		});
-	}
-
-	agendaList.push({
-		title: date,
-		data: [taskAgendaFormat(task)],
-	});
-	return agendaList;
-}
-
-export function updateSingleTaskInAgendaList(agendaList, task) {
-	const date = task.date;
-	if (!agendaList[date]) agendaList[date] = [];
-	const index = agendaList[date].findIndex((t) => t.id === task.id);
-	if (index !== -1) {
-		agendaList[date][index] = taskAgendaFormat(task);
-	}
-}
-
-export function deleteSingleTaskFromAgendaList(agendaList, task) {
-	const date = task.date;
-	if (!agendaList[date]) agendaList[date] = [];
-	const index = agendaList[date].findIndex((t) => t.id === task.id);
-	if (index !== -1) {
-		agendaList[date].splice(index, 1);
-	}
 }

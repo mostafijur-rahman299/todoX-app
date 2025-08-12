@@ -1,12 +1,12 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   SafeAreaView,
   Animated,
   Easing,
-  Dimensions,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import groupBy from 'lodash/groupBy';
 import {
@@ -20,11 +20,11 @@ import { colors } from '@/constants/Colors';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
 import { Timeline } from "react-native-calendars";
+import { useSelector } from 'react-redux';
 
 // Import Timeline components
 import { 
-  getDate,
-  timelineEvents 
+  getDate 
 } from '@/components/Timeline/TimelineConstants';
 import TimelineCalendarHeader from '@/components/Timeline/TimelineCalendarHeader';
 import TimelineCalendarDay from '@/components/Timeline/TimelineCalendarDay';
@@ -37,6 +37,9 @@ import {
   getCalendarTheme 
 } from '@/components/Timeline/TimelineStyles';
 import AddTaskButton from '@/components/AddTaskButton';
+import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
+import { convertTaskListToTimelineList } from '@/utils/gnFunc';
+import useTasks from '@/hooks/useTasks';
 
 /**
  * Auto-hiding help text component for timeline instructions
@@ -120,30 +123,31 @@ const TimelineHelpText = () => {
  * Displays tasks and events in a beautiful timeline view with enhanced design
  */
 const TimelineCalendarScreen = () => {
-  // Get screen dimensions for responsive design
-  const { height: screenHeight } = Dimensions.get('window');
-  
   // State management with hooks
   const [currentDate, setCurrentDate] = useState(getDate());
-  const [events, setEvents] = useState(timelineEvents);
+  const [events, setEvents] = useState([]);
   const [showMenu, setShowMenu] = useState(false);
   const [filterBy, setFilterBy] = useState('all');
   const [viewMode, setViewMode] = useState('timeline');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const task_list = useSelector((state) => state.task.task_list);
+  const [calendarKey, setCalendarKey] = useState(0);
+  
+  // Task management hooks
+  const { updateTask, deleteTask } = useTasks();
 
   // Refs for calendar and animation
   const calendarRef = useRef(null);
   const rotation = useRef(new Animated.Value(0));
 
-  // Memoized calculations for performance
-  const eventsByDate = useMemo(
-    () => groupBy(events, (e) => CalendarUtils.getCalendarDateString(e.start)),
-    [events]
-  );
+  useEffect(() => {
+    const convertedEvents = convertTaskListToTimelineList(task_list);
+    setEvents(convertedEvents);
+    setCalendarKey(new Date());
+  }, [task_list]);
 
-  /**
-   * Filter events based on current filter
-   */
   const getFilteredEvents = useCallback(() => {
     let filtered = events || [];
     
@@ -186,10 +190,90 @@ const TimelineCalendarScreen = () => {
   const {
     createNewEvent,
     approveNewEvent,
-    handleEventPress,
+    handleEventPress: originalHandleEventPress,
     handleDateChanged: onDateChanged,
     handleMonthChange,
   } = useTimelineEventHandlers(filteredEventsByDate, setEvents);
+
+  /**
+   * Handle task press to open detail modal
+   */
+  const handleTaskPress = (task) => {
+    // Find the original task from task_list using the task id
+    const originalTask = task_list.find(t => t.id === task.id);
+    if (originalTask) {
+      setSelectedTask(originalTask);
+      setShowTaskModal(true);
+    } else {
+      // If not found in task_list, it might be a timeline-created event
+      // Convert timeline event to task format
+      const timelineTask = {
+        id: task.id,
+        title: task.title,
+        summary: task.summary || '',
+        priority: task.priority || 'medium',
+        category: 'Timeline',
+        date: task.start ? task.start.split(' ')[0] : new Date().toISOString().split('T')[0],
+        startTime: task.start ? task.start.split(' ')[1] : null,
+        endTime: task.end ? task.end.split(' ')[1] : null,
+        is_completed: false,
+        subTask: [],
+        reminder: false,
+      };
+      setSelectedTask(timelineTask);
+      setShowTaskModal(true);
+    }
+  };
+
+  /**
+   * Handle closing task detail modal
+   */
+  const handleCloseTaskModal = () => {
+    setShowTaskModal(false);
+    setSelectedTask(null);
+  };
+
+  /**
+   * Handle updating a task from TaskDetailModal
+   */
+  const handleUpdateTask = async (updatedTask) => {
+    try {
+      const success = await updateTask(updatedTask.id, updatedTask);
+      
+      if (success) {
+        // Update selected task if it's the same one being edited
+        if (selectedTask && selectedTask.id === updatedTask.id) {
+          setSelectedTask(updatedTask);
+        }
+      } else {
+        Alert.alert('Error', 'Failed to update task. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      Alert.alert('Error', 'Failed to update task. Please try again.');
+    }
+  };
+
+  /**
+   * Handle deleting a task from TaskDetailModal
+   */
+  const handleDeleteTask = async (taskId) => {
+    try {
+      const success = await deleteTask(taskId);
+      
+      if (success) {
+        // Close modal if the deleted task was selected
+        if (selectedTask && selectedTask.id === taskId) {
+          handleCloseTaskModal();
+        }
+      } else {
+        Alert.alert('Error', 'Failed to delete task. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      Alert.alert('Error', 'Failed to delete task. Please try again.');
+    }
+  };
 
   /**
    * Handle date change in calendar with state update
@@ -296,7 +380,7 @@ const TimelineCalendarScreen = () => {
       format24h: false,
       onBackgroundLongPress: createNewEvent,
       onBackgroundLongPressOut: approveNewEvent,
-      onEventPress: handleEventPress,
+      onEventPress: handleTaskPress,
       unavailableHours: [],
       overlapEventsSpacing: 28,
       rightEdgeSpacing: 36,
@@ -304,7 +388,7 @@ const TimelineCalendarScreen = () => {
       start: 0,
       end: 24,
     }),
-    [createNewEvent, approveNewEvent, handleEventPress, timelineTheme]
+    [createNewEvent, approveNewEvent, handleTaskPress, timelineTheme]
   );
 
   /**
@@ -369,6 +453,7 @@ const TimelineCalendarScreen = () => {
       {/* Calendar and Timeline Container with proper flex constraints */}
       <View style={{ flex: 1 }}>
         <CalendarProvider
+          key={calendarKey}
           date={currentDate}
           onDateChanged={handleDateChanged}
           onMonthChange={handleMonthChange}
@@ -380,6 +465,7 @@ const TimelineCalendarScreen = () => {
           {/* Calendar with constrained height */}
           <View>
             <ExpandableCalendar
+              key={calendarKey}
               ref={calendarRef}
               firstDay={1}
               markedDates={markedDates}
@@ -400,6 +486,7 @@ const TimelineCalendarScreen = () => {
           {/* Timeline Container with proper flex and overflow handling */}
           <View style={[timelineStyles.timelineContainer]}>
             <TimelineList
+              key={calendarKey}
               events={filteredEventsByDate}
               timelineProps={timelineProps}
               renderItem={renderItem}
@@ -409,6 +496,14 @@ const TimelineCalendarScreen = () => {
           <AddTaskButton />
         </CalendarProvider>
       </View>
+
+      <TaskDetailModal
+        visible={showTaskModal}
+        onClose={handleCloseTaskModal}
+        task={selectedTask}
+        onUpdateTask={handleUpdateTask}
+        onDeleteTask={handleDeleteTask}
+      />
     </SafeAreaView>
   );
 };
