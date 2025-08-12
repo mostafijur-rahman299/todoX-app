@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { 
   addTask as addTaskAction, 
   updateTask as updateTaskAction, 
@@ -47,7 +47,6 @@ const useTasks = () => {
       }
       return true;
     } catch (error) {
-      console.error('Error saving tasks to storage:', error);
       dispatch(setError('Failed to save tasks to storage'));
       return false;
     }

@@ -17,6 +17,7 @@ import { getPriorityColor } from '@/utils/gnFunc';
 const UpcomingAgendaItem = React.memo(({ 
 	item, 
 	onToggleCompletion, 
+	onTaskPress,
 	isSelectionMode = false, 
 	isSelected = false 
 }) => {
@@ -29,9 +30,13 @@ const UpcomingAgendaItem = React.memo(({
 				onToggleCompletion(item.id);
 			}
 		} else {
-			Alert.alert(item.title);
+			if (onTaskPress) {
+				onTaskPress(item);
+			} else {
+				Alert.alert(item.title);
+			}
 		}
-	}, [item, isSelectionMode, onToggleCompletion]);
+	}, [item, isSelectionMode, onToggleCompletion, onTaskPress]);
 
 	/**
 	 * Handle task completion toggle

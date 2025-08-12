@@ -141,3 +141,74 @@ export const getFirstFreeSlot = (task_list) => {
 	};
 };
 
+export function taskAgendaFormat(task) {
+	return {
+		id: task.id,
+		is_completed: task.is_completed,
+		priority: task.priority,
+		category: task.category?.toLowerCase(),
+		title: task.title,
+		startTime: task.startTime,
+		endTime: task.endTime,
+		itemCustomHeightType: "LongEvent",
+	};
+}
+
+export function convertTaskListToAgendaList(tasks) {
+	const grouped = tasks.reduce((acc, task) => {
+		const taskDate = task.date;
+		if (!acc[taskDate]) acc[taskDate] = [];
+
+		acc[taskDate].push(taskAgendaFormat(task));
+		return acc;
+	}, {});
+
+	return Object.entries(grouped)
+		.sort(([a], [b]) => new Date(a) - new Date(b))
+		.map(([date, data]) => ({
+			title: date,
+			data: data.sort((a, b) => {
+				if (a.startTime && b.startTime) {
+					return a.startTime.localeCompare(b.startTime);
+				}
+				return 0;
+			}),
+		}));
+}
+
+export function addSingleTaskToAgendaList(agendaList, task) {
+	const date = task.date;
+	const isExist = agendaList.find((t) => t.title === date);
+	if (isExist){
+		return agendaList.map((t) => {
+			if (t.title === date) {
+				t.data.push(taskAgendaFormat(task));
+			}
+			return t;
+		});
+	}
+
+	agendaList.push({
+		title: date,
+		data: [taskAgendaFormat(task)],
+	});
+	return agendaList;
+}
+
+export function updateSingleTaskInAgendaList(agendaList, task) {
+	const date = task.date;
+	if (!agendaList[date]) agendaList[date] = [];
+	const index = agendaList[date].findIndex((t) => t.id === task.id);
+	if (index !== -1) {
+		agendaList[date][index] = taskAgendaFormat(task);
+	}
+}
+
+export function deleteSingleTaskFromAgendaList(agendaList, task) {
+	const date = task.date;
+	if (!agendaList[date]) agendaList[date] = [];
+	const index = agendaList[date].findIndex((t) => t.id === task.id);
+	if (index !== -1) {
+		agendaList[date].splice(index, 1);
+	}
+}

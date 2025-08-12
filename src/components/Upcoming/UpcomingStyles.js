@@ -10,6 +10,17 @@ export const upcomingStyles = StyleSheet.create({
 		backgroundColor: colors.background,
 	},
 	
+	// Menu overlay for outside click handling
+	menuOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: 'rgba(0,0,0,0.2)',
+		zIndex: 999,
+	},
+	
 	// Section Styling
 	section: {
 		backgroundColor: colors.background,

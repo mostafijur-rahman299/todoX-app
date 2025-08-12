@@ -15,6 +15,7 @@ import ErrorBoundary from './src/components/UI/ErrorBoundary';
 import Task from './src/navigation/Tasks'; 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+
 const Stack = createNativeStackNavigator();
 
 // Prevent splash screen from auto-hiding
@@ -115,15 +116,10 @@ const AppNavigator = () => {
     <SafeAreaView style={styles.container}>
       <Stack.Navigator 
         screenOptions={{ headerShown: false }}
-        // initialRouteName={isFirstLaunch ? "Start" : (isAuthenticated ? "Task" : "Auth")}
+        initialRouteName={isFirstLaunch ? "Auth" : "Task"}
       >
-        {/* {!isFirstLaunch && (
-          <Stack.Screen name="Start" component={StartScreen} />
-        )} */}
-          <Stack.Screen name="Task" component={Task} />
-      
-          <Stack.Screen name="Auth" component={AuthNavigation} />
-      
+        <Stack.Screen name="Task" component={Task} />
+        <Stack.Screen name="Auth" component={AuthNavigation} />
       </Stack.Navigator>
     </SafeAreaView>
   );

@@ -4,6 +4,7 @@ import {
 	Easing,
 	View,
 	Alert,
+	TouchableOpacity,
 } from "react-native";
 import {
 	ExpandableCalendar,
@@ -11,7 +12,7 @@ import {
 	CalendarProvider,
 	WeekCalendar,
 } from "react-native-calendars";
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
 import { getMarkedDates } from "@/utils/gnFunc";
@@ -25,12 +26,14 @@ import {
 	upcomingStyles,
 } from "@/components/Upcoming";
 import AddTaskButton from '@/components/AddTaskButton';
+import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
+import { convertTaskListToAgendaList } from "@/utils/gnFunc";
+import useTasks from '@/hooks/useTasks';
 
 const Upcoming = () => {
-	const dispatch = useDispatch();
-	const task_list = useSelector((state) => state.task.calendar_list);
-	const marked = useRef(getMarkedDates([]));
+	const task_list = useSelector((state) => state.task.task_list);
 	const calendarTheme = useUpcomingCalendarTheme();
+	const { bulkCompleteTask, updateTask, deleteTask, loadTasksFromStorage } = useTasks();
 	
 	// State management for menu functionality
 	const [showMenu, setShowMenu] = useState(false);
@@ -40,6 +43,11 @@ const Upcoming = () => {
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [calendarKey, setCalendarKey] = useState(0);
 	const [filteredAgendaItems, setFilteredAgendaItems] = useState([]);
+	const [agendaItems, setAgendaItems] = useState([]);
+	
+	// Task detail modal state
+	const [showTaskModal, setShowTaskModal] = useState(false);
+	const [selectedTask, setSelectedTask] = useState(null);
 	
 	const [weekView, setWeekView] = useState(false);
 	const calendarRef = useRef(null);
@@ -47,64 +55,27 @@ const Upcoming = () => {
 
 	const today = new Date().toISOString().split("T")[0];
 
-	/** 
-	 * Convert tasks from Redux store to agenda items format
-	 */
-	function convertTasks(tasks) {
-		const grouped = tasks.reduce((acc, task) => {
-			const taskDate = task.date || today;
-			if (!acc[taskDate]) acc[taskDate] = [];
-			
-			acc[taskDate].push({
-				id: task.id || `${task.title}_${taskDate}_${Date.now()}`,
-				is_completed: task.is_completed || false,
-				priority: task.priority || "low",
-				category: task.category?.toLowerCase() || "inbox",
-				title: task.title || "Untitled Task",
-				time: task.time || task.startTime,
-				startTime: task.startTime,
-				endTime: task.endTime,
-				itemCustomHeightType: "LongEvent",
-			});
-			return acc;
-		}, {});
-
-		return Object.entries(grouped)
-			.sort(([a], [b]) => new Date(a) - new Date(b))
-			.map(([date, data]) => ({
-				title: date,
-				data: data.sort((a, b) => {
-					// Sort by time if available
-					if (a.time && b.time) {
-						return a.time.localeCompare(b.time);
-					}
-					return 0;
-				})
-			}));
-	}
-
 	// Load from Redux
 	const markedDates = useMemo(() => {
-	const newMarked = getMarkedDates(task_list);
+	const dataSource = filterBy === 'all' ? agendaItems : filteredAgendaItems;
+	const newMarked = getMarkedDates(dataSource);
 	return Object.keys(newMarked).length
 		? newMarked
 		: { [today]: { marked: true, dotColor: "#00adf5" } };
-	}, [task_list]);
+	}, [agendaItems, filteredAgendaItems, filterBy, today]);
 
+	
+	useEffect(() => {
+		setAgendaItems(convertTaskListToAgendaList(task_list));
+	}, [task_list]);
 	 
 
 	/**
 	 * Filter agenda items based on current filter 
 	 */
 	const filterAgendaItems = useCallback(() => {
-		let sourceItems = [];
-		
-		// Use task_list if available, otherwise use agendaItems as fallback
-		if (task_list && task_list.length > 0) {
-			sourceItems = convertTasks(task_list);
-		} else {
-			sourceItems = filteredAgendaItems;
-		}
+		// Always use agendaItems as the source for filtering
+		const sourceItems = agendaItems || [];
 
 		if (filterBy === 'all') {
 			setFilteredAgendaItems(sourceItems);
@@ -129,16 +100,17 @@ const Upcoming = () => {
 		}
 
 		setFilteredAgendaItems(filtered);
-	}, [filterBy, task_list, today]);
+	}, [filterBy, agendaItems, today]);
 
 	/**
 	 * Get total filtered tasks count
 	 */
 	const getFilteredTasksCount = useCallback(() => {
-		return filteredAgendaItems.reduce((total, section) => {
+		const dataSource = filterBy === 'all' ? agendaItems : filteredAgendaItems;
+		return dataSource.reduce((total, section) => {
 			return total + section.data.filter(item => item.title && !item.title.includes("No tasks") && !item.title.includes("No ")).length;
 		}, 0);
-	}, [filteredAgendaItems]);
+	}, [filteredAgendaItems, agendaItems, filterBy]);
 
 	/**
 	 * Apply filters when filterBy changes
@@ -169,18 +141,11 @@ const Upcoming = () => {
 	 * Handle refresh tasks from storage
 	 */
 	const handleRefreshTasks = async () => {
-		// setIsRefreshing(true);
-		// try {
-		// 	const storedTasks = await getDataLocalStorage('task_list') || [];
-		// 	dispatch(setTasks(storedTasks));
-		// 	Alert.alert('Success', 'Tasks refreshed successfully');
-		// } catch (error) {
-		// 	console.error('Error refreshing tasks:', error);
-		// 	Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
-		// } finally {
-		// 	setIsRefreshing(false);
-		// 	setShowMenu(false);
-		// }
+		setIsRefreshing(true);
+		await loadTasksFromStorage();
+		setIsRefreshing(false);
+		setDisplayTasks(task_list);
+		setShowMenu(false);
 	};
 
 	/**
@@ -199,13 +164,74 @@ const Upcoming = () => {
 	 */
 	const handleBulkComplete = async () => {
 		try {
-			// Implement bulk complete logic here
-			Alert.alert('Success', `${selectedTaskIds.length} tasks completed`);
+			bulkCompleteTask(selectedTaskIds);
 			setIsSelectionMode(false);
 			setSelectedTaskIds([]);
 		} catch (error) {
 			console.error('Error completing tasks:', error);
 			Alert.alert('Error', 'Failed to complete tasks. Please try again.');
+		}
+	};
+
+	/**
+	 * Handle task press to open detail modal
+	 */
+	const handleTaskPress = (task) => {
+		// Find the original task from task_list using the task id
+		const originalTask = task_list.find(t => t.id === task.id);
+		if (originalTask) {
+			setSelectedTask(originalTask);
+			setShowTaskModal(true);
+		}
+	};
+
+	/**
+	 * Handle closing task detail modal
+	 */
+	const handleCloseTaskModal = () => {
+		setShowTaskModal(false);
+		setSelectedTask(null);
+	};
+
+	/**
+	 * Handle updating a task from TaskDetailModal
+	 */
+	const handleUpdateTask = async (updatedTask) => {
+		try {
+			const success = await updateTask(updatedTask.id, updatedTask);
+			
+			if (success) {
+				// Update selected task if it's the same one being edited
+				if (selectedTask && selectedTask.id === updatedTask.id) {
+					setSelectedTask(updatedTask);
+				}
+			} else {
+				Alert.alert('Error', 'Failed to update task. Please try again.');
+			}
+		} catch (error) {
+			console.error('Error updating task:', error);
+			Alert.alert('Error', 'Failed to update task. Please try again.');
+		}
+	};
+
+	/**
+	 * Handle deleting a task from TaskDetailModal
+	 */
+	const handleDeleteTask = async (taskId) => {
+		try {
+			const success = await deleteTask(taskId);
+			
+			if (success) {
+				// Close modal if the deleted task was selected
+				if (selectedTask && selectedTask.id === taskId) {
+					handleCloseTaskModal();
+				}
+			} else {
+				Alert.alert('Error', 'Failed to delete task. Please try again.');
+			}
+		} catch (error) {
+			console.error('Error deleting task:', error);
+			Alert.alert('Error', 'Failed to delete task. Please try again.');
 		}
 	};
 
@@ -216,21 +242,6 @@ const Upcoming = () => {
 		setFilterBy(filter);
 		setShowMenu(false);
 	};
-
-	/**
-	 * Handle applying filters from the modal
-	 */
-	const handleApplyFilters = useCallback((filters) => {
-		console.log('Applied filters:', filters);
-		// Implement filter logic here
-	}, []);
-
-	/**
-	 * Handle menu button press
-	 */
-	const handleMenuPress = useCallback(() => {
-		setShowMenu(!showMenu);
-	}, [showMenu]);
 
 	/**
 	 * Handle menu close (for outside click)
@@ -246,11 +257,9 @@ const Upcoming = () => {
 		if (isSelectionMode) {
 			handleTaskSelection(taskId);
 		} else {
-			// Implement task completion toggle logic here
-			console.log('Toggle task completion:', taskId);
-			// TODO: Dispatch action to toggle task completion in Redux store
+			bulkCompleteTask([taskId]);
 		}
-	}, [isSelectionMode, selectedTaskIds, handleTaskSelection]);
+	}, [isSelectionMode, handleTaskSelection, bulkCompleteTask]);
 
 	/**
 	 * Render agenda item component
@@ -262,12 +271,13 @@ const Upcoming = () => {
 		return (
 			<UpcomingAgendaItem 
 				item={{ ...item, id: itemId }} 
-				// onToggleCompletion={handleToggleTaskCompletion}
+				onToggleCompletion={handleToggleTaskCompletion}
+				onTaskPress={isSelectionMode ? () => handleTaskSelection(itemId) : () => handleTaskPress(item)}
 				isSelectionMode={isSelectionMode}
 				isSelected={selectedTaskIds.includes(itemId)}
 			/>
 		);
-	}, [ isSelectionMode, selectedTaskIds]);
+	}, [handleToggleTaskCompletion, isSelectionMode, selectedTaskIds, handleTaskSelection, handleTaskPress]);
 
 	/**
 	 * Smooth and refined calendar toggle animation
@@ -314,6 +324,14 @@ const Upcoming = () => {
 	
 	return (
 		<View style={upcomingStyles.container}>
+			{showMenu && (
+				<TouchableOpacity
+					style={upcomingStyles.menuOverlay}
+					onPress={() => setShowMenu(false)}
+					activeOpacity={1}
+				/>
+			)}
+
 			<View style={{ position: 'relative' }}>
 				<UpcomingHeader 
 					filteredTasksCount={getFilteredTasksCount()}
@@ -335,6 +353,7 @@ const Upcoming = () => {
 					onEnterSelectionMode={handleEnterSelectionMode}
 					onFilterChange={handleFilterChange}
 					onClose={handleMenuClose}
+					onRefreshTasks={handleRefreshTasks}
 				/>
 			</View>
 
@@ -363,7 +382,7 @@ const Upcoming = () => {
 					/> 
 				)}
 				<AgendaList
-					sections={task_list}
+					sections={filterBy === 'all' ? agendaItems : filteredAgendaItems}
 					renderItem={renderItem}
 					sectionStyle={upcomingStyles.section}
 					theme={calendarTheme}
@@ -371,6 +390,14 @@ const Upcoming = () => {
 			</CalendarProvider>
 
 			<AddTaskButton />
+
+			<TaskDetailModal
+				visible={showTaskModal}
+				onClose={handleCloseTaskModal}
+				task={selectedTask}
+				onUpdateTask={handleUpdateTask}
+				onDeleteTask={handleDeleteTask}
+			/>
 		</View>
 	);
 };

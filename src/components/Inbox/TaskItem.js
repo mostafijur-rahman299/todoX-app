@@ -75,11 +75,8 @@ const TaskItem = React.memo(({
   };
 
   const getTaskTag = () => {
-    if (item.category && item.category !== 'Inbox') {
+    if (item.category) {
       return item.category;
-    }
-    if (item.priority) {
-      return item.priority;
     }
     return 'task';
   };

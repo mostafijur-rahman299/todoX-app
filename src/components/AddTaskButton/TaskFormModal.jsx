@@ -6,7 +6,6 @@ import {
     TouchableWithoutFeedback,
     TouchableOpacity,
     Alert,
-    Dimensions,
     Animated,
     Easing
 } from 'react-native';
@@ -20,15 +19,8 @@ import TaskOptionsBar from './TaskOptionsBar';
 import CategorySelector from './CategorySelector';
 import PrioritySelector from './PrioritySelector';
 import DateTimeSelector from './DateTimeSelector';
-import { useSelector } from 'react-redux';
 
-const { height: screenHeight } = Dimensions.get('window');
-
-/**
- * Main task form modal component with smooth animations
- * Contains all form elements and handles task creation with slide-up and fade animations
- */
-const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
+const TaskFormModal = ({ visible, onClose, task, onUpdateTask }) => {
     // Animation refs for smooth modal transitions
     const slideAnim = useRef(new Animated.Value(400)).current; // Start below screen
     const fadeAnim = useRef(new Animated.Value(0)).current; // Start transparent
@@ -149,32 +141,32 @@ const TaskFormModal = ({ visible, onClose, task, onUpdateTask, dispatch }) => {
      * Save task with validation
      */
     const saveTask = async () => {
-    if (!task.title.trim()) {
-        Alert.alert('Error', 'Please enter a task title');
-        return;
-    }
+        if (!task.title.trim()) {
+            Alert.alert('Error', 'Please enter a task title');
+            return;
+        }
 
-    try {
+        try {
 
-        const taskToSave = {
-            id: generateId(),
-            title: task.title.trim(),
-            summary: task.summary || "",
-            category: task.category || "Inbox",
-            priority: task.priority || "medium",
-            reminder: task.reminder || false,
-            date: task.date,
-            startTime: task.startTime,
-            endTime: task.endTime,
-            subTask: task.subTask || [],
-        };
+            const taskToSave = {
+                id: generateId(),
+                title: task.title.trim(),
+                summary: task.summary || "",
+                category: task.category || "Inbox",
+                priority: task.priority || "medium",
+                reminder: task.reminder || false,
+                date: task.date,
+                startTime: task.startTime,
+                endTime: task.endTime,
+                subTask: task.subTask || [],
+            };
 
-        await addTask(taskToSave);
-        handleClose();
-    } catch (error) {
-        Alert.alert('Error', 'Failed to save task. Please try again.');
-    }
-};
+            await addTask(taskToSave);
+            handleClose();
+        } catch (error) {
+            Alert.alert('Error', 'Failed to save task. Please try again.');
+        }
+    };
 
 
     return (

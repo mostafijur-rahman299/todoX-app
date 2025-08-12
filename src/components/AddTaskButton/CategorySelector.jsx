@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-    Modal, 
-    View, 
-    Text, 
-    TouchableOpacity, 
+import {
+    Modal,
+    View,
+    Text,
+    TouchableOpacity,
     TouchableWithoutFeedback,
     ScrollView,
     StyleSheet,
@@ -18,14 +18,14 @@ import { categoryOptions } from '@/constants/GeneralData';
 const { height: screenHeight } = Dimensions.get('window');
 
 /**
- * Category/Inbox selector modal component
+ * Category selector modal component
  * Allows users to select task categories with smooth animations
  */
 const CategorySelector = ({ visible, onClose, task, onUpdateTask }) => {
     /**
      * Handle category selection with haptic feedback
      */
-    const handleInboxSelect = (category) => {
+    const handleCategorySelect = (category) => {
         if (Platform.OS === 'ios') {
             Vibration.vibrate(10);
         }
@@ -47,64 +47,62 @@ const CategorySelector = ({ visible, onClose, task, onUpdateTask }) => {
             statusBarTranslucent={true}
         >
             <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.modalOverlay} />
-            </TouchableWithoutFeedback>
-            
-            <TouchableWithoutFeedback>
-                <View style={styles.selectionModal}>
-                    <View style={styles.selectionModalHeader}>
-                        <Text style={styles.selectionModalTitle}>Select Category</Text>
-                        <TouchableOpacity 
-                            onPress={onClose}
-                            style={styles.selectionModalCloseBtn}
-                            activeOpacity={0.7}
-                        >
-                            <Ionicons name="close" size={22} color={colors.textSecondary} />
-                        </TouchableOpacity>
-                    </View>
-                    <ScrollView
-                        style={styles.selectionScrollView}
-                        showsVerticalScrollIndicator={false}
-                        nestedScrollEnabled={true}
-                        contentContainerStyle={{ paddingBottom: 12 }}
-                    >
-                        {categoryOptions.map((category, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={[
-                                    styles.selectionOption,
-                                    task.category === category.value && styles.selectionOptionSelected,
-                                ]}
-                                onPress={() => handleInboxSelect(category)}
-                                activeOpacity={0.7}
+                <View style={styles.selectionModalOverlay}>
+                    <TouchableWithoutFeedback>
+                        <View style={styles.selectionModal}>
+                            <View style={styles.selectionModalHeader}>
+                                <Text style={styles.selectionModalTitle}>Select Category</Text>
+                                <TouchableOpacity 
+                                    onPress={onClose}
+                                    style={styles.selectionModalCloseBtn}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="close" size={22} color={colors.textSecondary} />
+                                </TouchableOpacity>
+                            </View>
+                            <ScrollView
+                                style={styles.selectionScrollView}
+                                showsVerticalScrollIndicator={false}
+                                nestedScrollEnabled={true}
+                                contentContainerStyle={{ paddingBottom: 12 }}
                             >
-                                <View style={[
-                                    styles.selectionIconContainer,
-                                    { backgroundColor: category.color + '20' }
-                                ]}>
-                                    <Ionicons
-                                        name={category.icon}
-                                        size={22}
-                                        color={category.color}
-                                    />
-                                </View>
-                                <View style={styles.selectionTextContainer}>
-                                    <Text style={styles.selectionOptionText}>
-                                        {category.label}
-                                    </Text>
-                                </View>
-                                {task.category === category.value && (
-                                    <View style={styles.selectionCheckmark}>
-                                        <Ionicons
-                                            name="checkmark"
-                                            size={16}
-                                            color={colors.white}
-                                        />
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                                {categoryOptions.map((category, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        style={[
+                                            styles.selectionOption,
+                                            task.category === category.value && styles.selectionOptionSelected,
+                                        ]}
+                                        onPress={() => handleCategorySelect(category)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={[
+                                            styles.selectionIconContainer,
+                                            { backgroundColor: category.color + '20' }
+                                        ]}>
+                                            <Ionicons
+                                                name={category.icon}
+                                                size={18}
+                                                color={category.color}
+                                            />
+                                        </View>
+                                        <Text style={styles.selectionOptionText}>
+                                            {category.label}
+                                        </Text>
+                                        {task.category === category.value && (
+                                            <View style={styles.selectionCheckmark}>
+                                                <Ionicons
+                                                    name="checkmark"
+                                                    size={14}
+                                                    color={colors.white}
+                                                />
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    </TouchableWithoutFeedback>
                 </View>
             </TouchableWithoutFeedback>
         </Modal>
@@ -112,7 +110,7 @@ const CategorySelector = ({ visible, onClose, task, onUpdateTask }) => {
 };
 
 const styles = StyleSheet.create({
-    modalOverlay: {
+    selectionModalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
@@ -141,7 +139,7 @@ const styles = StyleSheet.create({
         borderBottomColor: colors.border,
     },
     selectionModalTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '600',
         color: colors.textPrimary,
     },
@@ -152,14 +150,14 @@ const styles = StyleSheet.create({
     },
     selectionScrollView: {
         maxHeight: screenHeight * 0.5,
-        paddingVertical: 8,
+        paddingVertical: 4,
     },
     selectionOption: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        gap: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        gap: 10,
         borderBottomWidth: 1,
         borderBottomColor: colors.border + '20',
     },
@@ -167,29 +165,22 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primary + '10',
     },
     selectionIconContainer: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    selectionTextContainer: {
-        flex: 1,
-    },
     selectionOptionText: {
-        fontSize: 16,
+        flex: 1,
+        fontSize: 14,
         color: colors.textPrimary,
         fontWeight: '500',
     },
-    selectionOptionDescription: {
-        fontSize: 12,
-        color: colors.textSecondary,
-        marginTop: 2,
-    },
     selectionCheckmark: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
         backgroundColor: colors.primary,
         alignItems: 'center',
         justifyContent: 'center',

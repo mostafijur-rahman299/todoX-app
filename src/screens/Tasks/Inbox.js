@@ -11,11 +11,9 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
-import { updateTask, deleteTask } from '@/store/Task/task';
 import { defaultCategories } from '@/constants/GeneralData';
 import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
 import AddTaskButton from '@/components/AddTaskButton/index';
 import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
 
