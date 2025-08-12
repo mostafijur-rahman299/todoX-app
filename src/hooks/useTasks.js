@@ -32,18 +32,10 @@ const useTasks = () => {
     error 
   } = useSelector(state => state.task);
 
-  const loadTasksFromStorage = useCallback(async () => {
-    try {
-      dispatch(setLoading(true));
+  const loadTasksFromStorage = async () => {
       const tasks = await getDataLocalStorage(STORAGE_KEYS.TASKS);
       dispatch(setTasks(tasks));
-      dispatch(setError(null));
-    } catch (error) {
-      dispatch(setError('Failed to load tasks from storage'));
-    } finally {
-      dispatch(setLoading(false));
-    }
-  }, [dispatch]);
+  }
 
   const saveTasksToStorage = useCallback(async (tasks, isCompletedTask = false) => {
     try {

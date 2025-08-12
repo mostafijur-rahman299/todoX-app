@@ -1,9 +1,45 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+
+function convertTasks(tasks) {
+		const grouped = tasks.reduce((acc, task) => {
+			const taskDate = task.date || today;
+			if (!acc[taskDate]) acc[taskDate] = [];
+			
+			acc[taskDate].push({
+				id: task.id || `${task.title}_${taskDate}_${Date.now()}`,
+				is_completed: task.is_completed || false,
+				priority: task.priority || "low",
+				category: task.category?.toLowerCase() || "inbox",
+				title: task.title || "Untitled Task",
+				time: task.time || task.startTime,
+				startTime: task.startTime,
+				endTime: task.endTime,
+				itemCustomHeightType: "LongEvent",
+			});
+			return acc;
+		}, {});
+
+		return Object.entries(grouped)
+			.sort(([a], [b]) => new Date(a) - new Date(b))
+			.map(([date, data]) => ({
+				title: date,
+				data: data.sort((a, b) => {
+					// Sort by time if available
+					if (a.time && b.time) {
+						return a.time.localeCompare(b.time);
+					}
+					return 0;
+				})
+			}));
+	}
+  
+
 const taskSlice = createSlice({
   name: 'task',
   initialState: {
     task_list: [],
+    calendar_list: [],
     loading: false,
     error: null,
   },
@@ -18,8 +54,7 @@ const taskSlice = createSlice({
 
     setTasks(state, action) {
       state.task_list = action.payload;
-      state.loading = false;
-      state.error = null;
+      state.calendar_list = convertTasks(action.payload);
     },
 
     addTask(state, action) {

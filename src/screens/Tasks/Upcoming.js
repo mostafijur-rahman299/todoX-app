@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, useEffect } from "react";
+import React, { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import {
 	Animated,
 	Easing,
@@ -22,15 +22,14 @@ import {
 	UpcomingCalendarHeader,
 	UpcomingMenuDropdown,
 	useUpcomingCalendarTheme,
-	agendaItems,
 	upcomingStyles,
 } from "@/components/Upcoming";
 import AddTaskButton from '@/components/AddTaskButton';
 
-const Upcoming = ({ weekView }) => {
+const Upcoming = () => {
 	const dispatch = useDispatch();
-	const tasks = useSelector((state) => state.task.display_tasks);
-	const marked = useRef(getMarkedDates(agendaItems));
+	const task_list = useSelector((state) => state.task.calendar_list);
+	const marked = useRef(getMarkedDates([]));
 	const calendarTheme = useUpcomingCalendarTheme();
 	
 	// State management for menu functionality
@@ -39,35 +38,105 @@ const Upcoming = ({ weekView }) => {
 	const [selectedTaskIds, setSelectedTaskIds] = useState([]);
 	const [filterBy, setFilterBy] = useState('all');
 	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [filteredAgendaItems, setFilteredAgendaItems] = useState(agendaItems);
+	const [calendarKey, setCalendarKey] = useState(0);
+	const [filteredAgendaItems, setFilteredAgendaItems] = useState([]);
+	
+	const [weekView, setWeekView] = useState(false);
+	const calendarRef = useRef(null);
+	const rotation = useRef(new Animated.Value(0));
+
+	const today = new Date().toISOString().split("T")[0];
+
+	/** 
+	 * Convert tasks from Redux store to agenda items format
+	 */
+	function convertTasks(tasks) {
+		const grouped = tasks.reduce((acc, task) => {
+			const taskDate = task.date || today;
+			if (!acc[taskDate]) acc[taskDate] = [];
+			
+			acc[taskDate].push({
+				id: task.id || `${task.title}_${taskDate}_${Date.now()}`,
+				is_completed: task.is_completed || false,
+				priority: task.priority || "low",
+				category: task.category?.toLowerCase() || "inbox",
+				title: task.title || "Untitled Task",
+				time: task.time || task.startTime,
+				startTime: task.startTime,
+				endTime: task.endTime,
+				itemCustomHeightType: "LongEvent",
+			});
+			return acc;
+		}, {});
+
+		return Object.entries(grouped)
+			.sort(([a], [b]) => new Date(a) - new Date(b))
+			.map(([date, data]) => ({
+				title: date,
+				data: data.sort((a, b) => {
+					// Sort by time if available
+					if (a.time && b.time) {
+						return a.time.localeCompare(b.time);
+					}
+					return 0;
+				})
+			}));
+	}
+
+	// Load from Redux
+	const markedDates = useMemo(() => {
+	const newMarked = getMarkedDates(task_list);
+	return Object.keys(newMarked).length
+		? newMarked
+		: { [today]: { marked: true, dotColor: "#00adf5" } };
+	}, [task_list]);
+
+	 
 
 	/**
-	 * Filter agenda items based on current filter
+	 * Filter agenda items based on current filter 
 	 */
 	const filterAgendaItems = useCallback(() => {
+		let sourceItems = [];
+		
+		// Use task_list if available, otherwise use agendaItems as fallback
+		if (task_list && task_list.length > 0) {
+			sourceItems = convertTasks(task_list);
+		} else {
+			sourceItems = filteredAgendaItems;
+		}
+
 		if (filterBy === 'all') {
-			setFilteredAgendaItems(agendaItems);
+			setFilteredAgendaItems(sourceItems);
 			return;
 		}
 
-		const filtered = agendaItems.map(section => ({
+		const filtered = sourceItems.map(section => ({
 			...section,
 			data: section.data.filter(item => {
 				// Skip empty items
-				if (!item.title) return false;
+				if (!item.title || item.title === "No tasks today") return false;
 				return item.priority === filterBy;
 			})
 		})).filter(section => section.data.length > 0);
 
+		// If no filtered items, show empty state
+		if (filtered.length === 0) {
+			filtered.push({
+				title: today,
+				data: [{ id: "no-filtered-tasks", title: `No ${filterBy} priority tasks` }],
+			});
+		}
+
 		setFilteredAgendaItems(filtered);
-	}, [filterBy]);
+	}, [filterBy, task_list, today]);
 
 	/**
 	 * Get total filtered tasks count
 	 */
 	const getFilteredTasksCount = useCallback(() => {
 		return filteredAgendaItems.reduce((total, section) => {
-			return total + section.data.filter(item => item.title).length;
+			return total + section.data.filter(item => item.title && !item.title.includes("No tasks") && !item.title.includes("No ")).length;
 		}, 0);
 	}, [filteredAgendaItems]);
 
@@ -76,6 +145,7 @@ const Upcoming = ({ weekView }) => {
 	 */
 	useEffect(() => {
 		filterAgendaItems();
+		setCalendarKey(Date.now());
 	}, [filterAgendaItems]);
 
 	/**
@@ -84,7 +154,7 @@ const Upcoming = ({ weekView }) => {
 	const handleEnterSelectionMode = () => {
 		setIsSelectionMode(true);
 		setSelectedTaskIds([]);
-		setShowMenu(false);
+		setShowMenu(false); 
 	};
 
 	/**
@@ -123,9 +193,9 @@ const Upcoming = ({ weekView }) => {
 			setSelectedTaskIds([...selectedTaskIds, taskId]);
 		}
 	};
-
+ 
 	/**
-	 * Handle bulk actions on selected tasks
+	 * Handle bulk actions on selected tasks 
 	 */
 	const handleBulkComplete = async () => {
 		try {
@@ -178,8 +248,9 @@ const Upcoming = ({ weekView }) => {
 		} else {
 			// Implement task completion toggle logic here
 			console.log('Toggle task completion:', taskId);
+			// TODO: Dispatch action to toggle task completion in Redux store
 		}
-	}, [isSelectionMode, selectedTaskIds]);
+	}, [isSelectionMode, selectedTaskIds, handleTaskSelection]);
 
 	/**
 	 * Render agenda item component
@@ -191,15 +262,12 @@ const Upcoming = ({ weekView }) => {
 		return (
 			<UpcomingAgendaItem 
 				item={{ ...item, id: itemId }} 
-				onToggleCompletion={handleToggleTaskCompletion}
+				// onToggleCompletion={handleToggleTaskCompletion}
 				isSelectionMode={isSelectionMode}
 				isSelected={selectedTaskIds.includes(itemId)}
 			/>
 		);
-	}, [handleToggleTaskCompletion, isSelectionMode, selectedTaskIds]);
-
-	const calendarRef = useRef(null);
-	const rotation = useRef(new Animated.Value(0));
+	}, [ isSelectionMode, selectedTaskIds]);
 
 	/**
 	 * Smooth and refined calendar toggle animation
@@ -235,6 +303,14 @@ const Upcoming = ({ weekView }) => {
 	const onCalendarToggled = useCallback((isOpen) => {
 		rotation.current.setValue(isOpen ? 1 : 0);
 	}, []);
+
+	/**
+	 * Toggle between week and month view
+	 */
+	const toggleWeekView = useCallback(() => {
+		setWeekView(!weekView);
+		setCalendarKey(Date.now());
+	}, [weekView]);
 	
 	return (
 		<View style={upcomingStyles.container}>
@@ -248,6 +324,8 @@ const Upcoming = ({ weekView }) => {
 					selectedTaskIds={selectedTaskIds}
 					onExitSelectionMode={handleExitSelectionMode}
 					onBulkComplete={handleBulkComplete}
+					weekView={weekView}
+					onToggleWeekView={toggleWeekView}
 				/>
 
 				<UpcomingMenuDropdown
@@ -255,14 +333,13 @@ const Upcoming = ({ weekView }) => {
 					filterBy={filterBy}
 					isRefreshing={isRefreshing}
 					onEnterSelectionMode={handleEnterSelectionMode}
-					onRefreshTasks={handleRefreshTasks}
 					onFilterChange={handleFilterChange}
 					onClose={handleMenuClose}
 				/>
 			</View>
 
 			<CalendarProvider
-				date={agendaItems[1]?.title}
+				date={today}
 				showTodayButton
 				todayButtonStyle={upcomingStyles.todayButton}
 				theme={calendarTheme}>
@@ -270,23 +347,23 @@ const Upcoming = ({ weekView }) => {
 					<WeekCalendar
 						testID="week_calendar"
 						firstDay={1}
-						markedDates={marked.current}
+						markedDates={markedDates}
 					/>
 				) : (
 					<ExpandableCalendar
-						testID="expandable_calendar"
+						key={calendarKey}
 						renderHeader={renderHeader}
 						ref={calendarRef}
 						onCalendarToggled={onCalendarToggled}
 						theme={calendarTheme}
 						firstDay={1}
-						markedDates={marked.current}
+						markedDates={markedDates}
 						leftArrowImageSource={leftArrowIcon}
 						rightArrowImageSource={rightArrowIcon}
-					/>
+					/> 
 				)}
 				<AgendaList
-					sections={filteredAgendaItems}
+					sections={task_list}
 					renderItem={renderItem}
 					sectionStyle={upcomingStyles.section}
 					theme={calendarTheme}
@@ -298,4 +375,4 @@ const Upcoming = ({ weekView }) => {
 	);
 };
 
-export default Upcoming;
+export default React.memo(Upcoming);
