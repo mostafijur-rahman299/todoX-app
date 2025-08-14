@@ -155,6 +155,7 @@ export function taskAgendaFormat(task) {
 }
 
 export function convertTaskListToAgendaList(tasks) {
+	if (!tasks) return [];
 	const grouped = tasks.reduce((acc, task) => {
 		const taskDate = task.date;
 		if (!acc[taskDate]) acc[taskDate] = [];
@@ -177,14 +178,13 @@ export function convertTaskListToAgendaList(tasks) {
 }
 
 export function convertTaskListToTimelineList(tasks) {
+	if (!tasks) return [];
 	return tasks
 		.filter(task => task.date && task.startTime && task.endTime) // Only include tasks with complete date/time info
 		.map((task) => {
 			// Combine date with start and end times to create proper datetime strings
 			const startDateTime = `${task.date} ${task.startTime}:00`;
 			const endDateTime = `${task.date} ${task.endTime}:00`;
-
-			console.log(task)
 			
 			return {
 				id: task.id, // Add unique ID for timeline events

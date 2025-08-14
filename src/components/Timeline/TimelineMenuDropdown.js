@@ -12,8 +12,6 @@ const TimelineMenuDropdown = ({
   isRefreshing,
   onRefreshEvents,
   onFilterChange,
-  onViewChange,
-  viewMode,
   onClose 
 }) => {
   const menuOpacity = useRef(new Animated.Value(0)).current;

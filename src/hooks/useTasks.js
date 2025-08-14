@@ -34,7 +34,7 @@ const useTasks = () => {
 
   const loadTasksFromStorage = async () => {
       const tasks = await getDataLocalStorage(STORAGE_KEYS.TASKS);
-      dispatch(setTasks(tasks));
+      dispatch(setTasks(tasks || []));
   }
 
   const saveTasksToStorage = useCallback(async (tasks, isCompletedTask = false) => {
@@ -58,15 +58,15 @@ const useTasks = () => {
       
       // Create new task with proper data structure
       const newTask = {
-        id: taskData.id || Date.now().toString(),
-        title: taskData.title || "",
-        summary: taskData.summary || "",
-        category: taskData.category || "Inbox",
-        priority: taskData.priority || "medium",
+        id: taskData.id,
+        title: taskData.title,
+        summary: taskData.summary,
+        category: taskData.category,
+        priority: taskData.priority,
         reminder: taskData.reminder || false,
         date: taskData.date || new Date().toISOString().split('T')[0],
-        startTime: taskData.startTime || null,
-        endTime: taskData.endTime || null,
+        startTime: taskData.startTime,
+        endTime: taskData.endTime,
         subTask: taskData.subTask || [],
         is_completed: false,
         completed_timestamp: null,

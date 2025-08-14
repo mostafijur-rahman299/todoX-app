@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCategories } from '@/store/Task/category';
-import { defaultCategories } from '@/constants/GeneralData';
+import { categoryOptions } from '@/constants/GeneralData';
 import { colors, spacing, typography, borderRadius, shadows } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddTaskButton from '@/components/AddTaskButton/index';
@@ -77,19 +77,17 @@ const Inbox = () => {
     const initializeCategories = async () => {
       try {
         const storedCategories = await AsyncStorage.getItem('categories');
-        let categoriesToSet = storedCategories ? JSON.parse(storedCategories) : defaultCategories;
+        let categoriesToSet = storedCategories ? JSON.parse(storedCategories) : categoryOptions;
 
-        categoriesToSet = categoriesToSet.filter(
+        categoriesToSet = categoriesToSet?.filter(
           (category) => !categories.some((c) => c.name === category.name) && category.name !== 'all'
         );
 
-        if (categoriesToSet.length > 0) {
+        if (categoriesToSet?.length > 0) {
           await AsyncStorage.setItem('categories', JSON.stringify(categoriesToSet));
           dispatch(setCategories(categoriesToSet));
         }
-      } catch (error) {
-        console.error('Error managing categories:', error);
-      }
+      } catch (error) {}
     };
 
     initializeCategories();

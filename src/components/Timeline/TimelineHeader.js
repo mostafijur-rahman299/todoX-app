@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '@/constants/Colors';
@@ -10,8 +10,7 @@ const TimelineHeader = ({
   filteredEventsCount, 
   filterBy, 
   showMenu, 
-  setShowMenu,
-  viewMode 
+  setShowMenu
 }) => {
   const headerOpacity = useRef(new Animated.Value(0)).current;
 
@@ -36,7 +35,6 @@ const TimelineHeader = ({
           <Text style={styles.headerSubtitle}>
             {filteredEventsCount} {filteredEventsCount === 1 ? 'event' : 'events'} 
             {filterBy !== 'all' && ` (${filterBy} priority)`}
-            {viewMode && ` • ${viewMode} view`}
           </Text>
         </View>
         <View style={styles.menuContainer}>

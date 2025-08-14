@@ -123,7 +123,9 @@ const AddTaskButton = () => {
                     endTime: firstFreeSlot.endTime,
                 });
             }
-        }catch(error){}
+        }catch(error){
+            console.log(error)
+        }
 
         setModalVisible(true);
     };

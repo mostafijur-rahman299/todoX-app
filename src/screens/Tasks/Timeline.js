@@ -118,17 +118,12 @@ const TimelineHelpText = () => {
   );
 };
 
-/**
- * Professional Timeline Calendar Component
- * Displays tasks and events in a beautiful timeline view with enhanced design
- */
 const TimelineCalendarScreen = () => {
   // State management with hooks
   const [currentDate, setCurrentDate] = useState(getDate());
   const [events, setEvents] = useState([]);
   const [showMenu, setShowMenu] = useState(false);
   const [filterBy, setFilterBy] = useState('all');
-  const [viewMode, setViewMode] = useState('timeline');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -249,7 +244,6 @@ const TimelineCalendarScreen = () => {
         Alert.alert('Error', 'Failed to update task. Please try again.');
       }
     } catch (error) {
-      console.error('Error updating task:', error);
       Alert.alert('Error', 'Failed to update task. Please try again.');
     }
   };
@@ -288,14 +282,6 @@ const TimelineCalendarScreen = () => {
    */
   const handleFilterChange = (filter) => {
     setFilterBy(filter);
-    setShowMenu(false);
-  };
-
-  /**
-   * Handle view mode change
-   */
-  const handleViewChange = (mode) => {
-    setViewMode(mode);
     setShowMenu(false);
   };
 
@@ -391,10 +377,6 @@ const TimelineCalendarScreen = () => {
     [createNewEvent, approveNewEvent, handleTaskPress, timelineTheme]
   );
 
-  /**
-   * Render timeline item with proper prop handling
-   * Extracts key from props to avoid React key spreading error
-   */
   const renderItem = useCallback((timelineProps, info) => {
     // Extract key from props to avoid spreading it into JSX
     const { key, ...restProps } = timelineProps;
@@ -435,7 +417,6 @@ const TimelineCalendarScreen = () => {
           filterBy={filterBy}
           showMenu={showMenu}
           setShowMenu={setShowMenu}
-          viewMode={viewMode}
         />
 
         <TimelineMenuDropdown
@@ -444,8 +425,6 @@ const TimelineCalendarScreen = () => {
           isRefreshing={isRefreshing}
           onRefreshEvents={handleRefreshEvents}
           onFilterChange={handleFilterChange}
-          onViewChange={handleViewChange}
-          viewMode={viewMode}
           onClose={handleCloseMenu}
         />
       </View>
