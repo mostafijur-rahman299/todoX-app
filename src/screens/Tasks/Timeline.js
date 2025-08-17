@@ -5,7 +5,6 @@ import {
   SafeAreaView,
   Animated,
   Easing,
-  TouchableOpacity,
   Alert,
 } from 'react-native';
 import groupBy from 'lodash/groupBy';
@@ -15,7 +14,6 @@ import {
   CalendarProvider,
   CalendarUtils,
 } from 'react-native-calendars';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/Colors';
 import leftArrowIcon from "@/assets/icons/previous.png";
 import rightArrowIcon from "@/assets/icons/next.png";
@@ -41,83 +39,6 @@ import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
 import { convertTaskListToTimelineList } from '@/utils/gnFunc';
 import useTasks from '@/hooks/useTasks';
 
-/**
- * Auto-hiding help text component for timeline instructions
- */
-const TimelineHelpText = () => {
-  const [isVisible, setIsVisible] = useState(true);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-
-  /**
-   * Handle closing the help text with smooth animation
-   */
-  const handleClose = () => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-      }),
-      Animated.timing(slideAnim, {
-        toValue: -1,
-        duration: 300,
-        useNativeDriver: true,
-        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-      }),
-    ]).start(() => {
-      setIsVisible(false);
-    });
-  };
-
-  if (!isVisible) return null;
-
-  return (
-    <Animated.View 
-      style={[
-        helpTextStyles.container,
-        {
-          opacity: fadeAnim,
-          transform: [
-            {
-              translateY: slideAnim.interpolate({
-                inputRange: [-1, 0, 1],
-                outputRange: [-50, 0, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      <View style={helpTextStyles.contentContainer}>
-        <View style={helpTextStyles.helpItem}>
-          <Ionicons name="hand-left-outline" size={16} color={colors.textSecondary} />
-          <Text style={helpTextStyles.helpText}>
-            Long press on timeline to add a task
-          </Text>
-        </View>
-        <View style={helpTextStyles.separator} />
-        <View style={helpTextStyles.helpItem}>
-          <Ionicons name="add-circle-outline" size={16} color={colors.textSecondary} />
-          <Text style={helpTextStyles.helpText}>
-            Or use the add button
-          </Text>
-        </View>
-      </View>
-      
-      {/* Close Button */}
-      <TouchableOpacity 
-        style={helpTextStyles.closeButton}
-        onPress={handleClose}
-        hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
-      >
-        <Ionicons name="close" size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
-
 const TimelineCalendarScreen = () => {
   // State management with hooks
   const [currentDate, setCurrentDate] = useState(getDate());
@@ -137,13 +58,23 @@ const TimelineCalendarScreen = () => {
   const calendarRef = useRef(null);
   const rotation = useRef(new Animated.Value(0));
 
+  // Update events from Redux task_list and trigger calendar re-render when necessary
   useEffect(() => {
     const convertedEvents = convertTaskListToTimelineList(task_list);
     setEvents(convertedEvents);
-    setCalendarKey(new Date());
+    // Update calendar key to force re-render when events change
+    if (convertedEvents.length > 0) {
+      setCalendarKey(Date.now());
+    }
   }, [task_list]);
 
-  const getFilteredEvents = useCallback(() => {
+  // Update calendar key when filter changes to ensure proper re-rendering
+  useEffect(() => {
+    setCalendarKey(Date.now());
+  }, [filterBy]);
+
+  // Memoize filtered events to prevent unnecessary recalculations
+  const filteredEvents = useMemo(() => {
     let filtered = events || [];
     
     if (filterBy !== 'all') {
@@ -153,7 +84,7 @@ const TimelineCalendarScreen = () => {
     return filtered;
   }, [events, filterBy]);
 
-  const filteredEvents = getFilteredEvents();
+  // Memoize grouped events by date with stable reference
   const filteredEventsByDate = useMemo(
     () => groupBy(filteredEvents, (e) => CalendarUtils.getCalendarDateString(e.start)),
     [filteredEvents]
@@ -181,14 +112,54 @@ const TimelineCalendarScreen = () => {
     return marked;
   }, [filteredEventsByDate, currentDate]);
 
-  // Event handlers from custom hook
+  // Event handlers from custom hook - pass Redux task_list to avoid undefined errors
   const {
     createNewEvent,
     approveNewEvent,
-    handleEventPress: originalHandleEventPress,
     handleDateChanged: onDateChanged,
     handleMonthChange,
-  } = useTimelineEventHandlers(filteredEventsByDate, setEvents);
+    loadTimelineEvents,
+    syncTimelineEvents,
+    taskList,
+    isLoading: timelineLoading,
+    taskError,
+  } = useTimelineEventHandlers(filteredEventsByDate, setEvents, task_list || []);
+
+  // Load timeline events only when task_list is available and events are empty
+  useEffect(() => {
+    // Only load timeline events if we have task_list and no events from Redux yet
+    if (task_list && Array.isArray(task_list) && events.length === 0) {
+      loadTimelineEvents();
+    }
+  }, [task_list, events.length, loadTimelineEvents]); // Depend on task_list availability
+
+  // Enhanced createNewEvent with user feedback - memoized to prevent recreation
+  const handleTimelineLongPress = useCallback(async (timeString, timeObject) => {
+    try {
+      await createNewEvent(timeString, timeObject);
+      // Show success feedback could be added here if needed
+    } catch (error) {
+      console.error('Failed to create timeline event:', error);
+      Alert.alert(
+        'Error',
+        'Failed to create timeline event. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, [createNewEvent]);
+
+  // Show error alert when taskError changes - with ref to prevent unnecessary re-renders
+  const lastErrorRef = useRef(null);
+  useEffect(() => {
+    if (taskError && taskError !== lastErrorRef.current) {
+      lastErrorRef.current = taskError;
+      Alert.alert(
+        'Timeline Error',
+        `An error occurred: ${taskError}`,
+        [{ text: 'OK' }]
+      );
+    }
+  }, [taskError]);
 
   /**
    * Handle task press to open detail modal
@@ -364,7 +335,7 @@ const TimelineCalendarScreen = () => {
     () => ({
       theme: timelineTheme,
       format24h: false,
-      onBackgroundLongPress: createNewEvent,
+      onBackgroundLongPress: handleTimelineLongPress,
       onBackgroundLongPressOut: approveNewEvent,
       onEventPress: handleTaskPress,
       unavailableHours: [],
@@ -374,8 +345,8 @@ const TimelineCalendarScreen = () => {
       start: 0,
       end: 24,
     }),
-    [createNewEvent, approveNewEvent, handleTaskPress, timelineTheme]
-  );
+    [handleTimelineLongPress, approveNewEvent, handleTaskPress, timelineTheme]
+  )
 
   const renderItem = useCallback((timelineProps, info) => {
     // Extract key from props to avoid spreading it into JSX
@@ -432,7 +403,6 @@ const TimelineCalendarScreen = () => {
       {/* Calendar and Timeline Container with proper flex constraints */}
       <View style={{ flex: 1 }}>
         <CalendarProvider
-          key={calendarKey}
           date={currentDate}
           onDateChanged={handleDateChanged}
           onMonthChange={handleMonthChange}
@@ -459,13 +429,10 @@ const TimelineCalendarScreen = () => {
             />
           </View>
           
-          {/* Auto-hiding Help Text */}
-          <TimelineHelpText />
           
           {/* Timeline Container with proper flex and overflow handling */}
           <View style={[timelineStyles.timelineContainer]}>
             <TimelineList
-              key={calendarKey}
               events={filteredEventsByDate}
               timelineProps={timelineProps}
               renderItem={renderItem}

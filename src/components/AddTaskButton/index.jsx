@@ -113,7 +113,10 @@ const AddTaskButton = () => {
 
         try{
             const taskDate = newTask.date || new Date().toISOString().split('T')[0];
-            const task_list = tasks.filter((item) => item.date === taskDate);
+            // Ensure tasks is defined and is an array before filtering
+            const task_list = tasks && Array.isArray(tasks) 
+                ? tasks.filter((item) => item.date === taskDate) 
+                : [];
             const firstFreeSlot = getFirstFreeSlot(task_list);
 
             if (firstFreeSlot) {
@@ -124,7 +127,7 @@ const AddTaskButton = () => {
                 });
             }
         }catch(error){
-            console.log(error)
+            console.error('Error finding first free slot:', error);
         }
 
         setModalVisible(true);

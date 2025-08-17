@@ -156,7 +156,7 @@ const useTasks = () => {
       dispatch(deleteTaskAction(taskId));
       
       // Get updated task list (without the deleted task)
-      const updatedTasks = task_list.filter(task => task.id !== taskId);
+      const updatedTasks = (task_list || []).filter(task => task.id !== taskId);
       
       // Save to AsyncStorage
       const success = await saveTasksToStorage(updatedTasks);
@@ -218,6 +218,12 @@ const useTasks = () => {
       // Update Redux store
       dispatch(completeTaskAction(taskIds));
       
+      // Handle undefined task_list
+      if (!task_list || !Array.isArray(task_list)) {
+        console.warn('completeTask: task_list is undefined or not an array');
+        return false;
+      }
+
       // Get the task that was toggled
       const task = task_list.find(t => taskIds.includes(t.id));
       if (!task) {
@@ -225,6 +231,10 @@ const useTasks = () => {
       }
 
       // Update task lists based on completion status
+      if (!task_list || !Array.isArray(task_list)) {
+        console.warn('completeMultipleTasks: task_list is undefined or not an array');
+        return false;
+      }
       const updatedTasks = task_list.filter(t => !taskIds.includes(t.id));
 
       const updatedCompletedTasks = taskIds.map(taskId => ({

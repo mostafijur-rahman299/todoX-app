@@ -32,6 +32,10 @@ const taskSlice = createSlice({
 
     // Consolidated toggle action
     completeTask(state, action) {
+      if (!state.task_list || !Array.isArray(state.task_list)) {
+        state.task_list = [];
+        return;
+      }
       state.task_list = state.task_list.filter(task => !action.payload.includes(task.id));
     },
 
@@ -60,6 +64,10 @@ const taskSlice = createSlice({
 
     deleteTask(state, action) {
       const taskId = action.payload;
+      if (!state.task_list || !Array.isArray(state.task_list)) {
+        state.task_list = [];
+        return;
+      }
       state.task_list = state.task_list.filter(task => task.id !== taskId);
     },
 
