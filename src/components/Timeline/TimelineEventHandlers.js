@@ -31,8 +31,8 @@ export const useTimelineEventHandlers = (eventsByDate, setEvents, reduxTaskList)
 
     const newEvent = {
       id: eventId,
-      start: startDateTime, // Proper datetime format for timeline
-      end: endDateTime, // Proper datetime format for timeline
+      start: startDateTime,
+      end: endDateTime,
       title: 'New Task',
       summary: 'Tap to edit details',
       color: getRandomEventColor(), // Use random color
@@ -45,11 +45,11 @@ export const useTimelineEventHandlers = (eventsByDate, setEvents, reduxTaskList)
       id: eventId,
       title: newEvent.title,
       summary: newEvent.summary,
-      category: 'timeline',
+      category: 'inbox',
       priority: newEvent.priority,
       date: timeObject.date,
-      startTime: startTime, // Store time only
-      endTime: endTime, // Store time only
+      startTime: startTime,
+      endTime: endTime,
       reminder: false,
       subTask: [],
     };
@@ -66,9 +66,7 @@ export const useTimelineEventHandlers = (eventsByDate, setEvents, reduxTaskList)
           return [...filteredEvents, newEvent];
         });
         
-        console.log('New timeline event created successfully:', newEvent);
       } else {
-        console.error('Failed to save task to persistent storage');
         // Fallback: still show the event locally even if storage fails
         setEvents((prevEvents) => {
           const filteredEvents = prevEvents.filter(e => e.id !== eventId);
@@ -76,7 +74,6 @@ export const useTimelineEventHandlers = (eventsByDate, setEvents, reduxTaskList)
         });
       }
     } catch (error) {
-      console.error('Error creating new event:', error);
       // Fallback: still show the event locally even if storage fails
       setEvents((prevEvents) => {
         const filteredEvents = prevEvents.filter(e => e.id !== eventId);
@@ -84,15 +81,6 @@ export const useTimelineEventHandlers = (eventsByDate, setEvents, reduxTaskList)
       });
     }
   }, [eventsByDate, setEvents, addTask]);
-
-  /**
-   * Approve and finalize new event creation with random color and persistent storage
-   */
-  const approveNewEvent = useCallback((_timeString, timeObject) => {
-    // This function is called after createNewEvent, so we don't need to create another prompt
-    // The event has already been created and stored, this is just for the timeline library callback
-    console.log('Event creation approved for:', timeObject);
-  }, []);
 
 
   /**
@@ -216,7 +204,6 @@ export const useTimelineEventHandlers = (eventsByDate, setEvents, reduxTaskList)
 
   return {
     createNewEvent,
-    approveNewEvent,
     handleDateChanged,
     handleMonthChange,
     loadTimelineEvents,

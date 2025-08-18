@@ -115,13 +115,9 @@ const TimelineCalendarScreen = () => {
   // Event handlers from custom hook - pass Redux task_list to avoid undefined errors
   const {
     createNewEvent,
-    approveNewEvent,
     handleDateChanged: onDateChanged,
     handleMonthChange,
     loadTimelineEvents,
-    syncTimelineEvents,
-    taskList,
-    isLoading: timelineLoading,
     taskError,
   } = useTimelineEventHandlers(filteredEventsByDate, setEvents, task_list || []);
 
@@ -336,7 +332,6 @@ const TimelineCalendarScreen = () => {
       theme: timelineTheme,
       format24h: false,
       onBackgroundLongPress: handleTimelineLongPress,
-      onBackgroundLongPressOut: approveNewEvent,
       onEventPress: handleTaskPress,
       unavailableHours: [],
       overlapEventsSpacing: 28,
@@ -345,7 +340,7 @@ const TimelineCalendarScreen = () => {
       start: 0,
       end: 24,
     }),
-    [handleTimelineLongPress, approveNewEvent, handleTaskPress, timelineTheme]
+    [handleTimelineLongPress, handleTaskPress, timelineTheme]
   )
 
   const renderItem = useCallback((timelineProps, info) => {

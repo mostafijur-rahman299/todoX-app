@@ -47,24 +47,24 @@ const BrowseMenu = () => {
             icon: 'checkmark-circle-outline',
             color: colors.success,
         },
-        {
-            id: 'trash',
-            title: 'Trash',
-            subtitle: 'Recover deleted items',
-            icon: 'trash-outline',
-            isPremium: true,
-            color: colors.error,
-        },
+        // {
+        //     id: 'trash',
+        //     title: 'Trash',
+        //     subtitle: 'Recover deleted items',
+        //     icon: 'trash-outline',
+        //     isPremium: true,
+        //     color: colors.error,
+        // },
     ];
 
     const settingsItems = [
-        {
-            id: 'settings',
-            title: 'Settings',
-            subtitle: 'App preferences',
-            icon: 'settings-outline',
-            color: colors.textSecondary,
-        },
+        // {
+        //     id: 'settings',
+        //     title: 'Settings',
+        //     subtitle: 'App preferences',
+        //     icon: 'settings-outline',
+        //     color: colors.textSecondary,
+        // },
         {
             id: 'help',
             title: 'Help & Feedback',

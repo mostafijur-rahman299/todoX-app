@@ -148,7 +148,7 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                 </TouchableOpacity>
 
                 {/* Reminders Option - Premium Feature */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={[
                         styles.optionButton,
                         styles.premiumButton,
@@ -169,7 +169,7 @@ const TaskOptionsBar = ({ task, onUpdateTask, onPriorityPress, onDateTimePress, 
                         size={12}
                         color={colors.warning}
                     />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </ScrollView>
             
             {/* Premium Modal */}
