@@ -11,18 +11,10 @@ class StorageManager {
     /**
      * Store data in AsyncStorage with caching
      */
-    static async storeData(key, value, useCache = true) {
+    static async storeData(key, value) {
         try {
             const jsonValue = JSON.stringify(value);
             await AsyncStorage.setItem(key, jsonValue);
-            
-            if (useCache) {
-                cache.set(key, {
-                    data: value,
-                    timestamp: Date.now()
-                });
-            }
-            
             return true;
         } catch (error) {
             return false;

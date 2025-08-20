@@ -192,64 +192,107 @@ const useTasks = () => {
   }
 
   const restoreTask = async (task) => {
+    try {
+      dispatch(setLoading(true));
+      
+      // Validate task parameter
+      if (!task || !task.id) {
+        console.warn('restoreTask: Invalid task provided');
+        dispatch(setError('Invalid task provided'));
+        return false;
+      }
 
-    let updatedTask = {
-      ...task,
-      is_completed: false,
-      completed_timestamp: null,
-      updated_at: new Date().toISOString(),
-    }
+      // Create updated task with restored status
+      const updatedTask = {
+        ...task,
+        is_completed: false,
+        isCompleted: false,
+        completed_timestamp: null,
+        updated_at: new Date().toISOString(),
+      };
 
       // Update Redux store
       dispatch(addTaskAction(updatedTask));
       
-      // Get updated task list (including the new task)
-      const updatedTasks = [updatedTask, ...task_list];
+      // Get updated task list (including the restored task)
+      const updatedTasks = [updatedTask, ...(task_list || [])];
       
-      // Save to AsyncStorage
-      await saveTasksToStorage(updatedTasks);
-      await bulkDeleteCompletedTasks([task.id]);
+      // Save to AsyncStorage with error handling
+      const saveActiveSuccess = await saveTasksToStorage(updatedTasks);
+      const removeCompletedSuccess = await bulkDeleteCompletedTasks([task.id]);
+      
+      if (!saveActiveSuccess || !removeCompletedSuccess) {
+        throw new Error('Failed to save task restoration to storage');
+      }
+      
+      dispatch(setError(null));
+      return true;
+    } catch (error) {
+      console.error('Error restoring task:', error);
+      dispatch(setError('Failed to restore task'));
+      return false;
+    } finally {
+      dispatch(setLoading(false));
+    }
   }
 
   const bulkCompleteTask = async (taskIds) => {
-      const completedTasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS) ?? [];
+    try {
       dispatch(setLoading(true));
+      
+      // Handle undefined task_list
+      if (!task_list || !Array.isArray(task_list)) {
+        console.warn('bulkCompleteTask: task_list is undefined or not an array');
+        dispatch(setError('Task list is not available'));
+        return false;
+      }
+
+      // Validate that all tasks exist
+      const tasksToComplete = task_list.filter(t => taskIds.includes(t.id));
+      if (tasksToComplete.length === 0) {
+        console.warn('bulkCompleteTask: No valid tasks found to complete');
+        dispatch(setError('No valid tasks found to complete'));
+        return false;
+      }
+
+      // Get existing completed tasks
+      const existingCompletedTasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS) ?? [];
       
       // Update Redux store
       dispatch(completeTaskAction(taskIds));
       
-      // Handle undefined task_list
-      if (!task_list || !Array.isArray(task_list)) {
-        console.warn('completeTask: task_list is undefined or not an array');
-        return false;
-      }
-
-      // Get the task that was toggled
-      const task = task_list.find(t => taskIds.includes(t.id));
-      if (!task) {
-        return false;
-      }
-
-      // Update task lists based on completion status
-      if (!task_list || !Array.isArray(task_list)) {
-        console.warn('completeMultipleTasks: task_list is undefined or not an array');
-        return false;
-      }
-      const updatedTasks = task_list.filter(t => !taskIds.includes(t.id));
-
-      const updatedCompletedTasks = taskIds.map(taskId => ({
-        ...task_list.find(t => t.id === taskId),
+      // Create completed tasks with proper timestamps
+      const updatedCompletedTasks = tasksToComplete.map(task => ({
+        ...task,
         is_completed: true,
+        isCompleted: true,
         completed_timestamp: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }));
       
-      // Save to AsyncStorage
-      await saveTasksToStorage([
-        ...updatedCompletedTasks,
-        ...completedTasks,
-      ], true);
-      await saveTasksToStorage(updatedTasks, false);
+      // Remove completed tasks from active tasks
+      const remainingTasks = task_list.filter(t => !taskIds.includes(t.id));
+      
+      // Save to AsyncStorage with proper error handling
+      const saveActiveSuccess = await saveTasksToStorage(remainingTasks, false);
+      const saveCompletedSuccess = await storeDataLocalStorage(
+        STORAGE_KEYS.COMPLETED_TASKS, 
+        [...updatedCompletedTasks, ...existingCompletedTasks]
+      );
+      
+      if (!saveActiveSuccess || !saveCompletedSuccess) {
+        throw new Error('Failed to save task completion to storage');
+      }
+      
+      dispatch(setError(null));
+      return true;
+    } catch (error) {
+      console.error('Error completing tasks:', error);
+      dispatch(setError('Failed to complete tasks'));
+      return false;
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const bulkUpdateTasksHook = useCallback(async (taskIds, updates) => {

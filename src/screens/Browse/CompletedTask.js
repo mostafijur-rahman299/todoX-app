@@ -24,7 +24,6 @@ import useTasks, { STORAGE_KEYS } from '../../hooks/useTasks';
  */
 const CompletedTask = () => {
     const navigation = useNavigation();
-    const dispatch = useDispatch();
     const { clearAllCompletedTasks, bulkDeleteCompletedTasks, restoreTask: restoreTaskAction } = useTasks();
     
     // Component state
@@ -57,21 +56,38 @@ const CompletedTask = () => {
     }, []);
 
     /**
-     * Handle refresh functionality
+     * Handle refresh functionality with proper error handling
      */
     const onRefresh = async () => {
-        setRefreshing(true);
-        const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
-        setCompletedTasks(tasks || []);
-        setRefreshing(false);
+        try {
+            setRefreshing(true);
+            const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
+            setCompletedTasks(tasks || []);
+        } catch (error) {
+            console.error('Error refreshing completed tasks:', error);
+            Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
+        } finally {
+            setRefreshing(false);
+        }
     };
 
     /**
-     * Toggle task back to incomplete
+     * Toggle task back to incomplete with proper error handling
      */
-    const restoreTask = (task) => {
-        setCompletedTasks(prev => prev.filter(t => t.id !== task.id));
-        restoreTaskAction(task);
+    const restoreTask = async (task) => {
+        try {
+            // Optimistically update UI
+            setCompletedTasks(prev => prev.filter(t => t.id !== task.id));
+            
+            // Perform the restore operation
+            await restoreTaskAction(task);
+        } catch (error) {
+            console.error('Error restoring task:', error);
+            // Revert optimistic update on error
+            const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
+            setCompletedTasks(tasks || []);
+            Alert.alert('Error', 'Failed to restore task. Please try again.');
+        }
     };
 
     /**
@@ -107,9 +123,9 @@ const CompletedTask = () => {
     };
 
     /**
-     * Delete selected tasks
+     * Delete selected tasks with proper error handling
      */
-    const deleteSelectedTasks = () => {
+    const deleteSelectedTasks = async () => {
         if (selectedTasks.size === 0) return;
         
         Alert.alert(
@@ -120,13 +136,27 @@ const CompletedTask = () => {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => {
-                        selectedTasks.forEach(taskId => {
-                            bulkDeleteCompletedTasks([taskId]);
-                        });
-                        setSelectedTasks(new Set());
-                        setIsSelectionMode(false);
-                        setCompletedTasks(completedTasks.filter(task => !selectedTasks.has(task.id)));
+                    onPress: async () => {
+                        try {
+                            const tasksToDelete = Array.from(selectedTasks);
+                            
+                            // Perform bulk delete operation first
+                            const success = await bulkDeleteCompletedTasks(tasksToDelete);
+                            
+                            if (!success) {
+                                throw new Error('Failed to delete tasks');
+                            }
+                            
+                            // Update UI after successful deletion
+                            setCompletedTasks(prev => prev.filter(task => !selectedTasks.has(task.id)));
+                            setSelectedTasks(new Set());
+                            setIsSelectionMode(false);
+                            
+                            Alert.alert('Success', `${tasksToDelete.length} task(s) deleted successfully`);
+                        } catch (error) {
+                            console.error('Error deleting selected tasks:', error);
+                            Alert.alert('Error', 'Failed to delete tasks. Please try again.');
+                        }
                     },
                 },
             ]
@@ -134,7 +164,7 @@ const CompletedTask = () => {
     };
 
     /**
-     * Clear all completed tasks
+     * Clear all completed tasks with proper error handling
      */
     const clearAllTasks = () => {
         Alert.alert(
@@ -145,9 +175,21 @@ const CompletedTask = () => {
                 {
                     text: 'Clear All',
                     style: 'destructive',
-                    onPress: () => {
-                        clearAllCompletedTasks();
-                        setCompletedTasks([]);
+                    onPress: async () => {
+                        try {
+                            const taskCount = completedTasks.length;
+                            
+                            // Perform clear operation first
+                            await clearAllCompletedTasks();
+                            
+                            // Update UI after successful clear
+                            setCompletedTasks([]);
+                            
+                            Alert.alert('Success', `All ${taskCount} completed tasks cleared successfully`);
+                        } catch (error) {
+                            console.error('Error clearing all tasks:', error);
+                            Alert.alert('Error', 'Failed to clear all tasks. Please try again.');
+                        }
                     },
                 },
             ]
@@ -155,7 +197,7 @@ const CompletedTask = () => {
     };
 
     /**
-     * Delete a single task
+     * Delete a single task with proper error handling
      */
     const deleteTask = (taskId) => {
         Alert.alert(
@@ -166,9 +208,23 @@ const CompletedTask = () => {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => {
-                        bulkDeleteCompletedTasks([taskId]);
-                        setCompletedTasks(completedTasks.filter(task => task.id !== taskId));
+                    onPress: async () => {
+                        try {
+                            // Perform delete operation first
+                            const success = await bulkDeleteCompletedTasks([taskId]);
+                            
+                            if (!success) {
+                                throw new Error('Failed to delete task');
+                            }
+                            
+                            // Update UI after successful deletion
+                            setCompletedTasks(prev => prev.filter(task => task.id !== taskId));
+                            
+                            Alert.alert('Success', 'Task deleted successfully');
+                        } catch (error) {
+                            console.error('Error deleting task:', error);
+                            Alert.alert('Error', 'Failed to delete task. Please try again.');
+                        }
                     },
                 },
             ]
@@ -208,7 +264,7 @@ const CompletedTask = () => {
                         if (isSelectionMode) {
                             toggleTaskSelection(task.id);
                         } else {
-                            restoreTask(task.id);
+                            restoreTask(task);
                         }
                     }}
                 >
@@ -389,7 +445,7 @@ const CompletedTask = () => {
                     <FlatList
                         data={completedTasks}
                         renderItem={renderTaskItem}
-                        keyExtractor={(item) => item.id.toString()}
+                        keyExtractor={(item) => item?.id?.toString()}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.listContainer}
                         refreshControl={

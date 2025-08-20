@@ -88,60 +88,7 @@ const HelpAndFeedback = () => {
 						<CustomText style={styles.contactText}>Email Support</CustomText>
 					</TouchableOpacity>
 				</View>
-
-				{/* FAQ */}
-				<View style={styles.section}>
-					<CustomText variant="h4" style={styles.sectionTitle}>
-						FAQ
-					</CustomText>
-					{faqData.map((item) => (
-						<View key={item.id} style={styles.faqItem}>
-							<TouchableOpacity
-								style={styles.faqQuestion}
-								onPress={() => toggleFAQ(item.id)}>
-								<CustomText style={styles.questionText}>
-									{item.question}
-								</CustomText>
-								<Ionicons
-									name={expandedFAQ === item.id ? "chevron-up" : "chevron-down"}
-									size={20}
-									color={colors.textSecondary}
-								/>
-							</TouchableOpacity>
-							{expandedFAQ === item.id && (
-								<View style={styles.faqAnswer}>
-									<CustomText style={styles.answerText}>
-										{item.answer}
-									</CustomText>
-								</View>
-							)}
-						</View>
-					))}
-				</View>
-
-				{/* Feedback */}
-				<View style={styles.section}>
-					<CustomText variant="h4" style={styles.sectionTitle}>
-						Send Feedback
-					</CustomText>
-					<View style={styles.feedbackContainer}>
-						<TextInput
-							style={styles.feedbackInput}
-							placeholder="Tell us what you think..."
-							placeholderTextColor={colors.textSecondary}
-							multiline
-							value={feedbackText}
-							onChangeText={setFeedbackText}
-						/>
-					</View>
-					<CustomButton
-						title="Submit Feedback"
-						onPress={submitFeedback}
-						variant="primary"
-						fullWidth
-						disabled={!feedbackText.trim()}
-					/>
-				</View>
+				
 			</ScrollView>
 		</View>
 	);
