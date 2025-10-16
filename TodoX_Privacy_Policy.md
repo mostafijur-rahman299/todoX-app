@@ -1,7 +1,7 @@
 # TodoX Privacy Policy
 
-**Effective Date:** [Current Date]  
-**Last Updated:** [Current Date]
+**Effective Date:** 2025/11/17  
+**Last Updated:** 2025/11/17
 
 ## 1. Introduction
 
