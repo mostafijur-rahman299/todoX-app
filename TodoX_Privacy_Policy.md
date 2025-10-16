@@ -5,7 +5,7 @@
 
 ## 1. Introduction
 
-Welcome to TodoX ("we," "our," or "us"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our TodoX mobile application ("App") published on the Google Play Store. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the application.
+Welcome to TodoX. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our TodoX mobile application ("App") published on the Google Play Store. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the application.
 
 ## 2. Information We Collect
 
