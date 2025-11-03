@@ -217,7 +217,6 @@ const VerificationScreen = ({ route, navigation }) => {
 
 	return (
 		<>
-			<StatusBar barStyle="light-content" backgroundColor={colors.primary} translucent />
 			<LinearGradient
 				colors={colors.gradients.primary}
 				style={styles.container}

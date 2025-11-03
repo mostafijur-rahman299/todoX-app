@@ -96,6 +96,3 @@ export default function Tasks() {
     );
 }
 
-const styles = StyleSheet.create({
-    // Add any custom styling here if needed
-});

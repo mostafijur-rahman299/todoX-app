@@ -42,7 +42,7 @@ const BrowseMenu = () => {
         // },
         {
             id: 'completed',
-            title: 'Completed',
+            title: 'Completed Tasks',
             subtitle: 'View finished tasks',
             icon: 'checkmark-circle-outline',
             color: colors.success,

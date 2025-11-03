@@ -29,6 +29,7 @@ import AddTaskButton from '@/components/AddTaskButton';
 import TaskDetailModal from '@/components/Tasks/TaskDetailModal';
 import { convertTaskListToAgendaList } from "@/utils/gnFunc";
 import useTasks from '@/hooks/useTasks';
+import { spacing } from '@/constants/Colors';
 
 const Upcoming = () => {
 	const task_list = useSelector((state) => state.task.task_list);
@@ -332,7 +333,7 @@ const Upcoming = () => {
 				/>
 			)}
 
-			<View style={{ position: 'relative' }}>
+			<View style={{ position: 'relative'}}>
 				<UpcomingHeader 
 					filteredTasksCount={getFilteredTasksCount()}
 					filterBy={filterBy}

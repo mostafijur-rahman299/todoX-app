@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, StatusBar, Dimensions, Platform, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Animated, StatusBar, Dimensions, Platform, SafeAreaView } from 'react-native';
 import CustomText from '@/components/UI/CustomText';
 import CustomButton from '@/components/UI/CustomButton';
 import { useNavigation } from '@react-navigation/native';
@@ -69,7 +69,6 @@ const StartScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} translucent />
       <LinearGradient
         colors={[colors.background, colors.backgroundSecondary, colors.surface]}
         style={[styles.container, responsiveStyles.container]}
@@ -164,7 +163,7 @@ const StartScreen = () => {
                 iconPosition="right"
               />
               
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => navigation.navigate('SignIn')}
                 style={[styles.secondaryButton, responsiveStyles.secondaryButton]}
                 activeOpacity={0.8}
@@ -172,7 +171,7 @@ const StartScreen = () => {
                 <CustomText style={[styles.secondaryButtonText, responsiveStyles.secondaryButtonText]}>
                   Already have an account? Sign In
                 </CustomText>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </Animated.View>
         </View>

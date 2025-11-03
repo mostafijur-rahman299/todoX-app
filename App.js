@@ -1,4 +1,4 @@
-import { StyleSheet, StatusBar, View, SafeAreaView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, SafeAreaView, ActivityIndicator, StatusBar as RNStatusBar, Platform} from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState, useCallback } from 'react';
@@ -10,11 +10,9 @@ import { colors } from '@/constants/Colors';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getDataLocalStorage, storeDataLocalStorage } from './src/utils/storage';
-import StartScreen from './src/screens/StartScreen';
 import ErrorBoundary from './src/components/UI/ErrorBoundary';
 import Task from './src/navigation/Tasks'; 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 
 const Stack = createNativeStackNavigator();
 
@@ -52,12 +50,9 @@ export default function App() {
       <ErrorBoundary>
         <Provider store={store}>
           <AuthProvider>
+            <View style={{ backgroundColor: colors.primary, height: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0 }} />
+            <RNStatusBar backgroundColor={colors.primary} barStyle="light-content" />
             <View style={styles.container}>
-              <StatusBar 
-                barStyle="dark-content" 
-                backgroundColor={colors.primary} 
-                translucent={false}
-              />
               {fontsLoaded ? (
                 <NavigationContainer>
                   <AppNavigator />

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     View,
     StyleSheet,
-    ScrollView,
     TouchableOpacity,
     Alert,
     SafeAreaView,
@@ -12,16 +11,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector, useDispatch } from 'react-redux';
 import CustomText from '@/components/UI/CustomText';
 import { colors, spacing, borderRadius, shadows } from '@/constants/Colors';
-import { storeDataLocalStorage, getDataLocalStorage } from '@/utils/storage';
+import { getDataLocalStorage } from '@/utils/storage';
 import useTasks, { STORAGE_KEYS } from '../../hooks/useTasks';
 
-/**
- * CompletedTask component - displays completed tasks with compact and modern design
- * Features: Simplified UI, quick actions, minimal selection mode
- */
 const CompletedTask = () => {
     const navigation = useNavigation();
     const { clearAllCompletedTasks, bulkDeleteCompletedTasks, restoreTask: restoreTaskAction } = useTasks();
@@ -33,14 +27,15 @@ const CompletedTask = () => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedTasks, setSelectedTasks] = useState(new Set());
 
+    const loadTasks = async () => {
+        const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
+        setCompletedTasks(tasks || []);
+    };
+
     /**
      * Load completed tasks from storage
      */
     useEffect(() => {
-        const loadTasks = async () => {
-            const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
-            setCompletedTasks(tasks || []);
-        };
         loadTasks();
     }, []);
 
@@ -61,8 +56,7 @@ const CompletedTask = () => {
     const onRefresh = async () => {
         try {
             setRefreshing(true);
-            const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
-            setCompletedTasks(tasks || []);
+            loadTasks();
         } catch (error) {
             console.error('Error refreshing completed tasks:', error);
             Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
@@ -472,15 +466,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-        backgroundColor: colors.surface,
+        paddingHorizontal: spacing.md,
+        paddingBottom: spacing.sm,
+        paddingTop: spacing.sm,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        backgroundColor: colors.background,
     },
     backButton: {
-        width: 40,
-        height: 40,
+        width: 30,
+        height: 30,
         borderRadius: borderRadius.md,
         backgroundColor: colors.backgroundSecondary,
         alignItems: 'center',

@@ -7,9 +7,7 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	ScrollView,
-	Alert,
-	StatusBar
-} from "react-native";
+	Alert} from "react-native";
 import { colors, spacing, borderRadius, shadows, typography } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -199,7 +197,6 @@ const SignUpScreen = () => {
 
 	return (
 		<>
-			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 			<LinearGradient
 				colors={[colors.background, colors.white]}
 				style={styles.container}

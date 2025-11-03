@@ -7,8 +7,7 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	ScrollView,
-	Alert,
-	StatusBar
+	Alert
 } from "react-native";
 import { colors, spacing, borderRadius, shadows, typography } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -56,7 +55,6 @@ const SignInScreen = () => {
 
 	return (
 		<>
-			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 			<LinearGradient
 				colors={[colors.background, colors.white]}
 				style={styles.container}

@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  StatusBar,
   Animated,
   Alert
 } from 'react-native';
@@ -214,9 +213,7 @@ const Categories = () => {
   }, [tasks, fadeAnim, slideAnim]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      
+    <View style={styles.container}>      
       {/* Header */}
       <Animated.View 
         style={[

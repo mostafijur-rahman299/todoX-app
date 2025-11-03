@@ -5,12 +5,10 @@ import {
     Animated,
     Dimensions,
     ScrollView,
-    StatusBar,
     Alert,
     Platform,
     Vibration,
     KeyboardAvoidingView,
-    TouchableWithoutFeedback,
     Easing,
 } from 'react-native';
 import { colors } from '@/constants/Colors';
