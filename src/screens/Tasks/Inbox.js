@@ -100,79 +100,84 @@ const Inbox = () => {
   /**
    * Handle task press to open detail modal
    */
-  const handleTaskPress = (task) => {
+  const handleTaskPress = useCallback((task) => {
     setSelectedTask(task);
     setShowTaskModal(true);
-  };
+  }, []);
 
   /**
    * Handle closing task detail modal
    */
-  const handleCloseTaskModal = () => {
+  const handleCloseTaskModal = useCallback(() => {
     setShowTaskModal(false);
     setSelectedTask(null);
-  };
+  }, []);
 
   /**
-   * Toggle task completion status
+   * Handle toggle task completion status
    */
-  const handleToggleComplete = async (taskId) => {
-    bulkCompleteTask([taskId]);
-  };
+  const handleToggleComplete = useCallback(async (taskId) => {
+    await bulkCompleteTask([taskId]);
+  }, [bulkCompleteTask]);
 
   /**
    * Handle refresh tasks from storage
    */
-  const handleRefreshTasks = async () => {
+  const handleRefreshTasks = useCallback(async () => {
     setIsRefreshing(true);
     await loadTasksFromStorage();
     setIsRefreshing(false);
-    setDisplayTasks(task_list);
     setShowMenu(false);
-  };
+  }, [loadTasksFromStorage]);
 
   /**
    * Handle entering selection mode
    */
-  const handleEnterSelectionMode = () => {
+  const handleEnterSelectionMode = useCallback(() => {
     setIsSelectionMode(true);
     setSelectedTaskIds([]);
     setShowMenu(false);
-  };
+  }, []);
 
   /**
    * Handle exiting selection mode
    */
-  const handleExitSelectionMode = () => {
+  const handleExitSelectionMode = useCallback(() => {
     setIsSelectionMode(false);
     setSelectedTaskIds([]);
-  };
+  }, []);
 
   /**
    * Handle task selection in selection mode
    */
-  const handleTaskSelection = (taskId) => {
-    if (selectedTaskIds.includes(taskId)) {
-      setSelectedTaskIds(selectedTaskIds.filter(id => id !== taskId));
-    } else {
-      setSelectedTaskIds([...selectedTaskIds, taskId]);
-    }
-  };
+  const handleTaskSelection = useCallback((taskId) => {
+    setSelectedTaskIds(prev => {
+      if (prev.includes(taskId)) {
+        return prev.filter(id => id !== taskId);
+      } else {
+        return [...prev, taskId];
+      }
+    });
+  }, []);
 
   /**
    * Handle bulk actions on selected tasks
    */
-  const handleBulkComplete = async () => {
-    bulkCompleteTask(selectedTaskIds);
-  };
+  const handleBulkComplete = useCallback(async () => {
+    const success = await bulkCompleteTask(selectedTaskIds);
+    if (success) {
+      setIsSelectionMode(false);
+      setSelectedTaskIds([]);
+    }
+  }, [bulkCompleteTask, selectedTaskIds]);
 
   /**
    * Handle filter change
    */
-  const handleFilterChange = (filter) => {
+  const handleFilterChange = useCallback((filter) => {
     setFilterBy(filter);
     setShowMenu(false);
-  };
+  }, []);
 
   /**
    * Handle updating a task from TaskDetailModal
@@ -249,6 +254,11 @@ const Inbox = () => {
     [getPriorityColor, isSelectionMode, selectedTaskIds, handleToggleComplete, handleTaskPress, handleTaskSelection]
   );
 
+  /**
+   * Key extractor for FlatList
+   */
+  const keyExtractor = useCallback((item) => item?.id?.toString(), []);
+
   const filteredTasks = getFilteredTasks();
 
   return (
@@ -289,10 +299,15 @@ const Inbox = () => {
         <FlatList
           data={filteredTasks}
           renderItem={renderTaskItem}
-          keyExtractor={(item) => item?.id?.toString()}
+          keyExtractor={keyExtractor}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.taskSeparator} />}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          windowSize={10}
         />
       )}
 

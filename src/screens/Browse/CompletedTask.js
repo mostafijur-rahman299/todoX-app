@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     View,
     StyleSheet,
@@ -10,7 +10,7 @@ import {
      FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import CustomText from '@/components/UI/CustomText';
 import { colors, spacing, borderRadius, shadows } from '@/constants/Colors';
 import { getDataLocalStorage } from '@/utils/storage';
@@ -27,17 +27,26 @@ const CompletedTask = () => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedTasks, setSelectedTasks] = useState(new Set());
 
-    const loadTasks = async () => {
-        const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
+    const loadTasks = useCallback(async () => {
+        const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS, false); // Force fresh load
         setCompletedTasks(tasks || []);
-    };
+    }, []);
 
     /**
-     * Load completed tasks from storage
+     * Load completed tasks from storage on mount and when screen comes into focus
      */
     useEffect(() => {
         loadTasks();
-    }, []);
+    }, [loadTasks]);
+
+    /**
+     * Reload tasks when screen comes into focus
+     */
+    useFocusEffect(
+        useCallback(() => {
+            loadTasks();
+        }, [loadTasks])
+    );
 
     /**
      * Simple fade-in animation
@@ -53,73 +62,76 @@ const CompletedTask = () => {
     /**
      * Handle refresh functionality with proper error handling
      */
-    const onRefresh = async () => {
+    const onRefresh = useCallback(async () => {
         try {
             setRefreshing(true);
-            loadTasks();
+            await loadTasks();
         } catch (error) {
             console.error('Error refreshing completed tasks:', error);
             Alert.alert('Error', 'Failed to refresh tasks. Please try again.');
         } finally {
             setRefreshing(false);
         }
-    };
+    }, [loadTasks]);
 
     /**
      * Toggle task back to incomplete with proper error handling
      */
-    const restoreTask = async (task) => {
+    const restoreTask = useCallback(async (task) => {
         try {
-            // Optimistically update UI
-            setCompletedTasks(prev => prev.filter(t => t.id !== task.id));
-            
             // Perform the restore operation
-            await restoreTaskAction(task);
+            const success = await restoreTaskAction(task);
+            
+            if (success) {
+                // Reload tasks after successful restore
+                await loadTasks();
+            } else {
+                Alert.alert('Error', 'Failed to restore task. Please try again.');
+            }
         } catch (error) {
             console.error('Error restoring task:', error);
-            // Revert optimistic update on error
-            const tasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS);
-            setCompletedTasks(tasks || []);
             Alert.alert('Error', 'Failed to restore task. Please try again.');
         }
-    };
+    }, [restoreTaskAction, loadTasks]);
 
     /**
      * Toggle selection mode
      */
-    const toggleSelectionMode = () => {
-        setIsSelectionMode(!isSelectionMode);
+    const toggleSelectionMode = useCallback(() => {
+        setIsSelectionMode(prev => !prev);
         setSelectedTasks(new Set());
-    };
+    }, []);
 
     /**
      * Toggle task selection
      */
-    const toggleTaskSelection = (taskId) => {
-        const newSelected = new Set(selectedTasks);
-        if (newSelected.has(taskId)) {
-            newSelected.delete(taskId);
-        } else {
-            newSelected.add(taskId);
-        }
-        setSelectedTasks(newSelected);
-    };
+    const toggleTaskSelection = useCallback((taskId) => {
+        setSelectedTasks(prev => {
+            const newSelected = new Set(prev);
+            if (newSelected.has(taskId)) {
+                newSelected.delete(taskId);
+            } else {
+                newSelected.add(taskId);
+            }
+            return newSelected;
+        });
+    }, []);
 
     /**
      * Select all tasks
      */
-    const selectAllTasks = () => {
+    const selectAllTasks = useCallback(() => {
         if (selectedTasks.size === completedTasks.length) {
             setSelectedTasks(new Set());
         } else {
             setSelectedTasks(new Set(completedTasks.map(task => task.id)));
         }
-    };
+    }, [selectedTasks.size, completedTasks]);
 
     /**
      * Delete selected tasks with proper error handling
      */
-    const deleteSelectedTasks = async () => {
+    const deleteSelectedTasks = useCallback(async () => {
         if (selectedTasks.size === 0) return;
         
         Alert.alert(
@@ -134,15 +146,15 @@ const CompletedTask = () => {
                         try {
                             const tasksToDelete = Array.from(selectedTasks);
                             
-                            // Perform bulk delete operation first
+                            // Perform bulk delete operation
                             const success = await bulkDeleteCompletedTasks(tasksToDelete);
                             
                             if (!success) {
                                 throw new Error('Failed to delete tasks');
                             }
                             
-                            // Update UI after successful deletion
-                            setCompletedTasks(prev => prev.filter(task => !selectedTasks.has(task.id)));
+                            // Reload tasks after successful deletion
+                            await loadTasks();
                             setSelectedTasks(new Set());
                             setIsSelectionMode(false);
                             
@@ -155,12 +167,12 @@ const CompletedTask = () => {
                 },
             ]
         );
-    };
+    }, [selectedTasks, bulkDeleteCompletedTasks, loadTasks]);
 
     /**
      * Clear all completed tasks with proper error handling
      */
-    const clearAllTasks = () => {
+    const clearAllTasks = useCallback(() => {
         Alert.alert(
             'Clear All Tasks',
             'Are you sure you want to delete all completed tasks?',
@@ -173,11 +185,11 @@ const CompletedTask = () => {
                         try {
                             const taskCount = completedTasks.length;
                             
-                            // Perform clear operation first
+                            // Perform clear operation
                             await clearAllCompletedTasks();
                             
-                            // Update UI after successful clear
-                            setCompletedTasks([]);
+                            // Reload tasks after successful clear
+                            await loadTasks();
                             
                             Alert.alert('Success', `All ${taskCount} completed tasks cleared successfully`);
                         } catch (error) {
@@ -188,12 +200,12 @@ const CompletedTask = () => {
                 },
             ]
         );
-    };
+    }, [completedTasks.length, clearAllCompletedTasks, loadTasks]);
 
     /**
      * Delete a single task with proper error handling
      */
-    const deleteTask = (taskId) => {
+    const deleteTask = useCallback((taskId) => {
         Alert.alert(
             'Delete Task',
             'Are you sure you want to delete this task?',
@@ -204,15 +216,15 @@ const CompletedTask = () => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            // Perform delete operation first
+                            // Perform delete operation
                             const success = await bulkDeleteCompletedTasks([taskId]);
                             
                             if (!success) {
                                 throw new Error('Failed to delete task');
                             }
                             
-                            // Update UI after successful deletion
-                            setCompletedTasks(prev => prev.filter(task => task.id !== taskId));
+                            // Reload tasks after successful deletion
+                            await loadTasks();
                             
                             Alert.alert('Success', 'Task deleted successfully');
                         } catch (error) {
@@ -223,7 +235,7 @@ const CompletedTask = () => {
                 },
             ]
         );
-    };
+    }, [bulkDeleteCompletedTasks, loadTasks]);
 
     /**
      * Format completion date in a compact way
@@ -241,9 +253,14 @@ const CompletedTask = () => {
     };
 
     /**
+     * Key extractor for FlatList
+     */
+    const keyExtractor = useCallback((item) => item?.id?.toString(), []);
+
+    /**
      * Render compact task item
      */
-    const renderTaskItem = ({ item: task }) => {
+    const renderTaskItem = useCallback(({ item: task }) => {
         const isSelected = selectedTasks.has(task.id);
         
         return (
@@ -328,7 +345,7 @@ const CompletedTask = () => {
                 )}
             </Animated.View>
         );
-    };
+    }, [isSelectionMode, selectedTasks, deleteTask, restoreTask, fadeAnim]);
 
     /**
      * Render simple empty state
@@ -439,9 +456,14 @@ const CompletedTask = () => {
                     <FlatList
                         data={completedTasks}
                         renderItem={renderTaskItem}
-                        keyExtractor={(item) => item?.id?.toString()}
+                        keyExtractor={keyExtractor}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.listContainer}
+                        removeClippedSubviews={true}
+                        maxToRenderPerBatch={10}
+                        updateCellsBatchingPeriod={50}
+                        initialNumToRender={10}
+                        windowSize={10}
                         refreshControl={
                             <RefreshControl
                                 refreshing={refreshing}

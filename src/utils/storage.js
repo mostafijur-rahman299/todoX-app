@@ -15,8 +15,13 @@ class StorageManager {
         try {
             const jsonValue = JSON.stringify(value);
             await AsyncStorage.setItem(key, jsonValue);
+            // Invalidate cache when storing new data
+            cache.delete(key);
             return true;
         } catch (error) {
+            if (__DEV__) {
+                console.error(`Error storing data for key ${key}:`, error);
+            }
             return false;
         }
     }
@@ -113,6 +118,8 @@ class StorageManager {
         try {
             const pairs = keyValuePairs.map(([key, value]) => [key, JSON.stringify(value)]);
             await AsyncStorage.multiSet(pairs);
+            // Invalidate cache for all updated keys
+            keyValuePairs.forEach(([key]) => cache.delete(key));
             return true;
         } catch (error) {
             if (__DEV__) {

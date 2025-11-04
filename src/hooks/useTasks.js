@@ -74,22 +74,22 @@ const useTasks = () => {
         updated_at: new Date().toISOString(),
       };
 
-      // Update Redux store
-      dispatch(addTaskAction(newTask));
-      
       // Get updated task list (including the new task)
       const updatedTasks = [newTask, ...task_list];
       
-      // Save to AsyncStorage
+      // Save to AsyncStorage first
       const success = await saveTasksToStorage(updatedTasks);
       
       if (success) {
+        // Update Redux store only after successful storage
+        dispatch(addTaskAction(newTask));
         dispatch(setError(null));
         return true;
       }
       
       return false;
     } catch (error) {
+      console.error('Error adding task:', error);
       dispatch(setError('Failed to add task'));
       return false;
     } finally {
@@ -104,6 +104,7 @@ const useTasks = () => {
       // Find the existing task to preserve all fields
       const existingTask = task_list.find(task => task.id === taskId);
       if (!existingTask) {
+        console.error('Task not found:', taskId);
         throw new Error('Task not found');
       }
       
@@ -123,24 +124,24 @@ const useTasks = () => {
         updated_at: new Date().toISOString(),
       };
 
-      // Update Redux store
-      dispatch(updateTaskAction(updatedTask));
-      
       // Get updated task list
       const updatedTasks = task_list.map(task => 
         task.id === taskId ? updatedTask : task
       );
       
-      // Save to AsyncStorage
+      // Save to AsyncStorage first
       const success = await saveTasksToStorage(updatedTasks);
       
       if (success) {
+        // Update Redux store only after successful storage
+        dispatch(updateTaskAction(updatedTask));
         dispatch(setError(null));
         return true;
       }
       
       return false;
     } catch (error) {
+      console.error('Error updating task:', error);
       dispatch(setError('Failed to update task'));
       return false;
     } finally {
@@ -152,16 +153,15 @@ const useTasks = () => {
     try {
       dispatch(setLoading(true));
       
-      // Update Redux store
-      dispatch(deleteTaskAction(taskId));
-      
       // Get updated task list (without the deleted task)
       const updatedTasks = (task_list || []).filter(task => task.id !== taskId);
       
-      // Save to AsyncStorage
+      // Save to AsyncStorage first
       const success = await saveTasksToStorage(updatedTasks);
       
       if (success) {
+        // Update Redux store only after successful storage
+        dispatch(deleteTaskAction(taskId));
         dispatch(setError(null));
         return true;
       }
@@ -211,13 +211,10 @@ const useTasks = () => {
         updated_at: new Date().toISOString(),
       };
 
-      // Update Redux store
-      dispatch(addTaskAction(updatedTask));
-      
       // Get updated task list (including the restored task)
       const updatedTasks = [updatedTask, ...(task_list || [])];
       
-      // Save to AsyncStorage with error handling
+      // Save to AsyncStorage first with error handling
       const saveActiveSuccess = await saveTasksToStorage(updatedTasks);
       const removeCompletedSuccess = await bulkDeleteCompletedTasks([task.id]);
       
@@ -225,6 +222,8 @@ const useTasks = () => {
         throw new Error('Failed to save task restoration to storage');
       }
       
+      // Update Redux store only after successful storage
+      dispatch(addTaskAction(updatedTask));
       dispatch(setError(null));
       return true;
     } catch (error) {
@@ -258,9 +257,6 @@ const useTasks = () => {
       // Get existing completed tasks
       const existingCompletedTasks = await getDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS) ?? [];
       
-      // Update Redux store
-      dispatch(completeTaskAction(taskIds));
-      
       // Create completed tasks with proper timestamps
       const updatedCompletedTasks = tasksToComplete.map(task => ({
         ...task,
@@ -273,7 +269,7 @@ const useTasks = () => {
       // Remove completed tasks from active tasks
       const remainingTasks = task_list.filter(t => !taskIds.includes(t.id));
       
-      // Save to AsyncStorage with proper error handling
+      // Save to AsyncStorage first with proper error handling
       const saveActiveSuccess = await saveTasksToStorage(remainingTasks, false);
       const saveCompletedSuccess = await storeDataLocalStorage(
         STORAGE_KEYS.COMPLETED_TASKS, 
@@ -284,6 +280,8 @@ const useTasks = () => {
         throw new Error('Failed to save task completion to storage');
       }
       
+      // Update Redux store only after successful storage
+      dispatch(completeTaskAction(taskIds));
       dispatch(setError(null));
       return true;
     } catch (error) {
@@ -299,9 +297,6 @@ const useTasks = () => {
     try {
       dispatch(setLoading(true));
       
-      // Update Redux store
-      dispatch(bulkUpdateTasks({ taskIds, updates }));
-      
       // Get updated task list
       const timestamp = new Date().toISOString();
       const updatedTasks = task_list.map(task => 
@@ -310,10 +305,12 @@ const useTasks = () => {
           : task
       );
       
-      // Save to AsyncStorage
+      // Save to AsyncStorage first
       const success = await saveTasksToStorage(updatedTasks);
       
       if (success) {
+        // Update Redux store only after successful storage
+        dispatch(bulkUpdateTasks({ taskIds, updates }));
         dispatch(setError(null));
         return true;
       }
@@ -332,15 +329,14 @@ const useTasks = () => {
     try {
       dispatch(setLoading(true));
       
-      // Clear Redux store
-      dispatch(setTasks([]));
-      
-      // Clear AsyncStorage
+      // Clear AsyncStorage first
       await Promise.all([
-        StorageManager.removeData(STORAGE_KEYS.TASKS),
-        StorageManager.removeData(STORAGE_KEYS.COMPLETED_TASKS)
+        storeDataLocalStorage(STORAGE_KEYS.TASKS, []),
+        storeDataLocalStorage(STORAGE_KEYS.COMPLETED_TASKS, [])
       ]);
       
+      // Clear Redux store only after successful storage clear
+      dispatch(setTasks([]));
       dispatch(setError(null));
       return true;
     } catch (error) {
